@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
+import { AuthDiagnostic } from '@/components/AuthDiagnostic'
 
 export default function AuthDebugPage() {
   const [firebaseUser, setFirebaseUser] = useState<any>(null)
@@ -132,7 +133,7 @@ export default function AuthDebugPage() {
         </div>
 
         {/* Actions */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Actions</h2>
           <div className="space-y-4">
             <button
@@ -157,6 +158,12 @@ export default function AuthDebugPage() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Real-time Auth Diagnostic */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold mb-4">Real-time Auth Diagnostic</h2>
+          <AuthDiagnostic />
         </div>
       </div>
     </div>

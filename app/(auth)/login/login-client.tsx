@@ -1,15 +1,60 @@
 'use client'
 
-import { useState } from 'react'
-import { signInWithPopup, signInWithRedirect, GoogleAuthProvider } from 'firebase/auth'
+import { useState, useEffect } from 'react'
+import { signInWithPopup, signInWithRedirect, GoogleAuthProvider, getRedirectResult } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
 import { Brain, Sparkles } from 'lucide-react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 
 export default function LoginClient() {
   const [isSigningIn, setIsSigningIn] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const searchParams = useSearchParams()
+  const router = useRouter()
+
+  // Handle redirect result on page load
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        console.log('[Login] Checking for redirect result...')
+        const result = await getRedirectResult(auth)
+        
+        if (result?.user) {
+          console.log('[Login] Redirect result found, user:', result.user.email)
+          setIsSigningIn(true)
+          
+          // Get the ID token
+          const idToken = await result.user.getIdToken()
+          
+          // Set auth cookie via API
+          const response = await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: idToken }),
+          })
+          
+          console.log('[Login] Cookie response from redirect:', response.ok ? 'success' : 'failed')
+          
+          if (response.ok) {
+            // Get redirect from sessionStorage or use default
+            const redirect = sessionStorage.getItem('auth_redirect') || searchParams.get('redirect') || '/journal'
+            sessionStorage.removeItem('auth_redirect')
+            console.log('[Login] Redirecting to:', redirect)
+            window.location.href = redirect
+          } else {
+            const data = await response.json()
+            throw new Error(data.error || 'Failed to set session')
+          }
+        }
+      } catch (error) {
+        console.error('[Login] Error handling redirect result:', error)
+        setError(error instanceof Error ? error.message : 'Failed to complete sign in')
+        setIsSigningIn(false)
+      }
+    }
+
+    handleRedirectResult()
+  }, [searchParams])
 
   const handleSignIn = async () => {
     setIsSigningIn(true)
