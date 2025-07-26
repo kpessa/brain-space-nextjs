@@ -61,6 +61,14 @@ export function AuthDiagnostic() {
       languageCode: auth.languageCode,
       settings: auth.settings
     })
+    
+    // Check Firebase config from environment
+    console.log('[AuthDiagnostic] Environment config:', {
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? 'Present' : 'Missing',
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+    })
 
     return () => unsubscribe()
   }, [])
@@ -71,7 +79,21 @@ export function AuthDiagnostic() {
       {loading ? (
         <p>Loading auth state...</p>
       ) : (
-        <pre className="overflow-auto">{JSON.stringify(authState, null, 2)}</pre>
+        <>
+          <div className="mb-4">
+            <h4 className="font-semibold mb-1">Firebase Config:</h4>
+            <div className="bg-white p-2 rounded">
+              <div>Auth Domain: {auth.config.authDomain || 'Not set'}</div>
+              <div>Project ID: {auth.config.projectId || 'Not set'}</div>
+              <div>API Key: {auth.config.apiKey ? '✓ Present' : '✗ Missing'}</div>
+              <div>App ID: {auth.config.appId ? '✓ Present' : '✗ Missing'}</div>
+            </div>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-1">Auth State:</h4>
+            <pre className="overflow-auto bg-white p-2 rounded">{JSON.stringify(authState, null, 2)}</pre>
+          </div>
+        </>
       )}
     </div>
   )

@@ -150,6 +150,25 @@ export default function AuthDebugPage() {
             >
               Test Cookie Set
             </button>
+            
+            <button
+              onClick={async () => {
+                try {
+                  const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth')
+                  const provider = new GoogleAuthProvider()
+                  console.log('[Auth Debug] Attempting manual sign in...')
+                  const result = await signInWithPopup(auth, provider)
+                  console.log('[Auth Debug] Sign in successful:', result.user.email)
+                  alert(`Signed in as: ${result.user.email}`)
+                } catch (error) {
+                  console.error('[Auth Debug] Sign in error:', error)
+                  alert(`Sign in failed: ${error.message}`)
+                }
+              }}
+              className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 ml-4"
+            >
+              Test Manual Sign In
+            </button>
 
             <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
               <p className="text-sm text-yellow-800">
