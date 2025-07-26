@@ -18,6 +18,12 @@ export default function LoginClient() {
       try {
         console.log('[Login] Checking for redirect result...')
         const result = await getRedirectResult(auth)
+        console.log('[Login] Redirect result:', {
+          hasResult: !!result,
+          hasUser: !!result?.user,
+          hasCredential: !!result?.credential,
+          operationType: result?.operationType,
+        })
         
         if (result?.user) {
           console.log('[Login] Redirect result found, user:', result.user.email)
@@ -56,6 +62,44 @@ export default function LoginClient() {
     handleRedirectResult()
   }, [searchParams])
 
+  // Also listen for auth state changes as a fallback
+  useEffect(() => {
+    console.log('[Login] Setting up auth state listener')
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      console.log('[Login] Auth state changed:', {
+        hasUser: !!user,
+        email: user?.email,
+        isSigningIn: isSigningIn,
+      })
+      
+      if (user && !isSigningIn) {
+        // User is signed in but we haven't handled it yet
+        console.log('[Login] User detected via auth state, setting cookie...')
+        setIsSigningIn(true)
+        
+        try {
+          const idToken = await user.getIdToken()
+          const response = await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: idToken }),
+          })
+          
+          if (response.ok) {
+            const redirect = sessionStorage.getItem('auth_redirect') || searchParams.get('redirect') || '/journal'
+            sessionStorage.removeItem('auth_redirect')
+            console.log('[Login] Redirecting via auth state handler to:', redirect)
+            window.location.href = redirect
+          }
+        } catch (error) {
+          console.error('[Login] Error in auth state handler:', error)
+        }
+      }
+    })
+    
+    return () => unsubscribe()
+  }, [isSigningIn, searchParams])
+
   const handleSignIn = async () => {
     setIsSigningIn(true)
     setError(null)
@@ -81,8 +125,18 @@ export default function LoginClient() {
         const redirect = searchParams.get('redirect') || '/journal'
         sessionStorage.setItem('auth_redirect', redirect)
         
+        // Add scopes and custom parameters
+        provider.addScope('profile')
+        provider.addScope('email')
+        
+        // Set custom parameters to ensure proper redirect
+        provider.setCustomParameters({
+          prompt: 'select_account',
+          auth_type: 'rerequest'
+        })
+        
         // Use redirect flow in production
-        console.log('[Login] Using redirect flow for production')
+        console.log('[Login] Using redirect flow for production with provider:', provider)
         await signInWithRedirect(auth, provider)
         // This won't return - browser will redirect
         return
