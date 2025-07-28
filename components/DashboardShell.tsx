@@ -12,8 +12,10 @@ import {
   ListTodo,
   Repeat,
 } from 'lucide-react'
+import { MobileNavigation } from './MobileNavigation'
+import { BottomNavigation } from './BottomNavigation'
 
-const navigation = [
+export const navigation = [
   { name: 'Todos', href: '/todos', icon: ListTodo },
   { name: 'Journal', href: '/journal', icon: BookOpen },
   { name: 'Nodes', href: '/nodes', icon: Network },
@@ -92,20 +94,22 @@ export default function DashboardShell({
         </div>
       </div>
 
-      {/* Mobile header */}
-      <div className="sticky top-0 z-40 flex items-center gap-x-6 bg-white px-4 py-4 shadow-sm sm:px-6 lg:hidden">
-        <div className="flex-1 flex items-center gap-2">
-          <Brain className="h-8 w-8 text-brain-600" />
-          <span className="text-lg font-semibold">Brain Space</span>
-        </div>
-      </div>
+      {/* Mobile header with navigation */}
+      <MobileNavigation 
+        currentPath={currentPath} 
+        user={user}
+        navigation={navigation}
+      />
 
       {/* Main content */}
-      <main className="lg:pl-64">
+      <main className="lg:pl-64 pb-16 sm:pb-0">
         <div className="px-4 py-8 sm:px-6 lg:px-8">
           {children}
         </div>
       </main>
+      
+      {/* Bottom navigation for mobile */}
+      <BottomNavigation />
     </div>
   )
 }
