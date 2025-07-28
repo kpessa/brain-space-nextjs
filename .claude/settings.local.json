@@ -25,7 +25,10 @@
       "Bash(pnpm remove:*)",
       "Bash(pnpm add:*)",
       "Bash(git diff:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(chmod:*)",
+      "Bash(node:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }

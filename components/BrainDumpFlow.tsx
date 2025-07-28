@@ -112,7 +112,7 @@ function BrainDumpFlowInner({ initialNodes = [], initialEdges = [], onBack, user
   }
 
   const handleSave = () => {
-    console.log('Saving brain dump...', { nodes, edges })
+
     // TODO: Implement save functionality
   }
 

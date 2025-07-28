@@ -9,7 +9,6 @@ import { useNodesStore } from '@/store/nodeStore'
 import { format, addDays, subDays } from 'date-fns'
 import { cn } from '@/lib/utils'
 
-
 // Helper to get priority color
 function getPriorityColor(importance?: number, urgency?: number) {
   if (importance === undefined || urgency === undefined) {

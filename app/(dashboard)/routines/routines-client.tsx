@@ -11,9 +11,6 @@ import { format } from 'date-fns'
 import { Badge } from '@/components/ui/Badge'
 import { X } from 'lucide-react'
 
-
-
-
 export default function RoutinesClient({ userId }: { userId: string }) {
   const {
     progress,

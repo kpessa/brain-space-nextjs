@@ -211,7 +211,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         (window.location.hostname.includes('vercel.app') || 
          window.location.hostname !== 'localhost')
 
-
       if (shouldUseRedirect) {
         // Use redirect flow in production to avoid COOP issues
         await signInWithRedirect(auth, provider)

@@ -663,7 +663,6 @@ export default function NodesClient({ userId }: { userId: string }) {
     event.target.value = ''
   }
 
-
   if (isLoading) {
     return (
         <div className="flex items-center justify-center h-64">

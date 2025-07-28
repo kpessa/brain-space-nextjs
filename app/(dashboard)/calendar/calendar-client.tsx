@@ -74,12 +74,7 @@ export default function CalendarClient({ userId }: { userId: string }) {
     }
   }
 
-  // const handleDisconnect = async () => {
-  //   try {
   //     await googleCalendarService.signOut()
-  //     setIsAuthorized(false)
-  //     setEvents([])
-  //     setCalendars([])
   //   } catch (error) {
   //     console.error('Error disconnecting:', error)
   //   }
@@ -183,7 +178,6 @@ export default function CalendarClient({ userId }: { userId: string }) {
     newDate.setDate(newDate.getDate() + 56) // 8 weeks
     setCurrentDate(newDate)
   }
-
 
   return (
       <div className="container mx-auto px-4 py-8 max-w-7xl">

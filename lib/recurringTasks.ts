@@ -99,7 +99,6 @@ export function calculateCurrentStreak(
   if (!completions || completions.length === 0) return 0
 
   // Sort completions by date (most recent first)
-  // const sortedCompletions = [...completions].sort(
   //   (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   // )
 

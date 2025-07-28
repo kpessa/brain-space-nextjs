@@ -8,10 +8,6 @@ export const dynamic = 'force-dynamic'
  * POST /api/auth/session - Set auth cookie from client-side token
  */
 export async function POST(request: NextRequest) {
-  console.log('[Auth Session API] POST request:', {
-    timestamp: new Date().toISOString(),
-    hasAdminAuth: !!adminAuth,
-  })
 
   try {
     const { token } = await request.json()
@@ -23,6 +19,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log('[Session API] Received token:', {
       tokenLength: token.length,
       tokenStart: token.substring(0, 20) + '...',
     })
@@ -72,13 +69,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-      uid: user.uid,
+    console.log('[Session API] User verified:', {      uid: user.uid,
       email: user.email,
     })
 
     // Set secure HTTP-only cookie
     setAuthCookie(token)
-
 
     return NextResponse.json({
       success: true,
@@ -120,6 +116,7 @@ export async function DELETE() {
  * GET /api/auth/session - Check current session
  */
 export async function GET() {
+  console.log('[Session API] GET request:', {
     timestamp: new Date().toISOString(),
     hasAdminAuth: !!adminAuth,
   })
@@ -162,6 +159,7 @@ export async function GET() {
       )
     }
 
+    console.log('[Session API] Session verified:', {
       uid: user.uid,
       email: user.email,
     })

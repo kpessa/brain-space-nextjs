@@ -11,13 +11,7 @@ export function AuthDiagnostic() {
   useEffect(() => {
     
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log('[AuthDiagnostic] Auth state changed:', {
-        hasUser: !!user,
-        email: user?.email,
-        uid: user?.uid,
-        timestamp: new Date().toISOString()
-      })
-      
+
       if (user) {
         try {
           const idToken = await user.getIdToken()

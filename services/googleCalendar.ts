@@ -127,11 +127,7 @@ export class GoogleCalendarService {
     
     window.gapi.load('client', async () => {
       try {
-        console.log('[GoogleCalendar] Initializing GAPI client with:', {
-          apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY ? 'present' : 'missing',
-          discoveryDoc: process.env.NEXT_PUBLIC_GOOGLE_CALENDAR_DISCOVERY_DOC,
-        })
-        
+
         await window.gapi.client.init({
           apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
           discoveryDocs: [process.env.NEXT_PUBLIC_GOOGLE_CALENDAR_DISCOVERY_DOC],
@@ -147,6 +143,7 @@ export class GoogleCalendarService {
 
   private gisLoaded() {
     try {
+      console.log('[GoogleCalendar] Initializing GIS with:', {
         clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? 'present' : 'missing',
         scopes: process.env.NEXT_PUBLIC_GOOGLE_CALENDAR_SCOPES,
       })
@@ -373,6 +370,7 @@ export class GoogleCalendarService {
 
   // Manual initialization method for debugging
   async initializeManually() {
+    console.log('[GoogleCalendar] Manual initialization - checking APIs:', {
       gapi: !!window.gapi,
       google: !!window.google,
       googleAccounts: !!window.google?.accounts,

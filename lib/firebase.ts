@@ -15,12 +15,6 @@ const firebaseConfig = {
 
 // Log config for debugging (without sensitive data)
 if (typeof window !== 'undefined') {
-  console.log('[Firebase] Initializing with config:', {
-    authDomain: firebaseConfig.authDomain,
-    projectId: firebaseConfig.projectId,
-    hasApiKey: !!firebaseConfig.apiKey,
-    hasAppId: !!firebaseConfig.appId,
-  })
 
   // Suppress expected errors that don't affect functionality
   const originalError = console.error
