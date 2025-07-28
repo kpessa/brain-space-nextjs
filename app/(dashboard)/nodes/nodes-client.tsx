@@ -38,7 +38,11 @@ import {
   Link,
   Grid3x3,
   TreePine,
-  Share2
+  Share2,
+  CheckSquare,
+  Square,
+  LinkIcon,
+  Trash2
 } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -46,6 +50,98 @@ interface NodeCreateModalProps {
   isOpen: boolean
   onClose: () => void
   userId: string
+}
+
+interface BulkLinkModalProps {
+  isOpen: boolean
+  onClose: () => void
+  selectedNodes: Set<string>
+  nodes: Node[]
+}
+
+function BulkLinkModal({ isOpen, onClose, selectedNodes, nodes }: BulkLinkModalProps) {
+  const [selectedParentId, setSelectedParentId] = useState<string>('')
+  const [loading, setLoading] = useState(false)
+  const { linkAsChild } = useNodesStore()
+  
+  // Filter out selected nodes from parent options
+  const availableParents = nodes.filter(node => !selectedNodes.has(node.id))
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedParentId) return
+    
+    setLoading(true)
+    try {
+      // Link all selected nodes as children of the selected parent
+      for (const nodeId of selectedNodes) {
+        await linkAsChild(selectedParentId, nodeId)
+      }
+      onClose()
+    } catch (error) {
+      console.error('Failed to link nodes:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Link Selected Nodes as Children">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Select Parent Node
+          </label>
+          <select
+            value={selectedParentId}
+            onChange={(e) => setSelectedParentId(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brain-500 focus:border-transparent"
+            required
+          >
+            <option value="">Choose a parent node...</option>
+            {availableParents.map(node => (
+              <option key={node.id} value={node.id}>
+                {node.title || 'Untitled'} ({node.type})
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        <div className="text-sm text-gray-600">
+          <p>This will link {selectedNodes.size} selected node{selectedNodes.size > 1 ? 's' : ''} as children of the selected parent.</p>
+        </div>
+        
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={loading || !selectedParentId}
+            className="flex-1"
+          >
+            {loading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                Linking...
+              </>
+            ) : (
+              <>
+                <LinkIcon className="w-4 h-4 mr-2" />
+                Link as Children
+              </>
+            )}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  )
 }
 
 function NodeCreateModal({ isOpen, onClose, userId }: NodeCreateModalProps) {
@@ -187,9 +283,12 @@ interface NodeCardProps {
   node: Node
   onCreateChild?: (parentNode: Node) => void
   onCreateParent?: (childNode: Node) => void
+  isSelected?: boolean
+  onSelect?: (nodeId: string, selected: boolean) => void
+  selectMode?: boolean
 }
 
-function NodeCard({ node, onCreateChild, onCreateParent }: NodeCardProps) {
+function NodeCard({ node, onCreateChild, onCreateParent, isSelected = false, onSelect, selectMode = false }: NodeCardProps) {
   const { updateNode, deleteNode, getNodeChildren, getNodeParent } = useNodesStore()
   const [showDetails, setShowDetails] = useState(false)
   
@@ -212,21 +311,34 @@ function NodeCard({ node, onCreateChild, onCreateParent }: NodeCardProps) {
   }
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className={`hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-brain-500' : ''}`}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <button
-                onClick={handleCompletionToggle}
-                className="flex-shrink-0"
-              >
-                {node.completed ? (
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                ) : (
-                  <Circle className="w-5 h-5 text-gray-400" />
-                )}
-              </button>
+              {selectMode ? (
+                <button
+                  onClick={() => onSelect?.(node.id, !isSelected)}
+                  className="flex-shrink-0"
+                >
+                  {isSelected ? (
+                    <CheckSquare className="w-5 h-5 text-brain-600" />
+                  ) : (
+                    <Square className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={handleCompletionToggle}
+                  className="flex-shrink-0"
+                >
+                  {node.completed ? (
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+              )}
               <div className="flex items-center gap-2">
                 <span className="text-lg">{getNodeTypeIcon(node.type)}</span>
                 <h3 className={`font-medium ${node.completed ? 'line-through text-gray-500' : 'text-gray-900'} line-clamp-2`}>
@@ -404,13 +516,16 @@ export default function NodesClient({ userId }: { userId: string }) {
   const [selectedType, setSelectedType] = useState<NodeType | 'all'>('all')
   const [selectedTag, setSelectedTag] = useState<string>('all')
   const [viewMode, setViewMode] = useState<'grid' | 'tree' | 'graph'>('grid')
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set())
   const [relationshipModal, setRelationshipModal] = useState<{
     isOpen: boolean
     sourceNode: Node | null
     type: 'child' | 'parent'
   }>({ isOpen: false, sourceNode: null, type: 'child' })
+  const [bulkLinkModalOpen, setBulkLinkModalOpen] = useState(false)
   
-  const { nodes, isLoading, error, loadNodes, getNodesByType, getNodesByTag } = useNodesStore()
+  const { nodes, isLoading, error, loadNodes, getNodesByType, getNodesByTag, deleteNode } = useNodesStore()
 
   useEffect(() => {
     loadNodes(userId)
@@ -455,6 +570,59 @@ export default function NodesClient({ userId }: { userId: string }) {
       sourceNode: null,
       type: 'child'
     })
+  }
+
+  // Selection handlers
+  const handleNodeSelect = (nodeId: string, selected: boolean) => {
+    setSelectedNodes(prev => {
+      const next = new Set(prev)
+      if (selected) {
+        next.add(nodeId)
+      } else {
+        next.delete(nodeId)
+      }
+      return next
+    })
+  }
+
+  const handleSelectAll = () => {
+    setSelectedNodes(new Set(filteredNodes.map(n => n.id)))
+  }
+
+  const handleDeselectAll = () => {
+    setSelectedNodes(new Set())
+  }
+
+  const toggleSelectMode = () => {
+    setSelectMode(!selectMode)
+    if (selectMode) {
+      // Exiting select mode, clear selections
+      setSelectedNodes(new Set())
+    }
+  }
+
+  // Bulk operations
+  const handleBulkDelete = async () => {
+    if (selectedNodes.size === 0) return
+    
+    const confirmed = window.confirm(`Are you sure you want to delete ${selectedNodes.size} nodes?`)
+    if (!confirmed) return
+
+    for (const nodeId of selectedNodes) {
+      await deleteNode(nodeId)
+    }
+    
+    setSelectedNodes(new Set())
+    setSelectMode(false)
+  }
+
+  const handleBulkLinkAsChildren = () => {
+    if (selectedNodes.size === 0) {
+      alert('Please select at least one node to link')
+      return
+    }
+    
+    setBulkLinkModalOpen(true)
   }
 
   // Export nodes to JSON
@@ -526,6 +694,20 @@ export default function NodesClient({ userId }: { userId: string }) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {/* Select Mode Toggle */}
+                <Button
+                  variant="outline"
+                  onClick={toggleSelectMode}
+                  className={`flex items-center gap-2 ${
+                    selectMode 
+                      ? 'bg-brain-600 text-white hover:bg-brain-700 border-brain-600' 
+                      : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
+                  }`}
+                >
+                  <CheckSquare className="w-4 h-4" />
+                  {selectMode ? 'Exit Select' : 'Select'}
+                </Button>
+                
                 {/* Import */}
                 <label className="cursor-pointer">
                   <input type="file" accept=".json" onChange={importNodes} className="hidden" />
@@ -712,6 +894,58 @@ export default function NodesClient({ userId }: { userId: string }) {
           </CardContent>
         </Card>
 
+        {/* Bulk Actions Toolbar */}
+        {selectMode && selectedNodes.size > 0 && (
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium text-gray-700">
+                    {selectedNodes.size} node{selectedNodes.size > 1 ? 's' : ''} selected
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleSelectAll}
+                    className="text-xs"
+                  >
+                    Select All ({filteredNodes.length})
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleDeselectAll}
+                    className="text-xs"
+                  >
+                    Deselect All
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleBulkLinkAsChildren}
+                    className="flex items-center gap-1"
+                  >
+                    <LinkIcon className="w-4 h-4" />
+                    Link as Children
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={handleBulkDelete}
+                    className="flex items-center gap-1"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Selected
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Nodes Display - Grid, Tree, or Graph */}
         {viewMode === 'grid' ? (
           // Grid View
@@ -723,6 +957,9 @@ export default function NodesClient({ userId }: { userId: string }) {
                   node={node} 
                   onCreateChild={handleCreateChild}
                   onCreateParent={handleCreateParent}
+                  isSelected={selectedNodes.has(node.id)}
+                  onSelect={handleNodeSelect}
+                  selectMode={selectMode}
                 />
               ))}
             </div>
@@ -786,6 +1023,17 @@ export default function NodesClient({ userId }: { userId: string }) {
             relationshipType={relationshipModal.type}
           />
         )}
+        
+        <BulkLinkModal
+          isOpen={bulkLinkModalOpen}
+          onClose={() => {
+            setBulkLinkModalOpen(false)
+            setSelectedNodes(new Set())
+            setSelectMode(false)
+          }}
+          selectedNodes={selectedNodes}
+          nodes={nodes}
+        />
         </div>
       </div>
   )
