@@ -15,7 +15,7 @@ export default function DashboardShell({
   const user = getUserFromHeaders()
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
         <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4 shadow-sm">
@@ -78,8 +78,8 @@ export default function DashboardShell({
       />
 
       {/* Main content */}
-      <main className="lg:pl-64 pb-16 sm:pb-0">
-        <div className="px-4 py-8 sm:px-6 lg:px-8">
+      <main className="flex-1 lg:pl-64 pb-16 sm:pb-0 overflow-y-auto">
+        <div className="px-4 py-8 sm:px-6 lg:px-8 min-h-full">
           {children}
         </div>
       </main>

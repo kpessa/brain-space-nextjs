@@ -10,7 +10,11 @@
       "Bash(firebase apps:sdkconfig:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(pnpm run:*)"
+      "Bash(pnpm run:*)",
+      "Bash(git push:*)",
+      "Bash(git rm:*)",
+      "Bash(git filter-branch:*)",
+      "Bash(git stash:*)"
     ],
     "deny": []
   }

@@ -680,8 +680,8 @@ export default function NodesClient({ userId }: { userId: string }) {
   }
 
   return (
-      <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(100vh-4rem)]">
-        <div className="max-w-7xl mx-auto">
+      <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-screen">
+        <div className="max-w-7xl mx-auto overflow-x-hidden">
           <header className="mb-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">

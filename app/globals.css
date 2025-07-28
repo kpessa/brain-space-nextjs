@@ -8,30 +8,27 @@
 @layer base {
   html {
     overflow-x: hidden;
-    overscroll-behavior: none;
+    /* Allow natural scrolling on mobile */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   
   body {
     overflow-x: hidden;
-    overscroll-behavior: none;
+    overflow-y: auto;
     position: relative;
     width: 100%;
+    min-height: 100vh;
+    /* Enable smooth scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
   }
   
-  /* Prevent iOS bounce effect */
+  /* Remove the iOS fixed positioning that was breaking scrolling */
+  /* Instead, use modern touch-action for scroll control */
   @supports (-webkit-touch-callout: none) {
     body {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      bottom: 0;
-    }
-    
-    #root {
-      height: 100%;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
+      /* Allow vertical scrolling but prevent horizontal overflow */
+      touch-action: pan-y;
     }
   }
 }
@@ -255,6 +252,12 @@
 
   .touch-pinch-zoom {
     touch-action: pinch-zoom;
+  }
+  
+  /* Enable smooth touch scrolling on mobile */
+  .touch-scroll {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
   }
 
   /* Overflow utilities for mobile */
