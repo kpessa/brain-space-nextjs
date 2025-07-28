@@ -11,6 +11,8 @@ import type { Node, NodeType } from '@/types/node'
 import { getNodeTypeColor, getNodeTypeIcon, getEisenhowerQuadrant } from '@/types/node'
 import { AIProviderSelector } from '@/components/AIProviderSelector'
 import { NodeRelationshipModal } from '@/components/nodes/NodeRelationshipModal'
+import { NodeHierarchyView } from '@/components/nodes/NodeHierarchyView'
+import { NodeBreadcrumb } from '@/components/nodes/NodeBreadcrumb'
 import { 
   Network, 
   Plus, 
@@ -32,7 +34,9 @@ import {
   GitBranch,
   GitMerge,
   ChevronRight,
-  Link
+  Link,
+  Grid3x3,
+  TreePine
 } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -293,23 +297,62 @@ function NodeCard({ node, onCreateChild, onCreateParent }: NodeCardProps) {
         </div>
 
         {showDetails && (
-          <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
-            <div className="text-xs text-gray-600">
-              <strong>Created:</strong> {node.createdAt ? new Date(node.createdAt).toLocaleString() : 'Unknown'}
-            </div>
-            <div className="text-xs text-gray-600">
-              <strong>Last Updated:</strong> {node.updatedAt ? new Date(node.updatedAt).toLocaleString() : 'Unknown'}
-            </div>
-            {node.tags && node.tags.length > 0 && (
-              <div className="text-xs text-gray-600">
-                <strong>All Tags:</strong> {node.tags.join(', ')}
+          <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
+            {/* Breadcrumb */}
+            {parent && (
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-gray-500">Path:</div>
+                <NodeBreadcrumb node={node} />
               </div>
             )}
-            {node.urgency && node.importance && (
-              <div className="text-xs text-gray-600">
-                <strong>Priority:</strong> Urgency {node.urgency}/10, Importance {node.importance}/10
+            
+            {/* Relationships */}
+            <div className="space-y-2">
+              {parent && (
+                <div className="text-xs">
+                  <span className="font-medium text-gray-600">Parent:</span>{' '}
+                  <span className="text-purple-600 hover:underline cursor-pointer">
+                    {parent.title || 'Untitled'}
+                  </span>
+                </div>
+              )}
+              
+              {children.length > 0 && (
+                <div className="text-xs">
+                  <span className="font-medium text-gray-600">Children ({children.length}):</span>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {children.map((child) => (
+                      <span 
+                        key={child.id}
+                        className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100 cursor-pointer"
+                      >
+                        {child.title || 'Untitled'}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Metadata */}
+            <div className="space-y-1 text-xs text-gray-600">
+              <div>
+                <strong>Created:</strong> {node.createdAt ? new Date(node.createdAt).toLocaleString() : 'Unknown'}
               </div>
-            )}
+              <div>
+                <strong>Updated:</strong> {node.updatedAt ? new Date(node.updatedAt).toLocaleString() : 'Unknown'}
+              </div>
+              {node.tags && node.tags.length > 0 && (
+                <div>
+                  <strong>All Tags:</strong> {node.tags.join(', ')}
+                </div>
+              )}
+              {node.urgency && node.importance && (
+                <div>
+                  <strong>Priority:</strong> Urgency {node.urgency}/10, Importance {node.importance}/10
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -358,6 +401,7 @@ export default function NodesClient({ userId }: { userId: string }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedType, setSelectedType] = useState<NodeType | 'all'>('all')
   const [selectedTag, setSelectedTag] = useState<string>('all')
+  const [viewMode, setViewMode] = useState<'grid' | 'tree'>('grid')
   const [relationshipModal, setRelationshipModal] = useState<{
     isOpen: boolean
     sourceNode: Node | null
@@ -598,6 +642,31 @@ export default function NodesClient({ userId }: { userId: string }) {
               </div>
               
               <div className="flex gap-4">
+                {/* View Mode Toggle */}
+                <div className="flex rounded-lg border border-gray-300">
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`px-3 py-2 flex items-center gap-2 rounded-l-lg transition-colors ${
+                      viewMode === 'grid' 
+                        ? 'bg-brain-600 text-white' 
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Grid3x3 className="w-4 h-4" />
+                    <span className="text-sm">Grid</span>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('tree')}
+                    className={`px-3 py-2 flex items-center gap-2 rounded-r-lg transition-colors ${
+                      viewMode === 'tree' 
+                        ? 'bg-brain-600 text-white' 
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <TreePine className="w-4 h-4" />
+                    <span className="text-sm">Tree</span>
+                  </button>
+                </div>
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value as NodeType | 'all')}
@@ -630,41 +699,52 @@ export default function NodesClient({ userId }: { userId: string }) {
           </CardContent>
         </Card>
 
-        {/* Nodes Grid */}
-        {filteredNodes.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredNodes.map((node) => (
-              <NodeCard 
-                key={node.id} 
-                node={node} 
-                onCreateChild={handleCreateChild}
-                onCreateParent={handleCreateParent}
-              />
-            ))}
-          </div>
+        {/* Nodes Display - Grid or Tree */}
+        {viewMode === 'grid' ? (
+          // Grid View
+          filteredNodes.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredNodes.map((node) => (
+                <NodeCard 
+                  key={node.id} 
+                  node={node} 
+                  onCreateChild={handleCreateChild}
+                  onCreateParent={handleCreateParent}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="text-center py-12">
+                <div className="w-16 h-16 bg-brain-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Network className="w-8 h-8 text-brain-600" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No nodes found</h3>
+                <p className="text-gray-500 mb-4">
+                  {nodes.length === 0 
+                    ? "Create your first node to start organizing your thoughts with AI assistance."
+                    : "Try adjusting your search or filters."}
+                </p>
+                {nodes.length === 0 && (
+                  <Button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    variant="primary"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Your First Node
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )
         ) : (
-          <Card>
-            <CardContent className="text-center py-12">
-              <div className="w-16 h-16 bg-brain-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Network className="w-8 h-8 text-brain-600" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No nodes found</h3>
-              <p className="text-gray-500 mb-4">
-                {nodes.length === 0 
-                  ? "Create your first node to start organizing your thoughts with AI assistance."
-                  : "Try adjusting your search or filters."}
-              </p>
-              {nodes.length === 0 && (
-                <Button
-                  onClick={() => setIsCreateModalOpen(true)}
-                  variant="primary"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Node
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+          // Tree View
+          <NodeHierarchyView
+            nodes={filteredNodes}
+            onCreateChild={handleCreateChild}
+            onCreateParent={handleCreateParent}
+            searchQuery={searchQuery}
+          />
         )}
 
         <NodeCreateModal
