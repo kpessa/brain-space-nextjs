@@ -88,8 +88,9 @@ export interface Node {
     }
   }
 
-  // Children logic (optional)
-  children?: string[]
+  // Relationships (optional)
+  parent?: string // Parent node ID
+  children?: string[] // Child node IDs
   logicType?: LogicType
 
   // Attempts (optional)

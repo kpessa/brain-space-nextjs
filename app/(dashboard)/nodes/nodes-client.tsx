@@ -10,6 +10,7 @@ import { createAIService } from '@/services/ai'
 import type { Node, NodeType } from '@/types/node'
 import { getNodeTypeColor, getNodeTypeIcon, getEisenhowerQuadrant } from '@/types/node'
 import { AIProviderSelector } from '@/components/AIProviderSelector'
+import { NodeRelationshipModal } from '@/components/nodes/NodeRelationshipModal'
 import { 
   Network, 
   Plus, 
@@ -27,7 +28,11 @@ import {
   Clock,
   Target,
   Download,
-  Upload
+  Upload,
+  GitBranch,
+  GitMerge,
+  ChevronRight,
+  Link
 } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -174,11 +179,16 @@ function NodeCreateModal({ isOpen, onClose, userId }: NodeCreateModalProps) {
 
 interface NodeCardProps {
   node: Node
+  onCreateChild?: (parentNode: Node) => void
+  onCreateParent?: (childNode: Node) => void
 }
 
-function NodeCard({ node }: NodeCardProps) {
-  const { updateNode, deleteNode } = useNodesStore()
+function NodeCard({ node, onCreateChild, onCreateParent }: NodeCardProps) {
+  const { updateNode, deleteNode, getNodeChildren, getNodeParent } = useNodesStore()
   const [showDetails, setShowDetails] = useState(false)
+  
+  const parent = getNodeParent(node.id)
+  const children = getNodeChildren(node.id)
 
   const handleCompletionToggle = () => {
     updateNode(node.id, { completed: !node.completed })
@@ -236,6 +246,24 @@ function NodeCard({ node }: NodeCardProps) {
           </div>
         </div>
 
+        {/* Relationships */}
+        {(parent || children.length > 0) && (
+          <div className="flex items-center gap-2 mb-2 text-xs">
+            {parent && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded">
+                <GitMerge className="w-3 h-3" />
+                <span>Child of: {parent.title || 'Untitled'}</span>
+              </div>
+            )}
+            {children.length > 0 && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                <GitBranch className="w-3 h-3" />
+                <span>{children.length} {children.length === 1 ? 'child' : 'children'}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className={`px-2 py-1 text-xs font-medium rounded ${getNodeTypeColor(node.type)} bg-opacity-10`}>
@@ -285,7 +313,7 @@ function NodeCard({ node }: NodeCardProps) {
           </div>
         )}
 
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           <Button
             size="sm"
             variant="outline"
@@ -294,6 +322,28 @@ function NodeCard({ node }: NodeCardProps) {
           >
             {showDetails ? 'Less' : 'More'} Details
           </Button>
+          
+          {/* Relationship buttons */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onCreateChild?.(node)}
+            className="text-xs flex items-center gap-1"
+          >
+            <GitBranch className="w-3 h-3" />
+            Add Child
+          </Button>
+          
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onCreateParent?.(node)}
+            className="text-xs flex items-center gap-1"
+          >
+            <GitMerge className="w-3 h-3" />
+            Add Parent
+          </Button>
+          
           <Button size="sm" variant="danger" onClick={() => deleteNode(node.id)} className="text-xs">
             Delete
           </Button>
@@ -308,6 +358,11 @@ export default function NodesClient({ userId }: { userId: string }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedType, setSelectedType] = useState<NodeType | 'all'>('all')
   const [selectedTag, setSelectedTag] = useState<string>('all')
+  const [relationshipModal, setRelationshipModal] = useState<{
+    isOpen: boolean
+    sourceNode: Node | null
+    type: 'child' | 'parent'
+  }>({ isOpen: false, sourceNode: null, type: 'child' })
   
   const { nodes, isLoading, error, loadNodes, getNodesByType, getNodesByTag } = useNodesStore()
 
@@ -330,6 +385,31 @@ export default function NodesClient({ userId }: { userId: string }) {
 
   // Get unique tags
   const allTags = Array.from(new Set(nodes.flatMap(node => node.tags || []))).sort()
+
+  // Handlers for relationship creation
+  const handleCreateChild = (parentNode: Node) => {
+    setRelationshipModal({
+      isOpen: true,
+      sourceNode: parentNode,
+      type: 'child'
+    })
+  }
+
+  const handleCreateParent = (childNode: Node) => {
+    setRelationshipModal({
+      isOpen: true,
+      sourceNode: childNode,
+      type: 'parent'
+    })
+  }
+
+  const closeRelationshipModal = () => {
+    setRelationshipModal({
+      isOpen: false,
+      sourceNode: null,
+      type: 'child'
+    })
+  }
 
   // Export nodes to JSON
   const exportNodes = () => {
@@ -554,7 +634,12 @@ export default function NodesClient({ userId }: { userId: string }) {
         {filteredNodes.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredNodes.map((node) => (
-              <NodeCard key={node.id} node={node} />
+              <NodeCard 
+                key={node.id} 
+                node={node} 
+                onCreateChild={handleCreateChild}
+                onCreateParent={handleCreateParent}
+              />
             ))}
           </div>
         ) : (
@@ -587,6 +672,15 @@ export default function NodesClient({ userId }: { userId: string }) {
           onClose={() => setIsCreateModalOpen(false)}
           userId={userId}
         />
+        
+        {relationshipModal.sourceNode && (
+          <NodeRelationshipModal
+            isOpen={relationshipModal.isOpen}
+            onClose={closeRelationshipModal}
+            sourceNode={relationshipModal.sourceNode}
+            relationshipType={relationshipModal.type}
+          />
+        )}
         </div>
       </div>
   )
