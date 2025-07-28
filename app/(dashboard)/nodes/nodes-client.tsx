@@ -13,6 +13,7 @@ import { AIProviderSelector } from '@/components/AIProviderSelector'
 import { NodeRelationshipModal } from '@/components/nodes/NodeRelationshipModal'
 import { NodeHierarchyView } from '@/components/nodes/NodeHierarchyView'
 import { NodeBreadcrumb } from '@/components/nodes/NodeBreadcrumb'
+import { NodeGraphView } from '@/components/nodes/NodeGraphView'
 import { 
   Network, 
   Plus, 
@@ -36,7 +37,8 @@ import {
   ChevronRight,
   Link,
   Grid3x3,
-  TreePine
+  TreePine,
+  Share2
 } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -401,7 +403,7 @@ export default function NodesClient({ userId }: { userId: string }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedType, setSelectedType] = useState<NodeType | 'all'>('all')
   const [selectedTag, setSelectedTag] = useState<string>('all')
-  const [viewMode, setViewMode] = useState<'grid' | 'tree'>('grid')
+  const [viewMode, setViewMode] = useState<'grid' | 'tree' | 'graph'>('grid')
   const [relationshipModal, setRelationshipModal] = useState<{
     isOpen: boolean
     sourceNode: Node | null
@@ -657,7 +659,7 @@ export default function NodesClient({ userId }: { userId: string }) {
                   </button>
                   <button
                     onClick={() => setViewMode('tree')}
-                    className={`px-3 py-2 flex items-center gap-2 rounded-r-lg transition-colors ${
+                    className={`px-3 py-2 flex items-center gap-2 transition-colors ${
                       viewMode === 'tree' 
                         ? 'bg-brain-600 text-white' 
                         : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -665,6 +667,17 @@ export default function NodesClient({ userId }: { userId: string }) {
                   >
                     <TreePine className="w-4 h-4" />
                     <span className="text-sm">Tree</span>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('graph')}
+                    className={`px-3 py-2 flex items-center gap-2 rounded-r-lg transition-colors ${
+                      viewMode === 'graph' 
+                        ? 'bg-brain-600 text-white' 
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span className="text-sm">Graph</span>
                   </button>
                 </div>
                 <select
@@ -699,7 +712,7 @@ export default function NodesClient({ userId }: { userId: string }) {
           </CardContent>
         </Card>
 
-        {/* Nodes Display - Grid or Tree */}
+        {/* Nodes Display - Grid, Tree, or Graph */}
         {viewMode === 'grid' ? (
           // Grid View
           filteredNodes.length > 0 ? (
@@ -737,7 +750,7 @@ export default function NodesClient({ userId }: { userId: string }) {
               </CardContent>
             </Card>
           )
-        ) : (
+        ) : viewMode === 'tree' ? (
           // Tree View
           <NodeHierarchyView
             nodes={filteredNodes}
@@ -745,6 +758,18 @@ export default function NodesClient({ userId }: { userId: string }) {
             onCreateParent={handleCreateParent}
             searchQuery={searchQuery}
           />
+        ) : (
+          // Graph View
+          <Card>
+            <CardContent className="p-0">
+              <NodeGraphView
+                nodes={filteredNodes}
+                onNodeClick={(node) => console.log('Node clicked:', node)}
+                onCreateChild={handleCreateChild}
+                onCreateParent={handleCreateParent}
+              />
+            </CardContent>
+          </Card>
         )}
 
         <NodeCreateModal
