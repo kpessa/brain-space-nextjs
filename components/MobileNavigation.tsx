@@ -4,20 +4,14 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Menu, X, Brain } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-interface NavigationItem {
-  name: string
-  href: string
-  icon: React.ElementType
-}
+import { navigation } from '@/lib/navigation'
 
 interface MobileNavigationProps {
   currentPath: string
   user: any
-  navigation: NavigationItem[]
 }
 
-export function MobileNavigation({ currentPath, user, navigation }: MobileNavigationProps) {
+export function MobileNavigation({ currentPath, user }: MobileNavigationProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   // Listen for custom event from bottom navigation

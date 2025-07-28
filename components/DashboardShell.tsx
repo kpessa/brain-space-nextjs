@@ -1,32 +1,9 @@
 import Link from 'next/link'
 import { getUserFromHeaders } from '@/lib/server-auth'
-import {
-  BookOpen,
-  Brain,
-  Trophy,
-  Clock,
-  SunMoon,
-  Calendar,
-  Network,
-  Grid3x3,
-  ListTodo,
-  Repeat,
-} from 'lucide-react'
+import { navigation } from '@/lib/navigation'
+import { Brain } from 'lucide-react'
 import { MobileNavigation } from './MobileNavigation'
 import { BottomNavigation } from './BottomNavigation'
-
-export const navigation = [
-  { name: 'Todos', href: '/todos', icon: ListTodo },
-  { name: 'Journal', href: '/journal', icon: BookOpen },
-  { name: 'Nodes', href: '/nodes', icon: Network },
-  { name: 'Brain Dump', href: '/braindump', icon: Brain },
-  { name: 'Matrix', href: '/matrix', icon: Grid3x3 },
-  { name: 'Recurring', href: '/recurring', icon: Repeat },
-  { name: 'Progress', href: '/progress', icon: Trophy },
-  { name: 'Timebox', href: '/timebox', icon: Clock },
-  { name: 'Routines', href: '/routines', icon: SunMoon },
-  { name: 'Calendar', href: '/calendar', icon: Calendar },
-]
 
 export default function DashboardShell({
   children,
@@ -98,7 +75,6 @@ export default function DashboardShell({
       <MobileNavigation 
         currentPath={currentPath} 
         user={user}
-        navigation={navigation}
       />
 
       {/* Main content */}
