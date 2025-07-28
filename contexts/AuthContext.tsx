@@ -61,7 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    console.log('[AuthContext] Initializing auth context', {
       timestamp: new Date().toISOString(),
       pathname: typeof window !== 'undefined' ? window.location.pathname : 'SSR',
     })
@@ -76,7 +75,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       getRedirectResult(auth)
         .then(async (result) => {
           if (result && result.user) {
-            console.log('[AuthContext] Redirect result found:', {
               userEmail: result.user.email,
               timestamp: new Date().toISOString(),
             })
@@ -89,7 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error('[AuthContext] Redirect result error:', error)
           // Clear any redirect errors to prevent loops
           if (error.code === 'auth/redirect-cancelled-by-user') {
-            console.log('[AuthContext] User cancelled the sign-in')
           }
         })
     }
@@ -110,7 +107,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Listen for auth changes
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        console.log('[AuthContext] Auth state changed:', {
           hasUser: !!firebaseUser,
           userEmail: firebaseUser?.email,
           hasSetCookie,
@@ -124,7 +120,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // This prevents duplicate cookie setting from redirect flow
           if (!hasSetCookie && !isAuthHandlerPage) {
             hasSetCookie = true
-            console.log('[AuthContext] Setting auth cookie')
             await setAuthCookie(firebaseUser)
 
             // Create or update user profile in Firestore
@@ -141,7 +136,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   createdAt: new Date(),
                   updatedAt: new Date(),
                 })
-                console.log('[AuthContext] Created user profile')
               }
             } catch (error) {
               console.error('[AuthContext] Error creating user profile:', error)
@@ -200,7 +194,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signInWithGoogle = async () => {
-    console.log('[AuthContext] Starting Google sign in', {
       timestamp: new Date().toISOString(),
       isProduction: process.env.NODE_ENV === 'production',
     })
@@ -218,21 +211,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         (window.location.hostname.includes('vercel.app') || 
          window.location.hostname !== 'localhost')
 
-      console.log('[AuthContext] Auth method:', shouldUseRedirect ? 'redirect' : 'popup')
 
       if (shouldUseRedirect) {
         // Use redirect flow in production to avoid COOP issues
-        console.log('[AuthContext] Using redirect flow for production')
         await signInWithRedirect(auth, provider)
         return
       }
 
       try {
         // Try popup first in development
-        console.log('[AuthContext] Attempting popup sign in')
         const result = await signInWithPopup(auth, provider)
         
-        console.log('[AuthContext] Popup sign in successful:', {
           userEmail: result.user.email,
           timestamp: new Date().toISOString(),
         })
@@ -244,7 +233,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (popupError.code === 'auth/popup-blocked' || 
             popupError.code === 'auth/popup-closed-by-user' ||
             popupError.message?.includes('Cross-Origin-Opener-Policy')) {
-          console.log('[AuthContext] Popup blocked, falling back to redirect')
           await signInWithRedirect(auth, provider)
         } else {
           throw popupError

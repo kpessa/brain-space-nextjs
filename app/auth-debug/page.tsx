@@ -156,9 +156,7 @@ export default function AuthDebugPage() {
                 try {
                   const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth')
                   const provider = new GoogleAuthProvider()
-                  console.log('[Auth Debug] Attempting manual sign in...')
                   const result = await signInWithPopup(auth, provider)
-                  console.log('[Auth Debug] Sign in successful:', result.user.email)
                   alert(`Signed in as: ${result.user.email}`)
                 } catch (error) {
                   console.error('[Auth Debug] Sign in error:', error)

@@ -87,7 +87,6 @@ export class GoogleCalendarService {
       gapiScript.async = true
       gapiScript.defer = true
       gapiScript.onload = () => {
-        console.log('GAPI script loaded')
         this.gapiLoaded()
       }
       gapiScript.onerror = () => {
@@ -107,7 +106,6 @@ export class GoogleCalendarService {
       gisScript.async = true
       gisScript.defer = true
       gisScript.onload = () => {
-        console.log('GIS script loaded')
         this.gisLoaded()
       }
       gisScript.onerror = () => {
@@ -129,7 +127,7 @@ export class GoogleCalendarService {
     
     window.gapi.load('client', async () => {
       try {
-        console.log('Initializing GAPI client with:', {
+        console.log('[GoogleCalendar] Initializing GAPI client with:', {
           apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY ? 'present' : 'missing',
           discoveryDoc: process.env.NEXT_PUBLIC_GOOGLE_CALENDAR_DISCOVERY_DOC,
         })
@@ -139,7 +137,6 @@ export class GoogleCalendarService {
           discoveryDocs: [process.env.NEXT_PUBLIC_GOOGLE_CALENDAR_DISCOVERY_DOC],
         })
         this.gapiInited = true
-        console.log('GAPI client initialized successfully')
         this.maybeEnableButtons()
       } catch (error) {
         console.error('Failed to initialize GAPI client:', error)
@@ -150,7 +147,6 @@ export class GoogleCalendarService {
 
   private gisLoaded() {
     try {
-      console.log('Initializing GIS token client with:', {
         clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? 'present' : 'missing',
         scopes: process.env.NEXT_PUBLIC_GOOGLE_CALENDAR_SCOPES,
       })
@@ -161,7 +157,6 @@ export class GoogleCalendarService {
         callback: '', // defined later
       })
       this.gisInited = true
-      console.log('GIS token client initialized successfully')
       this.maybeEnableButtons()
     } catch (error) {
       console.error('Failed to initialize GIS token client:', error)
@@ -171,7 +166,6 @@ export class GoogleCalendarService {
 
   private maybeEnableButtons() {
     if (this.gapiInited && this.gisInited) {
-      console.log('Google APIs loaded and ready')
     }
   }
 
@@ -207,8 +201,6 @@ export class GoogleCalendarService {
   }
 
   async authorize(immediate = false): Promise<boolean> {
-    console.log('authorize called with immediate:', immediate)
-    console.log('API states - GAPI:', this.gapiInited, 'GIS:', this.gisInited)
     
     if (!this.gapiInited || !this.gisInited) {
       console.error('Google APIs not loaded - GAPI:', this.gapiInited, 'GIS:', this.gisInited)
@@ -217,27 +209,21 @@ export class GoogleCalendarService {
 
     // Check for existing token
     const existingToken = await this.getStoredAccessToken()
-    console.log('Existing token:', existingToken ? 'found' : 'not found')
     
     if (existingToken) {
       window.gapi.client.setToken({ access_token: existingToken })
       try {
         // Test if token is still valid
-        console.log('Testing existing token validity...')
         await window.gapi.client.calendar.calendarList.list({ maxResults: 1 })
-        console.log('Existing token is valid')
         return true
       } catch (error) {
-        console.log('Stored token invalid, error:', error)
       }
     }
 
     if (immediate) {
-      console.log('Immediate mode - returning false as no valid token')
       return false
     }
 
-    console.log('Requesting new access token...')
     return new Promise(resolve => {
       this.tokenClient.callback = async (resp: any) => {
         if (resp.error) {
@@ -246,7 +232,6 @@ export class GoogleCalendarService {
           return
         }
 
-        console.log('Received new access token')
         // Store the new token
         await this.storeAccessToken(resp.access_token)
         resolve(true)
@@ -388,9 +373,6 @@ export class GoogleCalendarService {
 
   // Manual initialization method for debugging
   async initializeManually() {
-    console.log('Manual initialization started')
-    console.log('Current status:', this.getInitStatus())
-    console.log('Window objects:', {
       gapi: !!window.gapi,
       google: !!window.google,
       googleAccounts: !!window.google?.accounts,

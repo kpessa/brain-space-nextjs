@@ -94,9 +94,7 @@ export function createAIService(provider?: string): AIService {
   const configuredProvider = provider || storedProvider || process.env.NEXT_PUBLIC_AI_PROVIDER || 'mock'
   
   if (debugMode) {
-    console.log('🔧 AI Service Factory')
-    console.log('Provider:', configuredProvider)
-    console.log('Available:', { 
+    console.log('[AI Service] Provider selection:', {
       explicit: provider, 
       stored: storedProvider, 
       env: process.env.NEXT_PUBLIC_AI_PROVIDER 

@@ -1,19 +1,13 @@
 import { create } from 'zustand'
 import type { RoutineEntry, RoutineProgress } from '@/types/routines'
-import { db } from '@/lib/firebase'
-import {
-  collection,
-  doc,
-  getDocs,
-  getDoc,
-  setDoc,
-  updateDoc,
-  query,
-  where,
-  orderBy,
-  serverTimestamp,
-} from 'firebase/firestore'
 import { format, isToday, differenceInDays } from 'date-fns'
+
+// Helper to get Firebase dynamically
+async function getFirebase() {
+  const { db } = await import('@/lib/firebase')
+  const firestore = await import('firebase/firestore')
+  return { db, ...firestore }
+}
 
 interface RoutineStore {
   // State
@@ -48,7 +42,6 @@ interface RoutineStore {
 
   // Helpers
   getStreak: () => number
-  getMilestoneProgress: () => { current: number; next: number; nextTitle: string } | null
   updateStreak: (userId: string) => Promise<void>
 }
 
@@ -62,6 +55,7 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
   initializeProgress: async (userId: string) => {
     set({ isLoading: true, error: null })
     try {
+      const { db, doc, getDoc, setDoc } = await getFirebase()
       const progressDoc = await getDoc(doc(db, 'users', userId, 'routineProgress', 'current'))
       
       if (progressDoc.exists()) {
@@ -73,6 +67,7 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
           userId,
           currentDay: 0,
           totalDaysCompleted: 0,
+          startedAt: null,
           isActive: true,
           morningRoutinesCompleted: 0,
           eveningRoutinesCompleted: 0,
@@ -84,6 +79,7 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
         set({ progress: newProgress })
       }
     } catch (error) {
+      console.error('Error initializing progress:', error)
       set({ error: (error as Error).message })
     } finally {
       set({ isLoading: false })
@@ -93,6 +89,7 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
   loadEntries: async (userId: string) => {
     set({ isLoading: true, error: null })
     try {
+      const { db, collection, query, orderBy, getDocs } = await getFirebase()
       const entriesQuery = query(
         collection(db, 'users', userId, 'routineEntries'),
         orderBy('dayNumber', 'desc')
@@ -116,6 +113,7 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
       const todayEntry = entries.find(entry => isToday(new Date(entry.date)))
       set({ currentEntry: todayEntry || null })
     } catch (error) {
+      console.error('Error loading entries:', error)
       set({ error: (error as Error).message })
     } finally {
       set({ isLoading: false })
@@ -131,6 +129,8 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
     const existingEntry = entries.find(e => e.id === data.id)
     
     try {
+      const { db, doc, updateDoc, setDoc, serverTimestamp } = await getFirebase()
+      
       if (existingEntry) {
         // Update existing entry
         await updateDoc(doc(db, 'users', data.userId!, 'routineEntries', data.id!), {
@@ -148,10 +148,11 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
         const newEntry: RoutineEntry = {
           id,
           userId: data.userId!,
-          dayNumber: data.dayNumber!,
+          dayNumber: data.dayNumber || 0,
           date: data.date || format(new Date(), 'yyyy-MM-dd'),
-          eveningCompleted: false,
+          isComplete: false,
           morningCompleted: false,
+          eveningCompleted: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           ...data,
@@ -175,33 +176,23 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
   },
 
   completeEvening: async (userId: string, data) => {
-    const { progress, currentEntry } = get()
-    if (!progress) return
+    const { currentEntry, progress } = get()
+    if (!currentEntry || !progress) throw new Error('No current entry or progress')
 
     try {
-      const today = format(new Date(), 'yyyy-MM-dd')
-      let entry = currentEntry
-
-      if (!entry || entry.date !== today) {
-        // Create new entry for today
-        const dayNumber = progress.currentDay + 1
-        await get().createOrUpdateEntry({
-          userId,
-          dayNumber,
-          date: today,
-          eveningCompleted: true,
-          ...data,
-        })
-      } else {
-        // Update existing entry
-        await get().createOrUpdateEntry({
-          ...entry,
-          eveningCompleted: true,
-          ...data,
-        })
-      }
-
+      // Update the current entry
+      await get().createOrUpdateEntry({
+        ...currentEntry,
+        eveningCompleted: true,
+        sleepIntention: data.sleepIntention,
+        wakeIntention: data.wakeIntention,
+        magicalMoment: data.magicalMoment,
+        morningRitualPlan: data.morningRitualPlan,
+      })
+      
       // Update progress
+      const { db, doc, updateDoc } = await getFirebase()
+      const today = format(new Date(), 'yyyy-MM-dd')
       const newProgress = {
         ...progress,
         eveningRoutinesCompleted: progress.eveningRoutinesCompleted + 1,
@@ -220,19 +211,26 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
   },
 
   completeMorning: async (userId: string, data) => {
-    const { progress, currentEntry } = get()
-    if (!progress || !currentEntry) return
+    const { currentEntry, progress } = get()
+    if (!currentEntry || !progress) throw new Error('No current entry or progress')
 
     try {
-      // Update entry
+      // Update the current entry
       await get().createOrUpdateEntry({
         ...currentEntry,
         morningCompleted: true,
-        ...data,
+        actualSleepTime: data.actualSleepTime,
+        actualWakeTime: data.actualWakeTime,
+        ritualCompleted: data.ritualCompleted,
+        mit: data.mit,
+        onePercentImprovement: data.onePercentImprovement,
+        distractionsToMinimize: data.distractionsToMinimize,
+        isComplete: true, // Mark day as complete
       })
-
+      
       // Update progress
-      const bothCompleted = currentEntry.eveningCompleted && true
+      const { db, doc, updateDoc } = await getFirebase()
+      const bothCompleted = currentEntry.eveningCompleted
       const newProgress = {
         ...progress,
         morningRoutinesCompleted: progress.morningRoutinesCompleted + 1,
@@ -253,9 +251,10 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
 
   advanceDay: async (userId: string) => {
     const { progress } = get()
-    if (!progress || progress.currentDay >= 66) return
+    if (!progress) return
 
     try {
+      const { db, doc, updateDoc } = await getFirebase()
       const newProgress = {
         ...progress,
         currentDay: progress.currentDay + 1,
@@ -275,6 +274,7 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
     if (!progress) return
 
     try {
+      const { db, doc, updateDoc } = await getFirebase()
       const newProgress = {
         ...progress,
         isActive: false,
@@ -293,6 +293,7 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
     if (!progress) return
 
     try {
+      const { db, doc, updateDoc } = await getFirebase()
       const newProgress = {
         ...progress,
         isActive: true,
@@ -311,17 +312,27 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
     if (entries.length === 0) return 0
 
     let streak = 0
+    const sortedEntries = [...entries]
+      .filter(e => e.isComplete)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+    if (sortedEntries.length === 0) return 0
+
+    // Check if the most recent entry is today or yesterday
+    const mostRecent = new Date(sortedEntries[0].date)
     const today = new Date()
-    const sortedEntries = [...entries].sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    )
+    today.setHours(0, 0, 0, 0)
+    const daysDiff = differenceInDays(today, mostRecent)
 
-    for (let i = 0; i < sortedEntries.length; i++) {
-      const entry = sortedEntries[i]
-      const entryDate = new Date(entry.date)
-      const daysDiff = differenceInDays(today, entryDate)
+    if (daysDiff > 1) return 0 // Streak broken
 
-      if (daysDiff === i && (entry.morningCompleted || entry.eveningCompleted)) {
+    streak = 1
+    for (let i = 1; i < sortedEntries.length; i++) {
+      const current = new Date(sortedEntries[i - 1].date)
+      const previous = new Date(sortedEntries[i].date)
+      const diff = differenceInDays(current, previous)
+
+      if (diff === 1) {
         streak++
       } else {
         break
@@ -329,30 +340,6 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
     }
 
     return streak
-  },
-
-  getMilestoneProgress: () => {
-    const { progress } = get()
-    if (!progress) return null
-
-    const milestones = [7, 14, 21, 30, 45, 66]
-    const current = progress.currentDay
-    const next = milestones.find(m => m > current) || 66
-
-    const titles: Record<number, string> = {
-      7: 'One Week Strong',
-      14: 'Two Week Champion',
-      21: 'Habit Formation',
-      30: 'Monthly Master',
-      45: 'Persistence Pays',
-      66: 'Journey Complete',
-    }
-
-    return {
-      current,
-      next,
-      nextTitle: titles[next] || 'Journey Complete',
-    }
   },
 
   updateStreak: async (userId: string) => {
@@ -368,6 +355,7 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
       longestStreak,
     }
 
+    const { db, doc, updateDoc } = await getFirebase()
     await updateDoc(doc(db, 'users', userId, 'routineProgress', 'current'), newProgress)
     set({ progress: newProgress })
   },

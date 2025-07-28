@@ -1,21 +1,6 @@
 import { create } from 'zustand'
 import type { JournalEntry, UserProgress, Achievement } from '@/types/journal'
 import { XP_REWARDS, LEVELS, ACHIEVEMENTS_LIST } from '@/types/journal'
-import { db } from '@/lib/firebase'
-import {
-  collection,
-  doc,
-  getDocs,
-  getDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  Timestamp,
-  serverTimestamp,
-} from 'firebase/firestore'
 
 interface JournalState {
   entries: JournalEntry[]
@@ -139,6 +124,10 @@ export const useJournalStore = create<JournalState>((set, get) => ({
     
     // Sync to Firestore if user is authenticated
     if (entryData.userId !== 'demo-user') {
+      // Dynamically import Firebase
+      const { db } = await import('@/lib/firebase')
+      const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
+      
       // Save entry to Firestore
       await setDoc(doc(db, 'users', entryData.userId, 'journal', newEntry.id), {
         ...newEntry,
@@ -208,12 +197,16 @@ export const useJournalStore = create<JournalState>((set, get) => ({
       
       // Update user progress in Firestore if XP changed
       if (xpDiff !== 0 && currentEntry.userId !== 'demo-user') {
+        const { db } = await import('@/lib/firebase')
+        const { doc, setDoc } = await import('firebase/firestore')
         await setDoc(doc(db, 'users', currentEntry.userId, 'progress', 'journal'), newProgress)
       }
     }
     
     // Update entry in Firestore
     if (currentEntry.userId !== 'demo-user') {
+      const { db } = await import('@/lib/firebase')
+      const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore')
       await updateDoc(doc(db, 'users', currentEntry.userId, 'journal', id), {
         ...updates,
         updatedAt: serverTimestamp(),
@@ -241,6 +234,8 @@ export const useJournalStore = create<JournalState>((set, get) => ({
       
       // Delete from Firestore
       if (entry.userId !== 'demo-user') {
+        const { db } = await import('@/lib/firebase')
+        const { doc, deleteDoc } = await import('firebase/firestore')
         await deleteDoc(doc(db, 'users', entry.userId, 'journal', id))
       }
     } catch (error) {
@@ -434,6 +429,10 @@ export const useJournalStore = create<JournalState>((set, get) => ({
     
     set({ isLoading: true })
     try {
+      // Dynamically import Firebase
+      const { db } = await import('@/lib/firebase')
+      const { collection, query, orderBy, getDocs } = await import('firebase/firestore')
+      
       const entriesQuery = query(
         collection(db, 'users', userId, 'journal'),
         orderBy('createdAt', 'desc')
@@ -453,7 +452,7 @@ export const useJournalStore = create<JournalState>((set, get) => ({
       
       set({ entries })
     } catch (error) {
-      // Error loading entries from Firestore
+      console.error('Error loading entries from Firestore:', error)
     } finally {
       set({ isLoading: false })
     }
@@ -463,6 +462,10 @@ export const useJournalStore = create<JournalState>((set, get) => ({
     if (!userId || userId === 'demo-user') return
     
     try {
+      // Dynamically import Firebase
+      const { db } = await import('@/lib/firebase')
+      const { doc, getDoc, setDoc } = await import('firebase/firestore')
+      
       const progressDoc = await getDoc(doc(db, 'users', userId, 'progress', 'journal'))
       if (progressDoc.exists()) {
         const progress = progressDoc.data() as UserProgress
@@ -474,7 +477,7 @@ export const useJournalStore = create<JournalState>((set, get) => ({
         set({ userProgress: newProgress })
       }
     } catch (error) {
-      // Error loading user progress from Firestore
+      console.error('Error loading user progress from Firestore:', error)
     }
   },
   
@@ -485,6 +488,10 @@ export const useJournalStore = create<JournalState>((set, get) => ({
     set({ isSyncing: true })
     
     try {
+      // Dynamically import Firebase
+      const { db } = await import('@/lib/firebase')
+      const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
+      
       // Sync all entries
       const batch = entries.map(entry => 
         setDoc(doc(db, 'users', userId, 'journal', entry.id), {
@@ -500,7 +507,7 @@ export const useJournalStore = create<JournalState>((set, get) => ({
       
       await Promise.all(batch)
     } catch (error) {
-      // Error syncing to Firestore
+      console.error('Error syncing to Firestore:', error)
     } finally {
       set({ isSyncing: false })
     }

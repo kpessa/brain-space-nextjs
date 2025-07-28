@@ -60,9 +60,7 @@ export function NodeRelationshipModal({
         : `Create a parent/category node for "${sourceNode.title}". ${text}`
 
       if (shouldUseAI) {
-        console.log('Enhancing related node with AI...')
         const result = await aiService.enhanceNode(contextText)
-        console.log('AI enhancement result:', result)
         
         nodeData = {
           ...nodeData,
@@ -79,7 +77,6 @@ export function NodeRelationshipModal({
         }
       }
 
-      console.log(`Creating ${relationshipType} node with data:`, nodeData)
       
       let nodeId: string | null = null
       if (relationshipType === 'child') {
@@ -88,7 +85,6 @@ export function NodeRelationshipModal({
         nodeId = await createParentNode(sourceNode.id, nodeData)
       }
       
-      console.log('Created related node ID:', nodeId)
       
       if (nodeId) {
         setText('')

@@ -1,17 +1,5 @@
 import { create } from 'zustand'
 import type { Node, Edge } from '@xyflow/react'
-import { db } from '@/lib/firebase'
-import {
-  collection,
-  doc,
-  getDocs,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  orderBy,
-  serverTimestamp,
-} from 'firebase/firestore'
 
 export interface BrainDumpNode extends Node {
   data: {
@@ -27,6 +15,13 @@ export interface BrainDumpNode extends Node {
     keywords?: string[]
     isCollapsed?: boolean
     nodeType?: string
+    // Source text mapping
+    sourceText?: string      // Original text snippet
+    textPosition?: {         // Position in source
+      line: number
+      start: number
+      end: number
+    }
   }
 }
 
@@ -89,6 +84,10 @@ export const useBrainDumpStore = create<BrainDumpState>((set, get) => ({
 
     set({ isLoading: true, error: null })
     try {
+      // Dynamically import Firebase
+      const { db } = await import('@/lib/firebase')
+      const { collection, query, orderBy, getDocs } = await import('firebase/firestore')
+      
       const entriesQuery = query(
         collection(db, 'users', userId, 'braindumps'),
         orderBy('createdAt', 'desc')
@@ -132,6 +131,10 @@ export const useBrainDumpStore = create<BrainDumpState>((set, get) => ({
     }
     
     try {
+      // Dynamically import Firebase
+      const { db } = await import('@/lib/firebase')
+      const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
+      
       // Save to Firestore
       await setDoc(doc(db, 'users', userId, 'braindumps', newEntry.id), {
         ...newEntry,
@@ -161,6 +164,10 @@ export const useBrainDumpStore = create<BrainDumpState>((set, get) => ({
     }
 
     try {
+      // Dynamically import Firebase
+      const { db } = await import('@/lib/firebase')
+      const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore')
+      
       // Update in Firestore
       await updateDoc(doc(db, 'users', entry.userId, 'braindumps', id), {
         ...updates,
@@ -193,6 +200,10 @@ export const useBrainDumpStore = create<BrainDumpState>((set, get) => ({
     }
 
     try {
+      // Dynamically import Firebase
+      const { db } = await import('@/lib/firebase')
+      const { doc, deleteDoc } = await import('firebase/firestore')
+      
       // Delete from Firestore
       await deleteDoc(doc(db, 'users', entry.userId, 'braindumps', id))
 

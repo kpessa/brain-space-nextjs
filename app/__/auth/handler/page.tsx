@@ -15,14 +15,12 @@ export default function FirebaseAuthHandler() {
     let handled = false
 
     const handleAuthCompletion = async () => {
-      console.log('[Auth Handler] Starting auth completion process', {
         timestamp: new Date().toISOString(),
       })
 
       try {
         // First, check for redirect result
         const result = await getRedirectResult(auth)
-        console.log('[Auth Handler] Redirect result:', {
           hasResult: !!result,
           hasUser: !!result?.user,
           timestamp: new Date().toISOString(),
@@ -32,7 +30,6 @@ export default function FirebaseAuthHandler() {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
           if (handled) return
           
-          console.log('[Auth Handler] Auth state changed:', {
             hasUser: !!user,
             userEmail: user?.email,
             timestamp: new Date().toISOString(),
@@ -45,7 +42,6 @@ export default function FirebaseAuthHandler() {
             try {
               // Get fresh ID token
               const idToken = await user.getIdToken(true)
-              console.log('[Auth Handler] Got ID token, setting cookie...')
               
               // Set auth cookie via API
               const response = await fetch('/api/auth/session', {
@@ -54,7 +50,6 @@ export default function FirebaseAuthHandler() {
                 body: JSON.stringify({ token: idToken }),
               })
               
-              console.log('[Auth Handler] Cookie response:', {
                 ok: response.ok,
                 status: response.status,
                 timestamp: new Date().toISOString(),
@@ -65,7 +60,6 @@ export default function FirebaseAuthHandler() {
                 
                 // Get redirect URL from params or default to journal
                 const redirect = searchParams.get('redirect') || '/journal'
-                console.log('[Auth Handler] Redirecting to:', redirect)
                 
                 // Use window.location for a full page reload to ensure middleware runs
                 window.location.href = redirect
@@ -81,7 +75,6 @@ export default function FirebaseAuthHandler() {
           } else {
             // No user after waiting, redirect to login
             if (!handled) {
-              console.log('[Auth Handler] No user found, redirecting to login')
               setTimeout(() => {
                 if (!handled) {
                   router.push('/login')

@@ -14,7 +14,18 @@
       "Bash(git push:*)",
       "Bash(git rm:*)",
       "Bash(git filter-branch:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(ls:*)",
+      "Bash(pnpm tsc:*)",
+      "Bash(find:*)",
+      "Bash(npm run dev:*)",
+      "Bash(mv:*)",
+      "Bash(curl:*)",
+      "Bash(cat:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(pnpm add:*)",
+      "Bash(git diff:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   }

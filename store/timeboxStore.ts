@@ -1,16 +1,11 @@
 import { create } from 'zustand'
-import { db } from '@/lib/firebase'
-import {
-  collection,
-  doc,
-  getDocs,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  serverTimestamp,
-} from 'firebase/firestore'
+
+// Helper to get Firebase dynamically
+async function getFirebase() {
+  const { db } = await import('@/lib/firebase')
+  const firestore = await import('firebase/firestore')
+  return { db, ...firestore }
+}
 
 // Task attempt tracking
 export interface TaskAttempt {
@@ -244,6 +239,7 @@ export const useTimeboxStore = create<TimeboxState>((set, get) => ({
 
     set({ isLoading: true, error: null })
     try {
+      const { db, collection, query, where, getDocs } = await getFirebase()
       const timeboxDoc = await getDocs(
         query(
           collection(db, 'users', userId, 'timeboxes'),
@@ -290,6 +286,8 @@ export const useTimeboxStore = create<TimeboxState>((set, get) => ({
         }
       })
 
+      const { db, doc, collection, query, where, getDocs, setDoc, updateDoc, serverTimestamp } = await getFirebase()
+      
       const timeboxData: TimeboxData = {
         userId,
         date: selectedDate,

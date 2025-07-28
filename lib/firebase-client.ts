@@ -37,7 +37,6 @@ try {
   storage = getStorage(app)
 
   if (typeof window !== 'undefined') {
-    console.log('Firebase initialized successfully')
   }
 } catch (error) {
   console.error('Firebase initialization error:', error)

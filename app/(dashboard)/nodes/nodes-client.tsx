@@ -171,9 +171,7 @@ function NodeCreateModal({ isOpen, onClose, userId }: NodeCreateModalProps) {
       }
 
       if (shouldUseAI) {
-        console.log('Enhancing node with AI...')
         const result = await aiService.enhanceNode(text)
-        console.log('AI enhancement result:', result)
         
         // Build enhanced node data, excluding undefined values
         nodeData = {
@@ -192,9 +190,7 @@ function NodeCreateModal({ isOpen, onClose, userId }: NodeCreateModalProps) {
         }
       }
 
-      console.log('Creating node with data:', nodeData)
       const nodeId = await createNode(nodeData)
-      console.log('Created node ID:', nodeId)
       
       if (nodeId) {
         setText('')
@@ -1001,7 +997,6 @@ export default function NodesClient({ userId }: { userId: string }) {
             <CardContent className="p-0">
               <NodeGraphView
                 nodes={filteredNodes}
-                onNodeClick={(node) => console.log('Node clicked:', node)}
                 onCreateChild={handleCreateChild}
                 onCreateParent={handleCreateParent}
               />

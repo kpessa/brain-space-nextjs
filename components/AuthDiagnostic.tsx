@@ -9,7 +9,6 @@ export function AuthDiagnostic() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    console.log('[AuthDiagnostic] Setting up auth state listener')
     
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       console.log('[AuthDiagnostic] Auth state changed:', {
@@ -54,7 +53,6 @@ export function AuthDiagnostic() {
     })
 
     // Also log Firebase auth settings
-    console.log('[AuthDiagnostic] Firebase auth settings:', {
       authDomain: auth.config.authDomain,
       apiKey: auth.config.apiKey ? 'Present' : 'Missing',
       currentUser: auth.currentUser,
@@ -63,7 +61,6 @@ export function AuthDiagnostic() {
     })
     
     // Check Firebase config from environment
-    console.log('[AuthDiagnostic] Environment config:', {
       apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? 'Present' : 'Missing',
       authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
       projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,

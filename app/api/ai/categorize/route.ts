@@ -36,11 +36,16 @@ async function callOpenAI(text: string) {
           content: `You are an AI assistant that categorizes thoughts and tasks from a brain dump.
           Analyze the provided text and return a JSON response with:
           - categories: Array of category objects with name, thoughts, confidence, and reasoning
+          - suggestedCategories: Array of category names that might be useful for organizing these thoughts
           - relationships: Array of thought relationships (optional)
           - suggestions: Array of helpful suggestions
           
+          For suggested categories, include both:
+          - Categories you've already used
+          - Additional categories that might be helpful for future thoughts
+          
           For each thought, provide a nodeData object with:
-          - type: The node type (thought, task, question, idea, note)
+          - type: The node type (goal, project, task, option, idea, question, problem, insight, thought, concern)
           - title: A concise title (max 100 chars)
           - description: The full enhanced description
           - tags: Array of relevant tags
@@ -96,7 +101,9 @@ async function callGoogleAI(text: string) {
             - dueDate: {date: "ISO string"} if mentioned
             
             Brain dump text:
-            ${text}`
+            ${text}
+            
+            Also provide suggestedCategories: an array of category names that would be useful for organizing these and similar thoughts.`
           }]
         }],
         generationConfig: {
@@ -125,7 +132,7 @@ async function mockCategorize(text: string) {
     {
       name: 'Tasks',
       thoughts: lines
-        .filter(line => /buy|call|schedule|finish/i.test(line))
+        .filter(line => /buy|call|schedule|finish|need to|have to/i.test(line))
         .map(line => ({
           text: line,
           nodeData: {
@@ -158,11 +165,33 @@ async function mockCategorize(text: string) {
       confidence: 0.7,
       reasoning: 'Thoughts and ideas for consideration',
     },
+    {
+      name: 'Questions',
+      thoughts: lines
+        .filter(line => /\?|how|what|when|where|why/i.test(line))
+        .map(line => ({
+          text: line,
+          nodeData: {
+            type: 'question',
+            title: line.substring(0, 50),
+            description: line,
+            tags: ['question'],
+            urgency: 4,
+            importance: 5,
+          },
+        })),
+      confidence: 0.75,
+      reasoning: 'Questions that need answers or investigation',
+    },
   ]
+
+  // Add suggested categories based on what was found
+  const suggestedCategories = ['Tasks', 'Ideas', 'Questions', 'Goals', 'Problems', 'Projects', 'Personal', 'Work']
 
   return {
     categories: categories.filter(cat => cat.thoughts.length > 0),
-    suggestions: ['Consider breaking down larger tasks into smaller steps'],
+    suggestedCategories,
+    suggestions: ['Consider breaking down larger tasks into smaller steps', 'Try to identify which items are most urgent'],
   }
 }
 

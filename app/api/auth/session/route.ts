@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
  * POST /api/auth/session - Set auth cookie from client-side token
  */
 export async function POST(request: NextRequest) {
-  console.log('[Session API] POST request received', {
+  console.log('[Auth Session API] POST request:', {
     timestamp: new Date().toISOString(),
     hasAdminAuth: !!adminAuth,
   })
@@ -17,14 +17,12 @@ export async function POST(request: NextRequest) {
     const { token } = await request.json()
 
     if (!token) {
-      console.log('[Session API] No token provided')
       return NextResponse.json(
         { error: 'Token required' },
         { status: 400 }
       )
     }
 
-    console.log('[Session API] Attempting to verify token', {
       tokenLength: token.length,
       tokenStart: token.substring(0, 20) + '...',
     })
@@ -74,7 +72,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[Session API] Token verified successfully', {
       uid: user.uid,
       email: user.email,
     })
@@ -82,7 +79,6 @@ export async function POST(request: NextRequest) {
     // Set secure HTTP-only cookie
     setAuthCookie(token)
 
-    console.log('[Session API] Cookie set successfully')
 
     return NextResponse.json({
       success: true,
@@ -124,7 +120,6 @@ export async function DELETE() {
  * GET /api/auth/session - Check current session
  */
 export async function GET() {
-  console.log('[Session API] GET request received', {
     timestamp: new Date().toISOString(),
     hasAdminAuth: !!adminAuth,
   })
@@ -158,7 +153,6 @@ export async function GET() {
     const { user, error } = await verifyAuth()
 
     if (error || !user) {
-      console.log('[Session API] No valid session found:', error)
       return NextResponse.json(
         { 
           authenticated: false, 
@@ -168,7 +162,6 @@ export async function GET() {
       )
     }
 
-    console.log('[Session API] Valid session found', {
       uid: user.uid,
       email: user.email,
     })

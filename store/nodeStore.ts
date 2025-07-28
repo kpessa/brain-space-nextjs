@@ -1,20 +1,6 @@
 import { create } from 'zustand'
 import type { Node, NodeType } from '@/types/node'
 import type { RecurringCompletion, TaskType } from '@/types/recurrence'
-import { db } from '@/lib/firebase'
-import {
-  collection,
-  doc,
-  getDocs,
-  getDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  serverTimestamp,
-} from 'firebase/firestore'
 
 interface NodesStore {
   // State
@@ -67,6 +53,10 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
 
     set({ isLoading: true, error: null })
     try {
+      // Dynamically import Firebase to avoid SSR issues
+      const { db } = await import('@/lib/firebase')
+      const { collection, query, orderBy, getDocs } = await import('firebase/firestore')
+      
       const nodesQuery = query(
         collection(db, 'users', userId, 'nodes'),
         orderBy('createdAt', 'desc')
@@ -90,6 +80,7 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
         error: null,
       })
     } catch (error) {
+      console.error('Error loading nodes:', error)
       set({
         error: (error as Error).message,
         isLoading: false,
@@ -127,7 +118,9 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       if (nodeData.parent !== undefined) newNode.parent = nodeData.parent
       if (nodeData.children !== undefined) newNode.children = nodeData.children
 
-      // Saving node to Firestore
+      // Dynamically import Firebase to avoid SSR issues
+      const { db } = await import('@/lib/firebase')
+      const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
       
       // Create a clean object for Firestore (no undefined values)
       const firestoreData = Object.entries(newNode).reduce((acc, [key, value]) => {
@@ -167,6 +160,10 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
     }
 
     try {
+      // Dynamically import Firebase
+      const { db } = await import('@/lib/firebase')
+      const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore')
+      
       // Update in Firestore
       await updateDoc(doc(db, 'users', node.userId, 'nodes', nodeId), {
         ...updates,
@@ -220,6 +217,10 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
     }
 
     try {
+      // Dynamically import Firebase
+      const { db } = await import('@/lib/firebase')
+      const { doc, deleteDoc } = await import('firebase/firestore')
+      
       // Delete from Firestore
       await deleteDoc(doc(db, 'users', node.userId, 'nodes', nodeId))
 

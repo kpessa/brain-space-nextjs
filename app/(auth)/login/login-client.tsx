@@ -17,7 +17,6 @@ export default function LoginClient() {
       try {
         const result = await getRedirectResult(auth)
         if (result?.user) {
-          console.log('[Login] Redirect result found:', result.user.email)
           setIsSigningIn(true)
           
           const idToken = await result.user.getIdToken()
@@ -52,17 +51,14 @@ export default function LoginClient() {
     setIsSigningIn(true)
     setError(null)
     
-    console.log('[Login] Starting sign in process')
     
     try {
       const provider = new GoogleAuthProvider()
       
       try {
         // Always try popup first (like the working manual auth button)
-        console.log('[Login] Attempting popup sign in')
         const result = await signInWithPopup(auth, provider)
         
-        console.log('[Login] Popup sign in successful:', result.user.email)
         
         // Get the ID token
         const idToken = await result.user.getIdToken()
@@ -74,12 +70,10 @@ export default function LoginClient() {
           body: JSON.stringify({ token: idToken }),
         })
         
-        console.log('[Login] Cookie response:', response.ok ? 'success' : 'failed')
         
         if (response.ok) {
           // Redirect to intended page or journal
           const redirect = searchParams.get('redirect') || '/journal'
-          console.log('[Login] Redirecting to:', redirect)
           window.location.href = redirect
         } else {
           const data = await response.json()
@@ -91,7 +85,6 @@ export default function LoginClient() {
         if (popupError.code === 'auth/popup-blocked' || 
             popupError.code === 'auth/popup-closed-by-user' ||
             popupError.message?.includes('Cross-Origin-Opener-Policy')) {
-          console.log('[Login] Popup blocked, falling back to redirect')
           
           // Store redirect URL for after auth
           const redirect = searchParams.get('redirect') || '/journal'

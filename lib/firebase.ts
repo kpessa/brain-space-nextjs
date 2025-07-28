@@ -15,7 +15,7 @@ const firebaseConfig = {
 
 // Log config for debugging (without sensitive data)
 if (typeof window !== 'undefined') {
-  console.log('Firebase Config:', {
+  console.log('[Firebase] Initializing with config:', {
     authDomain: firebaseConfig.authDomain,
     projectId: firebaseConfig.projectId,
     hasApiKey: !!firebaseConfig.apiKey,
@@ -57,13 +57,11 @@ try {
   const useEmulators = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === 'true'
   
   if (useEmulators && typeof window !== 'undefined') {
-    console.log('Attempting to connect to Firebase emulators...')
     
     try {
       // @ts-ignore - emulator connection state
       if (!auth._canInitEmulator) {
         connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true })
-        console.log('Connected to Auth emulator')
       }
     } catch (error) {
       console.warn('Failed to connect to Auth emulator:', error)
@@ -73,7 +71,6 @@ try {
       // @ts-ignore
       if (!db._settings?.host?.includes('localhost')) {
         connectFirestoreEmulator(db, 'localhost', 8080)
-        console.log('Connected to Firestore emulator')
       }
     } catch (error) {
       console.warn('Failed to connect to Firestore emulator:', error)
@@ -83,13 +80,11 @@ try {
       // @ts-ignore
       if (!storage._protocol?.includes('localhost')) {
         connectStorageEmulator(storage, 'localhost', 9199)
-        console.log('Connected to Storage emulator')
       }
     } catch (error) {
       console.warn('Failed to connect to Storage emulator:', error)
     }
   } else if (typeof window !== 'undefined') {
-    console.log('Using production Firebase services')
   }
 } catch (error) {
   console.error('Failed to initialize Firebase:', error)
