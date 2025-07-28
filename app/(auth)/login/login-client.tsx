@@ -4,150 +4,65 @@ import { useState, useEffect } from 'react'
 import { signInWithPopup, signInWithRedirect, GoogleAuthProvider, getRedirectResult } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
 import { Brain, Sparkles } from 'lucide-react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 
 export default function LoginClient() {
   const [isSigningIn, setIsSigningIn] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const searchParams = useSearchParams()
-  const router = useRouter()
 
-  // Handle redirect result on page load
+  // Check for redirect result on mount (simplified version)
   useEffect(() => {
-    const handleRedirectResult = async () => {
+    const checkRedirectResult = async () => {
       try {
-        console.log('[Login] Checking for redirect result...')
         const result = await getRedirectResult(auth)
-        console.log('[Login] Redirect result:', {
-          hasResult: !!result,
-          hasUser: !!result?.user,
-          hasCredential: !!result?.credential,
-          operationType: result?.operationType,
-        })
-        
         if (result?.user) {
-          console.log('[Login] Redirect result found, user:', result.user.email)
+          console.log('[Login] Redirect result found:', result.user.email)
           setIsSigningIn(true)
           
-          // Get the ID token
           const idToken = await result.user.getIdToken()
-          
-          // Set auth cookie via API
           const response = await fetch('/api/auth/session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token: idToken }),
           })
           
-          console.log('[Login] Cookie response from redirect:', response.ok ? 'success' : 'failed')
-          
           if (response.ok) {
-            // Get redirect from sessionStorage or use default
             const redirect = sessionStorage.getItem('auth_redirect') || searchParams.get('redirect') || '/journal'
             sessionStorage.removeItem('auth_redirect')
-            console.log('[Login] Redirecting to:', redirect)
             window.location.href = redirect
           } else {
             const data = await response.json()
-            throw new Error(data.error || 'Failed to set session')
+            console.error('[Login] Session API error from redirect:', data)
+            setError(data.error || 'Failed to set session')
+            setIsSigningIn(false)
           }
         }
-      } catch (error) {
-        console.error('[Login] Error handling redirect result:', error)
-        setError(error instanceof Error ? error.message : 'Failed to complete sign in')
-        setIsSigningIn(false)
+      } catch (error: any) {
+        console.error('[Login] Error checking redirect result:', error)
+        // Don't set error state here as it might not be a real error
+        // (e.g., no redirect result to handle)
       }
     }
 
-    handleRedirectResult()
-  }, [searchParams])
-
-  // Also listen for auth state changes as a fallback
-  useEffect(() => {
-    console.log('[Login] Setting up auth state listener')
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      console.log('[Login] Auth state changed:', {
-        hasUser: !!user,
-        email: user?.email,
-        isSigningIn: isSigningIn,
-      })
-      
-      if (user && !isSigningIn) {
-        // User is signed in but we haven't handled it yet
-        console.log('[Login] User detected via auth state, setting cookie...')
-        setIsSigningIn(true)
-        
-        try {
-          const idToken = await user.getIdToken()
-          const response = await fetch('/api/auth/session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: idToken }),
-          })
-          
-          if (response.ok) {
-            const redirect = sessionStorage.getItem('auth_redirect') || searchParams.get('redirect') || '/journal'
-            sessionStorage.removeItem('auth_redirect')
-            console.log('[Login] Redirecting via auth state handler to:', redirect)
-            window.location.href = redirect
-          }
-        } catch (error) {
-          console.error('[Login] Error in auth state handler:', error)
-        }
-      }
-    })
-    
-    return () => unsubscribe()
-  }, [isSigningIn, searchParams])
+    checkRedirectResult()
+  }, [])
 
   const handleSignIn = async () => {
     setIsSigningIn(true)
     setError(null)
     
-    console.log('[Login] Starting sign in process', {
-      timestamp: new Date().toISOString(),
-      isProduction: process.env.NODE_ENV === 'production',
-    })
+    console.log('[Login] Starting sign in process')
     
     try {
       const provider = new GoogleAuthProvider()
       
-      // Check if we're in production and should use redirect instead of popup
-      const isProduction = process.env.NODE_ENV === 'production'
-      const shouldUseRedirect = isProduction && typeof window !== 'undefined' && 
-        (window.location.hostname.includes('vercel.app') || 
-         window.location.hostname !== 'localhost')
-
-      console.log('[Login] Auth method:', shouldUseRedirect ? 'redirect' : 'popup')
-
-      if (shouldUseRedirect) {
-        // Store redirect URL in sessionStorage for after auth
-        const redirect = searchParams.get('redirect') || '/journal'
-        sessionStorage.setItem('auth_redirect', redirect)
-        
-        // Add scopes and custom parameters
-        provider.addScope('profile')
-        provider.addScope('email')
-        
-        // Set custom parameters to ensure proper redirect
-        provider.setCustomParameters({
-          prompt: 'select_account',
-          auth_type: 'rerequest'
-        })
-        
-        // Use redirect flow in production
-        console.log('[Login] Using redirect flow for production with provider:', provider)
-        await signInWithRedirect(auth, provider)
-        // This won't return - browser will redirect
-        return
-      }
-
       try {
-        // Try popup first in development
+        // Always try popup first (like the working manual auth button)
         console.log('[Login] Attempting popup sign in')
         const result = await signInWithPopup(auth, provider)
         
-        console.log('[Login] Popup sign in successful, setting cookie')
+        console.log('[Login] Popup sign in successful:', result.user.email)
         
         // Get the ID token
         const idToken = await result.user.getIdToken()
@@ -168,10 +83,11 @@ export default function LoginClient() {
           window.location.href = redirect
         } else {
           const data = await response.json()
+          console.error('[Login] Session API error:', data)
           throw new Error(data.error || 'Failed to set session')
         }
       } catch (popupError: any) {
-        // If popup blocked or COOP error, fall back to redirect
+        // If popup blocked, fall back to redirect
         if (popupError.code === 'auth/popup-blocked' || 
             popupError.code === 'auth/popup-closed-by-user' ||
             popupError.message?.includes('Cross-Origin-Opener-Policy')) {
@@ -186,9 +102,9 @@ export default function LoginClient() {
           throw popupError
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('[Login] Sign in failed:', error)
-      setError(error instanceof Error ? error.message : 'Failed to sign in')
+      setError(error.message || 'Failed to sign in')
       setIsSigningIn(false)
     }
   }
