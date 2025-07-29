@@ -42,7 +42,7 @@ export function BottomNavigation() {
   if (shouldHide) return null
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t md:hidden">
       <div className="grid grid-cols-5 h-16 px-2">
         {navItems.map(item => {
           const Icon = item.icon
@@ -54,7 +54,7 @@ export function BottomNavigation() {
               <button
                 key={item.path}
                 onClick={item.action}
-                className="flex flex-col items-center justify-center gap-1 text-xs transition-all text-gray-500 hover:text-gray-700"
+                className="flex flex-col items-center justify-center gap-1 text-xs transition-all text-muted-foreground hover:text-foreground"
               >
                 <div className="p-1 rounded-lg transition-all">
                   <Icon className="w-5 h-5" />
@@ -71,14 +71,14 @@ export function BottomNavigation() {
               className={cn(
                 'flex flex-col items-center justify-center gap-1 text-xs transition-all',
                 isActive 
-                  ? 'text-brain-600' 
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'text-primary' 
+                  : 'text-muted-foreground hover:text-foreground'
               )}
             >
               <div
                 className={cn(
                   'p-1 rounded-lg transition-all',
-                  isActive && 'bg-brain-100'
+                  isActive && 'bg-primary/10'
                 )}
               >
                 <Icon className="w-5 h-5" />

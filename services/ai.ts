@@ -9,6 +9,7 @@ export interface EnhanceNodeResult {
     urgency?: number
     importance?: number
     dueDate?: { date: string }
+    isPersonal?: boolean
   }
 }
 
@@ -32,7 +33,7 @@ class AIService {
     this.provider = provider
   }
 
-  async enhanceNode(text: string): Promise<EnhanceNodeResult> {
+  async enhanceNode(text: string, mode?: string, existingTags?: string[]): Promise<EnhanceNodeResult> {
     // Ensure 'google' is sent as provider for Gemini
     const provider = this.provider === 'gemini' ? 'google' : this.provider
     
@@ -43,7 +44,7 @@ class AIService {
         // Add auth token if available
         ...(this.getAuthHeaders()),
       },
-      body: JSON.stringify({ text, provider }),
+      body: JSON.stringify({ text, provider, mode, existingTags }),
     })
 
     if (!response.ok) {

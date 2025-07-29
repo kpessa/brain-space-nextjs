@@ -54,23 +54,23 @@ export function FirebaseLogin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex justify-center">
-            <Brain className="h-12 w-12 text-brain-600" />
+            <Brain className="h-12 w-12 text-primary" />
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
+          <h2 className="mt-6 text-3xl font-bold text-foreground">
             Welcome to Brain Space
           </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-sm text-muted-foreground">
             {isSignUp ? 'Create your account' : 'Sign in to your account'}
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-md text-sm">
+            <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md text-sm">
               {error}
             </div>
           )}
@@ -79,7 +79,7 @@ export function FirebaseLogin() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-foreground"
               >
                 Email address
               </label>
@@ -91,14 +91,14 @@ export function FirebaseLogin() {
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-brain-500 focus:border-brain-500"
+                className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-foreground"
               >
                 Password
               </label>
@@ -110,7 +110,7 @@ export function FirebaseLogin() {
                 required
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-brain-500 focus:border-brain-500"
+                className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
           </div>
@@ -120,7 +120,7 @@ export function FirebaseLogin() {
               type="submit"
               disabled={loading}
               className={cn(
-                'w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brain-600 hover:bg-brain-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brain-500',
+                'w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
                 loading && 'opacity-50 cursor-not-allowed'
               )}
             >
@@ -141,10 +141,10 @@ export function FirebaseLogin() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+              <div className="w-full border-t"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-50 dark:bg-gray-900 text-gray-500">
+              <span className="px-2 bg-background text-muted-foreground">
                 Or continue with
               </span>
             </div>
@@ -156,7 +156,7 @@ export function FirebaseLogin() {
               onClick={handleGoogleSignIn}
               disabled={loading}
               className={cn(
-                'w-full flex justify-center items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brain-500',
+                'w-full flex justify-center items-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium text-foreground bg-card hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
                 loading && 'opacity-50 cursor-not-allowed'
               )}
             >
@@ -186,7 +186,7 @@ export function FirebaseLogin() {
             <button
               type="button"
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-brain-600 dark:text-brain-400 hover:text-brain-500"
+              className="text-sm text-primary hover:text-primary/80"
             >
               {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>

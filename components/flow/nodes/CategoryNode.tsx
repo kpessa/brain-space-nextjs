@@ -16,12 +16,12 @@ const categoryIcons: Record<string, string> = {
 }
 
 const categoryColors: Record<string, string> = {
-  ideas: 'from-blue-400 to-blue-600',
-  tasks: 'from-green-400 to-green-600',
-  questions: 'from-amber-400 to-amber-600',
-  insights: 'from-purple-400 to-purple-600',
-  problems: 'from-red-400 to-red-600',
-  misc: 'from-gray-400 to-gray-600',
+  ideas: 'from-info to-info/80',
+  tasks: 'from-success to-success/80',
+  questions: 'from-warning to-warning/80',
+  insights: 'from-primary to-primary/80',
+  problems: 'from-destructive to-destructive/80',
+  misc: 'from-muted-foreground to-muted-foreground/80',
 }
 
 interface CategoryNodeProps {
@@ -142,7 +142,7 @@ export function CategoryNode({ id, data, selected }: CategoryNodeProps) {
         }}
       />
       <div
-        className={`px-4 py-2 shadow-lg rounded-lg ${!useCustomStyle ? `bg-gradient-to-br ${colorClass} text-white` : ''} border-2 ${!useCustomStyle ? 'border-white/20' : ''} cursor-pointer select-none group/node relative`}
+        className={`px-4 py-2 shadow-lg rounded-lg ${!useCustomStyle ? `bg-gradient-to-br ${colorClass}` : ''} border-2 ${!useCustomStyle ? 'border-background/20' : ''} cursor-pointer select-none group/node relative`}
         style={customStyle}
         title={
           data.hasTopicBrainDump ? 'Double-click to open topic brain dump' : 'Double-click to edit'
@@ -154,52 +154,52 @@ export function CategoryNode({ id, data, selected }: CategoryNodeProps) {
           type="target"
           position={Position.Top}
           id="top"
-          className="w-3 h-3 !bg-blue-400 opacity-60 group-hover/node:opacity-100 hover:!opacity-100 transition-opacity border-2 border-white"
+          className="w-3 h-3 !bg-primary opacity-60 group-hover/node:opacity-100 hover:!opacity-100 transition-opacity border-2 border-background"
         />
         <Handle
           type="source"
           position={Position.Top}
           id="top-source"
-          className="w-3 h-3 !bg-blue-400 opacity-0"
+          className="w-3 h-3 !bg-primary opacity-0"
           style={{ left: '50%', transform: 'translateX(-50%)' }}
         />
         <Handle
           type="target"
           position={Position.Right}
           id="right"
-          className="w-3 h-3 !bg-blue-400 opacity-60 group-hover/node:opacity-100 hover:!opacity-100 transition-opacity border-2 border-white"
+          className="w-3 h-3 !bg-primary opacity-60 group-hover/node:opacity-100 hover:!opacity-100 transition-opacity border-2 border-background"
         />
         <Handle
           type="source"
           position={Position.Right}
           id="right-source"
-          className="w-3 h-3 !bg-blue-400 opacity-0"
+          className="w-3 h-3 !bg-primary opacity-0"
           style={{ top: '50%', transform: 'translateY(-50%)' }}
         />
         <Handle
           type="target"
           position={Position.Bottom}
           id="bottom"
-          className="w-3 h-3 !bg-blue-400 opacity-60 group-hover/node:opacity-100 hover:!opacity-100 transition-opacity border-2 border-white"
+          className="w-3 h-3 !bg-primary opacity-60 group-hover/node:opacity-100 hover:!opacity-100 transition-opacity border-2 border-background"
         />
         <Handle
           type="source"
           position={Position.Bottom}
           id="bottom-source"
-          className="w-3 h-3 !bg-blue-400 opacity-0"
+          className="w-3 h-3 !bg-primary opacity-0"
           style={{ left: '50%', transform: 'translateX(-50%)' }}
         />
         <Handle
           type="target"
           position={Position.Left}
           id="left"
-          className="w-3 h-3 !bg-blue-400 opacity-60 group-hover/node:opacity-100 hover:!opacity-100 transition-opacity border-2 border-white"
+          className="w-3 h-3 !bg-primary opacity-60 group-hover/node:opacity-100 hover:!opacity-100 transition-opacity border-2 border-background"
         />
         <Handle
           type="source"
           position={Position.Left}
           id="left-source"
-          className="w-3 h-3 !bg-blue-400 opacity-0"
+          className="w-3 h-3 !bg-primary opacity-0"
           style={{ top: '50%', transform: 'translateY(-50%)' }}
         />
 
@@ -209,7 +209,7 @@ export function CategoryNode({ id, data, selected }: CategoryNodeProps) {
             className="absolute -top-2 -left-2 bg-brain-600 rounded-full p-1 shadow-sm z-10"
             title="Has topic brain dump - double click to open"
           >
-            <Target className="w-3 h-3 text-white" />
+            <Target className="w-3 h-3 text-primary-foreground" />
           </div>
         )}
 
@@ -246,7 +246,7 @@ export function CategoryNode({ id, data, selected }: CategoryNodeProps) {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleToggle}
-                className="hover:bg-white/20 rounded p-0.5 transition-all duration-200"
+                className="hover:bg-background/20 rounded p-0.5 transition-all duration-200"
               >
                 {isCollapsed ? (
                   <ChevronRight className="w-4 h-4 transition-transform duration-200" />
@@ -257,7 +257,7 @@ export function CategoryNode({ id, data, selected }: CategoryNodeProps) {
               <span className="text-lg">{data.style?.icon || icon}</span>
               <div className="font-semibold">{data.label}</div>
               {data.children && (
-                <span className="text-xs bg-white/20 px-1.5 py-0.5 rounded-full">
+                <span className="text-xs bg-background/20 px-1.5 py-0.5 rounded-full">
                   {data.children.length}
                 </span>
               )}
@@ -272,25 +272,25 @@ export function CategoryNode({ id, data, selected }: CategoryNodeProps) {
           {!data.hasTopicBrainDump && (
             <button
               onClick={handleAddChild}
-              className="p-1 bg-white border border-gray-300 rounded shadow-sm hover:bg-green-100 hover:border-green-300 transition-colors"
+              className="p-1 bg-card border rounded shadow-sm hover:bg-success/10 hover:border-success/30 transition-colors"
               title="Add child node"
             >
-              <Plus className="w-3 h-3 text-green-600" />
+              <Plus className="w-3 h-3 text-success" />
             </button>
           )}
           <button
             onClick={() => setIsEditing(true)}
-            className="p-1 bg-white border border-gray-300 rounded shadow-sm hover:bg-gray-100 transition-colors"
+            className="p-1 bg-card border rounded shadow-sm hover:bg-accent transition-colors"
             title="Edit category name"
           >
-            <Edit2 className="w-3 h-3 text-gray-600" />
+            <Edit2 className="w-3 h-3 text-muted-foreground" />
           </button>
           <button
             onClick={handleDelete}
-            className="p-1 bg-white border border-gray-300 rounded shadow-sm hover:bg-red-100 hover:border-red-300 transition-colors"
+            className="p-1 bg-card border rounded shadow-sm hover:bg-destructive/10 hover:border-destructive/30 transition-colors"
             title="Delete category"
           >
-            <Trash2 className="w-3 h-3 text-red-600" />
+            <Trash2 className="w-3 h-3 text-destructive" />
           </button>
         </div>
       )}

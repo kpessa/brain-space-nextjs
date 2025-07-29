@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { ToastProvider } from '@/components/ToastProvider'
+import { AppWrapper } from '@/components/AppWrapper'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -30,8 +32,11 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body className="bg-gray-50 dark:bg-gray-900">
-        {children}
+      <body>
+        <AppWrapper>
+          {children}
+          <ToastProvider />
+        </AppWrapper>
       </body>
     </html>
   )

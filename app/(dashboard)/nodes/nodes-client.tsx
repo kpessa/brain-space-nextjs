@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { useNodesStore } from '@/store/nodeStore'
 import { createAIService } from '@/services/ai'
@@ -14,18 +13,19 @@ import { NodeRelationshipModal } from '@/components/nodes/NodeRelationshipModal'
 import { NodeHierarchyView } from '@/components/nodes/NodeHierarchyView'
 import { NodeBreadcrumb } from '@/components/nodes/NodeBreadcrumb'
 import { NodeGraphView } from '@/components/nodes/NodeGraphView'
+import { NodeUpdateModal } from '@/components/nodes/NodeUpdateModal'
+import { NodeDetailModal } from '@/components/nodes/NodeDetailModal'
+import { UpdateExportModal } from '@/components/nodes/UpdateExportModal'
+import { BulkTagModal } from '@/components/nodes/BulkTagModal'
+import { useUserPreferencesStore, shouldShowNode } from '@/store/userPreferencesStore'
+import { ModeToggle } from '@/components/ModeToggle'
 import { 
   Network, 
   Plus, 
   Search, 
-  Filter, 
   Zap, 
   MoreHorizontal,
   Tag,
-  Calendar,
-  Star,
-  Brain,
-  ArrowRight,
   CheckCircle,
   Circle,
   Clock,
@@ -34,15 +34,15 @@ import {
   Upload,
   GitBranch,
   GitMerge,
-  ChevronRight,
-  Link,
   Grid3x3,
   TreePine,
   Share2,
   CheckSquare,
   Square,
   LinkIcon,
-  Trash2
+  Trash2,
+  MessageSquare,
+  FileText
 } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -79,7 +79,7 @@ function BulkLinkModal({ isOpen, onClose, selectedNodes, nodes }: BulkLinkModalP
       }
       onClose()
     } catch (error) {
-      console.error('Failed to link nodes:', error)
+      // Failed to link nodes
     } finally {
       setLoading(false)
     }
@@ -149,7 +149,8 @@ function NodeCreateModal({ isOpen, onClose, userId }: NodeCreateModalProps) {
   const [shouldUseAI, setShouldUseAI] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { createNode, loadNodes } = useNodesStore()
+  const { createNode, loadNodes, nodes } = useNodesStore()
+  const { currentMode, addFrequentTag } = useUserPreferencesStore()
   const aiService = createAIService()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -171,7 +172,12 @@ function NodeCreateModal({ isOpen, onClose, userId }: NodeCreateModalProps) {
       }
 
       if (shouldUseAI) {
-        const result = await aiService.enhanceNode(text)
+        // Get all existing tags from nodes
+        const existingTags = Array.from(new Set(
+          nodes.flatMap(node => node.tags || [])
+        ))
+        
+        const result = await aiService.enhanceNode(text, currentMode, existingTags)
         
         // Build enhanced node data, excluding undefined values
         nodeData = {
@@ -182,12 +188,21 @@ function NodeCreateModal({ isOpen, onClose, userId }: NodeCreateModalProps) {
           tags: result.nodeData.tags || ['misc'],
           urgency: result.nodeData.urgency || 5,
           importance: result.nodeData.importance || 5,
+          isPersonal: result.nodeData.isPersonal !== undefined 
+            ? result.nodeData.isPersonal 
+            : currentMode === 'personal',
         }
+        
+        // Track used tags
+        result.nodeData.tags?.forEach(tag => addFrequentTag(tag))
         
         // Only add dueDate if it exists
         if (result.nodeData.dueDate && result.nodeData.dueDate.date) {
           nodeData.dueDate = { type: 'exact', date: result.nodeData.dueDate.date }
         }
+      } else {
+        // When not using AI, set isPersonal based on current mode
+        nodeData.isPersonal = currentMode === 'personal'
       }
 
       const nodeId = await createNode(nodeData)
@@ -201,7 +216,7 @@ function NodeCreateModal({ isOpen, onClose, userId }: NodeCreateModalProps) {
         throw new Error('Failed to create node - no ID returned')
       }
     } catch (error) {
-      console.error('Failed to create node:', error)
+      // Failed to create node
       setError(error instanceof Error ? error.message : 'Failed to create node')
     } finally {
       setLoading(false)
@@ -213,7 +228,7 @@ function NodeCreateModal({ isOpen, onClose, userId }: NodeCreateModalProps) {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            What's on your mind?
+            What&apos;s on your mind?
           </label>
           <textarea
             value={text}
@@ -277,16 +292,20 @@ function NodeCreateModal({ isOpen, onClose, userId }: NodeCreateModalProps) {
 
 interface NodeCardProps {
   node: Node
-  onCreateChild?: (parentNode: Node) => void
-  onCreateParent?: (childNode: Node) => void
+  onCreateChild?: (node: Node) => void
+  onCreateParent?: (node: Node) => void
+  onNodeClick?: (node: Node) => void
   isSelected?: boolean
   onSelect?: (nodeId: string, selected: boolean) => void
   selectMode?: boolean
+  userId: string
+  userName?: string
 }
 
-function NodeCard({ node, onCreateChild, onCreateParent, isSelected = false, onSelect, selectMode = false }: NodeCardProps) {
+function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected = false, onSelect, selectMode = false, userId, userName }: NodeCardProps) {
   const { updateNode, deleteNode, getNodeChildren, getNodeParent } = useNodesStore()
   const [showDetails, setShowDetails] = useState(false)
+  const [showUpdateModal, setShowUpdateModal] = useState(false)
   
   const parent = getNodeParent(node.id)
   const children = getNodeChildren(node.id)
@@ -307,14 +326,17 @@ function NodeCard({ node, onCreateChild, onCreateParent, isSelected = false, onS
   }
 
   return (
-    <Card className={`hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-brain-500' : ''}`}>
-      <CardContent className="p-4">
+    <Card className={`hover:shadow-md transition-shadow cursor-pointer ${isSelected ? 'ring-2 ring-brain-500' : ''}`}>
+      <CardContent className="p-4" onClick={() => !selectMode && onNodeClick?.(node)}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               {selectMode ? (
                 <button
-                  onClick={() => onSelect?.(node.id, !isSelected)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onSelect?.(node.id, !isSelected)
+                  }}
                   className="flex-shrink-0"
                 >
                   {isSelected ? (
@@ -325,7 +347,10 @@ function NodeCard({ node, onCreateChild, onCreateParent, isSelected = false, onS
                 </button>
               ) : (
                 <button
-                  onClick={handleCompletionToggle}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleCompletionToggle()
+                  }}
                   className="flex-shrink-0"
                 >
                   {node.completed ? (
@@ -354,7 +379,7 @@ function NodeCard({ node, onCreateChild, onCreateParent, isSelected = false, onS
             <span className={`px-2 py-1 text-xs font-medium rounded-full ${getQuadrantColor(node.urgency, node.importance)}`}>
               {getEisenhowerQuadrant(node.urgency, node.importance).replace('-', ' ')}
             </span>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
               <MoreHorizontal className="w-4 h-4" />
             </Button>
           </div>
@@ -470,17 +495,42 @@ function NodeCard({ node, onCreateChild, onCreateParent, isSelected = false, onS
           <Button
             size="sm"
             variant="outline"
-            onClick={() => setShowDetails(!showDetails)}
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowDetails(!showDetails)
+            }}
             className="text-xs"
           >
             {showDetails ? 'Less' : 'More'} Details
+          </Button>
+          
+          {/* Updates button */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowUpdateModal(true)
+            }}
+            className="text-xs flex items-center gap-1 relative"
+          >
+            <MessageSquare className="w-3 h-3" />
+            Updates
+            {node.updates && node.updates.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                {node.updates.length}
+              </span>
+            )}
           </Button>
           
           {/* Relationship buttons */}
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onCreateChild?.(node)}
+            onClick={(e) => {
+              e.stopPropagation()
+              onCreateChild?.(node)
+            }}
             className="text-xs flex items-center gap-1"
           >
             <GitBranch className="w-3 h-3" />
@@ -490,18 +540,49 @@ function NodeCard({ node, onCreateChild, onCreateParent, isSelected = false, onS
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onCreateParent?.(node)}
+            onClick={(e) => {
+              e.stopPropagation()
+              onCreateParent?.(node)
+            }}
             className="text-xs flex items-center gap-1"
           >
             <GitMerge className="w-3 h-3" />
             Add Parent
           </Button>
           
-          <Button size="sm" variant="danger" onClick={() => deleteNode(node.id)} className="text-xs">
+          <Button 
+            size="sm" 
+            variant="danger" 
+            onClick={(e) => {
+              e.stopPropagation()
+              const hasRelationships = parent || children.length > 0
+              if (hasRelationships) {
+                const message = `This node has relationships:\n${parent ? '- 1 parent node\n' : ''}${children.length > 0 ? `- ${children.length} child node(s)\n` : ''}\nDeleting will unlink all relationships. Continue?`
+                if (window.confirm(message)) {
+                  deleteNode(node.id)
+                }
+              } else {
+                if (window.confirm('Are you sure you want to delete this node?')) {
+                  deleteNode(node.id)
+                }
+              }
+            }} 
+            className="text-xs"
+          >
             Delete
           </Button>
         </div>
       </CardContent>
+      
+      {showUpdateModal && (
+        <NodeUpdateModal
+          isOpen={showUpdateModal}
+          onClose={() => setShowUpdateModal(false)}
+          node={node}
+          userId={userId}
+          userName={userName}
+        />
+      )}
     </Card>
   )
 }
@@ -520,8 +601,15 @@ export default function NodesClient({ userId }: { userId: string }) {
     type: 'child' | 'parent'
   }>({ isOpen: false, sourceNode: null, type: 'child' })
   const [bulkLinkModalOpen, setBulkLinkModalOpen] = useState(false)
+  const [bulkTagModalOpen, setBulkTagModalOpen] = useState(false)
+  const [nodeDetailModal, setNodeDetailModal] = useState<{
+    isOpen: boolean
+    node: Node | null
+  }>({ isOpen: false, node: null })
+  const [showExportModal, setShowExportModal] = useState(false)
   
-  const { nodes, isLoading, error, loadNodes, getNodesByType, getNodesByTag, deleteNode } = useNodesStore()
+  const { nodes, isLoading, loadNodes, deleteNode } = useNodesStore()
+  const { currentMode, hidePersonalInWorkMode, hideWorkInPersonalMode } = useUserPreferencesStore()
 
   useEffect(() => {
     loadNodes(userId)
@@ -529,6 +617,11 @@ export default function NodesClient({ userId }: { userId: string }) {
 
   // Filter nodes based on search and filters
   const filteredNodes = nodes.filter(node => {
+    // First check if node should be shown based on mode
+    if (!shouldShowNode(node.tags, node.isPersonal, currentMode, hidePersonalInWorkMode, hideWorkInPersonalMode)) {
+      return false
+    }
+    
     const matchesSearch = !searchQuery || 
       node.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       node.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -621,6 +714,15 @@ export default function NodesClient({ userId }: { userId: string }) {
     setBulkLinkModalOpen(true)
   }
 
+  const handleBulkTagOperations = () => {
+    if (selectedNodes.size === 0) {
+      alert('Please select at least one node to modify tags')
+      return
+    }
+    
+    setBulkTagModalOpen(true)
+  }
+
   // Export nodes to JSON
   const exportNodes = () => {
     const dataStr = JSON.stringify(nodes, null, 2)
@@ -633,6 +735,15 @@ export default function NodesClient({ userId }: { userId: string }) {
     linkElement.click()
   }
 
+  // Handle node click in tree view
+  const handleNodeClick = (node: Node) => {
+    setNodeDetailModal({ isOpen: true, node })
+  }
+  
+  const closeNodeDetailModal = () => {
+    setNodeDetailModal({ isOpen: false, node: null })
+  }
+  
   // Import nodes from JSON
   const importNodes = async (event: React.ChangeEvent<HTMLInputElement>) => {
     
@@ -645,7 +756,7 @@ export default function NodesClient({ userId }: { userId: string }) {
       
       // Import each node
       for (const node of importedNodes) {
-        const { id, userId, ...nodeData } = node
+        const { id: _, userId: __, ...nodeData } = node
         await useNodesStore.getState().createNode({
           ...nodeData,
           userId: userId,
@@ -655,7 +766,7 @@ export default function NodesClient({ userId }: { userId: string }) {
       await loadNodes(userId)
       alert(`Successfully imported ${importedNodes.length} nodes`)
     } catch (error) {
-      console.error('Failed to import nodes:', error)
+      // Failed to import nodes
       alert('Failed to import nodes. Please check the file format.')
     }
     
@@ -680,10 +791,10 @@ export default function NodesClient({ userId }: { userId: string }) {
           <header className="mb-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Network className="w-12 h-12 text-white" />
+                <Network className="w-12 h-12 text-primary-foreground" />
                 <div>
-                  <h1 className="text-4xl font-bold text-white">My Nodes</h1>
-                  <p className="text-white/80 text-lg">
+                  <h1 className="text-4xl font-bold text-primary-foreground">My Nodes</h1>
+                  <p className="text-primary-foreground/80 text-lg">
                     Organize your thoughts, tasks, and ideas
                   </p>
                 </div>
@@ -695,8 +806,8 @@ export default function NodesClient({ userId }: { userId: string }) {
                   onClick={toggleSelectMode}
                   className={`flex items-center gap-2 ${
                     selectMode 
-                      ? 'bg-brain-600 text-white hover:bg-brain-700 border-brain-600' 
-                      : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
+                      ? 'bg-primary text-primary-foreground hover:bg-primary/90 border-primary' 
+                      : 'bg-background/10 border-background/20 text-primary-foreground hover:bg-background/20'
                   }`}
                 >
                   <CheckSquare className="w-4 h-4" />
@@ -706,7 +817,7 @@ export default function NodesClient({ userId }: { userId: string }) {
                 {/* Import */}
                 <label className="cursor-pointer">
                   <input type="file" accept=".json" onChange={importNodes} className="hidden" />
-                  <Button variant="outline" className="flex items-center gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20">
+                  <Button variant="outline" className="flex items-center gap-2 bg-background/10 border-background/20 text-primary-foreground hover:bg-background/20">
                     <Upload className="w-4 h-4" />
                     Import
                   </Button>
@@ -716,10 +827,20 @@ export default function NodesClient({ userId }: { userId: string }) {
                 <Button
                   variant="outline"
                   onClick={exportNodes}
-                  className="flex items-center gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  className="flex items-center gap-2 bg-background/10 border-background/20 text-primary-foreground hover:bg-background/20"
                 >
                   <Download className="w-4 h-4" />
                   Export
+                </Button>
+                
+                {/* Export Updates */}
+                <Button
+                  variant="outline"
+                  onClick={() => setShowExportModal(true)}
+                  className="flex items-center gap-2 bg-background/10 border-background/20 text-primary-foreground hover:bg-background/20"
+                >
+                  <FileText className="w-4 h-4" />
+                  Export Updates
                 </Button>
                 
                 {/* Add Node */}
@@ -734,8 +855,9 @@ export default function NodesClient({ userId }: { userId: string }) {
               </div>
             </div>
             
-            {/* AI Provider Selector */}
-            <div className="mt-4 flex justify-end">
+            {/* AI Provider Selector and Mode Toggle */}
+            <div className="mt-4 flex justify-between items-center">
+              <ModeToggle />
               <AIProviderSelector />
             </div>
           </header>
@@ -750,7 +872,10 @@ export default function NodesClient({ userId }: { userId: string }) {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Nodes</p>
-                  <p className="text-2xl font-bold text-gray-900">{nodes.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{filteredNodes.length}</p>
+                  {currentMode !== 'all' && (
+                    <p className="text-xs text-gray-500">{currentMode} mode</p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -765,7 +890,7 @@ export default function NodesClient({ userId }: { userId: string }) {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Completed</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {nodes.filter(n => n.completed).length}
+                    {filteredNodes.filter(n => n.completed).length}
                   </p>
                 </div>
               </div>
@@ -781,7 +906,7 @@ export default function NodesClient({ userId }: { userId: string }) {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Tasks</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {nodes.filter(n => n.type === 'task').length}
+                    {filteredNodes.filter(n => n.type === 'task').length}
                   </p>
                 </div>
               </div>
@@ -920,6 +1045,15 @@ export default function NodesClient({ userId }: { userId: string }) {
                   <Button
                     size="sm"
                     variant="outline"
+                    onClick={handleBulkTagOperations}
+                    className="flex items-center gap-1"
+                  >
+                    <Tag className="w-4 h-4" />
+                    Bulk Tags
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={handleBulkLinkAsChildren}
                     className="flex items-center gap-1"
                   >
@@ -952,9 +1086,12 @@ export default function NodesClient({ userId }: { userId: string }) {
                   node={node} 
                   onCreateChild={handleCreateChild}
                   onCreateParent={handleCreateParent}
+                  onNodeClick={handleNodeClick}
                   isSelected={selectedNodes.has(node.id)}
                   onSelect={handleNodeSelect}
                   selectMode={selectMode}
+                  userId={userId}
+                  userName="Me"
                 />
               ))}
             </div>
@@ -988,7 +1125,11 @@ export default function NodesClient({ userId }: { userId: string }) {
             nodes={filteredNodes}
             onCreateChild={handleCreateChild}
             onCreateParent={handleCreateParent}
+            onNodeClick={handleNodeClick}
             searchQuery={searchQuery}
+            selectMode={selectMode}
+            selectedNodes={selectedNodes}
+            onNodeSelect={handleNodeSelect}
           />
         ) : (
           // Graph View
@@ -1027,6 +1168,37 @@ export default function NodesClient({ userId }: { userId: string }) {
           }}
           selectedNodes={selectedNodes}
           nodes={nodes}
+        />
+        
+        {nodeDetailModal.node && (
+          <NodeDetailModal
+            isOpen={nodeDetailModal.isOpen}
+            onClose={closeNodeDetailModal}
+            node={nodeDetailModal.node}
+            userId={userId}
+            userName="Me"
+            onCreateChild={handleCreateChild}
+            onCreateParent={handleCreateParent}
+            onRelationshipChange={() => {
+              // Force reload nodes to update tree view
+              loadNodes(userId)
+            }}
+          />
+        )}
+        
+        <UpdateExportModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+        />
+        
+        <BulkTagModal
+          isOpen={bulkTagModalOpen}
+          onClose={() => {
+            setBulkTagModalOpen(false)
+            setSelectedNodes(new Set())
+            setSelectMode(false)
+          }}
+          selectedNodeIds={selectedNodes}
         />
         </div>
       </div>

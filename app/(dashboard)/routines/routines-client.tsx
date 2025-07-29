@@ -24,7 +24,6 @@ export default function RoutinesClient({ userId }: { userId: string }) {
     resumeJourney,
     completeEvening,
     completeMorning,
-    getMilestoneProgress,
   } = useRoutineStore()
   
   const [showStartJourney, setShowStartJourney] = useState(false)
@@ -55,7 +54,7 @@ export default function RoutinesClient({ userId }: { userId: string }) {
   const completionRate = progress && progress.totalDaysCompleted > 0 
     ? Math.round((progress.totalDaysCompleted / progress.currentDay) * 100) 
     : 0
-  const milestoneProgress = getMilestoneProgress()
+  // const milestoneProgress = getMilestoneProgress() // TODO: Implement milestone progress
   
   // Get last 7 days of progress for the chart
   const getWeeklyProgress = () => {

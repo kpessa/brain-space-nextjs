@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { ChevronRight, ChevronDown, GitBranch, GitMerge, Plus, MoreHorizontal, Circle, CheckCircle } from 'lucide-react'
+import { ChevronRight, ChevronDown, GitBranch, GitMerge, Circle, CheckCircle, Square, CheckSquare } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useNodesStore } from '@/store/nodeStore'
 import type { Node } from '@/types/node'
@@ -15,6 +15,10 @@ interface NodeTreeItemProps {
   onNodeClick?: (node: Node) => void
   expandedNodes: Set<string>
   onToggleExpand: (nodeId: string) => void
+  selectMode?: boolean
+  isSelected?: boolean
+  onSelect?: (nodeId: string, selected: boolean) => void
+  selectedNodes?: Set<string>
 }
 
 function NodeTreeItem({ 
@@ -24,7 +28,11 @@ function NodeTreeItem({
   onCreateParent, 
   onNodeClick,
   expandedNodes,
-  onToggleExpand
+  onToggleExpand,
+  selectMode = false,
+  isSelected = false,
+  onSelect,
+  selectedNodes
 }: NodeTreeItemProps) {
   const { getNodeChildren, updateNode } = useNodesStore()
   const children = getNodeChildren(node.id)
@@ -60,10 +68,28 @@ function NodeTreeItem({
         className={`
           flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-gray-50 cursor-pointer
           ${node.completed ? 'opacity-60' : ''}
+          ${isSelected ? 'bg-brain-50 border-brain-200' : ''}
         `}
         style={{ paddingLeft: `${level * 24 + 12}px` }}
-        onClick={() => onNodeClick?.(node)}
+        onClick={() => !selectMode && onNodeClick?.(node)}
       >
+        {/* Selection checkbox */}
+        {selectMode && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onSelect?.(node.id, !isSelected)
+            }}
+            className="flex-shrink-0"
+          >
+            {isSelected ? (
+              <CheckSquare className="w-5 h-5 text-brain-600" />
+            ) : (
+              <Square className="w-5 h-5 text-gray-400" />
+            )}
+          </button>
+        )}
+        
         {/* Expand/Collapse Icon */}
         <button
           onClick={handleToggleExpand}
@@ -79,16 +105,18 @@ function NodeTreeItem({
         </button>
 
         {/* Completion Checkbox */}
-        <button
-          onClick={handleCompletionToggle}
-          className="flex-shrink-0"
-        >
-          {node.completed ? (
-            <CheckCircle className="w-5 h-5 text-green-600" />
-          ) : (
-            <Circle className="w-5 h-5 text-gray-400" />
-          )}
-        </button>
+        {!selectMode && (
+          <button
+            onClick={handleCompletionToggle}
+            className="flex-shrink-0"
+          >
+            {node.completed ? (
+              <CheckCircle className="w-5 h-5 text-green-600" />
+            ) : (
+              <Circle className="w-5 h-5 text-gray-400" />
+            )}
+          </button>
+        )}
 
         {/* Node Icon */}
         <span className="text-lg flex-shrink-0">{getNodeTypeIcon(node.type)}</span>
@@ -161,6 +189,10 @@ function NodeTreeItem({
               onNodeClick={onNodeClick}
               expandedNodes={expandedNodes}
               onToggleExpand={onToggleExpand}
+              selectMode={selectMode}
+              isSelected={selectedNodes?.has(child.id) || false}
+              onSelect={onSelect}
+              selectedNodes={selectedNodes}
             />
           ))}
         </div>
@@ -175,6 +207,9 @@ interface NodeHierarchyViewProps {
   onCreateParent?: (node: Node) => void
   onNodeClick?: (node: Node) => void
   searchQuery?: string
+  selectMode?: boolean
+  selectedNodes?: Set<string>
+  onNodeSelect?: (nodeId: string, selected: boolean) => void
 }
 
 export function NodeHierarchyView({
@@ -182,15 +217,46 @@ export function NodeHierarchyView({
   onCreateChild,
   onCreateParent,
   onNodeClick,
-  searchQuery = ''
+  searchQuery = '',
+  selectMode = false,
+  selectedNodes = new Set<string>(),
+  onNodeSelect
 }: NodeHierarchyViewProps) {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
-  const { getNodeChildren, getNodeParent } = useNodesStore()
+  const [showAllAsRoots, setShowAllAsRoots] = useState(false)
+  const { getNodeChildren } = useNodesStore()
 
   // Build tree structure - find root nodes (nodes without parents)
   const rootNodes = useMemo(() => {
-    return nodes.filter(node => !node.parent || !nodes.find(n => n.id === node.parent))
-  }, [nodes])
+    if (showAllAsRoots) {
+      console.log('Showing all nodes as roots:', nodes.length)
+      return nodes
+    }
+    
+    // Debug logging
+    console.log('Total nodes received:', nodes.length)
+    console.log('Nodes with parents:', nodes.filter(n => n.parent).map(n => ({
+      id: n.id,
+      title: n.title,
+      parent: n.parent,
+      parentExists: !!nodes.find(p => p.id === n.parent)
+    })))
+    
+    const roots = nodes.filter(node => {
+      // Node is a root if:
+      // 1. It has no parent (null, undefined, or empty string)
+      // 2. Its parent doesn't exist in the current nodes list
+      if (!node.parent || node.parent === null || node.parent === '') {
+        return true
+      }
+      // Check if parent exists
+      const parentExists = nodes.some(n => n.id === node.parent)
+      return !parentExists
+    })
+    console.log('Root nodes found:', roots.length, roots.map(n => n.title))
+    
+    return roots
+  }, [nodes, showAllAsRoots])
 
   // Filter nodes based on search
   const filteredRootNodes = useMemo(() => {
@@ -244,6 +310,14 @@ export function NodeHierarchyView({
           <div className="flex gap-2">
             <Button
               size="sm"
+              variant={showAllAsRoots ? "primary" : "outline"}
+              onClick={() => setShowAllAsRoots(!showAllAsRoots)}
+              className="text-xs"
+            >
+              {showAllAsRoots ? "Show Hierarchy" : "Show All Flat"}
+            </Button>
+            <Button
+              size="sm"
               variant="outline"
               onClick={expandAll}
               className="text-xs"
@@ -270,8 +344,10 @@ export function NodeHierarchyView({
           </div>
         ) : (
           <div className="space-y-1">
+            <p className="text-xs text-gray-500 mb-2">Root nodes (no parent):</p>
             {filteredRootNodes.map((node) => (
-              <div key={node.id} className="group">
+              <div key={node.id} className="group relative">
+                <div className="absolute left-0 top-2 w-1 h-6 bg-brain-500 rounded-r opacity-50"></div>
                 <NodeTreeItem
                   node={node}
                   level={0}
@@ -280,6 +356,10 @@ export function NodeHierarchyView({
                   onNodeClick={onNodeClick}
                   expandedNodes={expandedNodes}
                   onToggleExpand={toggleExpand}
+                  selectMode={selectMode}
+                  isSelected={selectedNodes.has(node.id)}
+                  onSelect={onNodeSelect}
+                  selectedNodes={selectedNodes}
                 />
               </div>
             ))}

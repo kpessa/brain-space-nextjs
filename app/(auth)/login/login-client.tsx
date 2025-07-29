@@ -104,32 +104,32 @@ export default function LoginClient() {
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full mx-4">
+      <div className="bg-card p-8 rounded-lg shadow-lg max-w-md w-full mx-4 border">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Brain className="h-8 w-8 text-brain-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Brain Space</h1>
-            <Sparkles className="h-6 w-6 text-space-600" />
+            <Brain className="h-8 w-8 text-primary" />
+            <h1 className="text-2xl font-bold text-foreground">Brain Space</h1>
+            <Sparkles className="h-6 w-6 text-secondary" />
           </div>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Capture, organize, and explore your thoughts with AI
           </p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">{error}</p>
+          <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+            <p className="text-sm text-destructive">{error}</p>
           </div>
         )}
 
         <button
           onClick={handleSignIn}
           disabled={isSigningIn}
-          className="w-full bg-brain-600 hover:bg-brain-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
         >
           {isSigningIn ? (
             <>
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
               Signing in...
             </>
           ) : (
@@ -157,7 +157,7 @@ export default function LoginClient() {
           )}
         </button>
 
-        <div className="mt-6 text-center text-sm text-gray-500">
+        <div className="mt-6 text-center text-sm text-muted-foreground">
           <p>
             By continuing, you agree to our{' '}
             <a href="#" className="text-brain-600 hover:underline">

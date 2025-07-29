@@ -35,24 +35,24 @@ export function RecurrenceDialog({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4 border">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b">
           <div>
             <h2 className="text-lg font-semibold">Make Task Recurring</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{taskLabel}</p>
+            <p className="text-sm text-muted-foreground">{taskLabel}</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            className="p-1 hover:bg-accent rounded transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Task Type Selection */}
-        <div className="p-4 border-b dark:border-gray-700">
+        <div className="p-4 border-b">
           <label className="block text-sm font-medium mb-2">Task Type</label>
           <div className="flex gap-4">
             <label className="flex items-center">
@@ -77,7 +77,7 @@ export function RecurrenceDialog({
             </label>
           </div>
           {taskType === 'habit' && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               Habits track completion streaks to help build consistency
             </p>
           )}

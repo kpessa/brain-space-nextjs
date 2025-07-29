@@ -1,14 +1,17 @@
 import { HTMLAttributes, forwardRef } from 'react'
 import { cn } from '@/lib/utils'
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {}
+interface CardProps extends HTMLAttributes<HTMLDivElement> {
+  backdrop?: boolean
+}
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, ...props }, ref) => (
+  ({ className, backdrop = false, ...props }, ref) => (
     <div
       ref={ref}
       className={cn(
-        'rounded-lg border border-gray-200 bg-white shadow-sm',
+        'rounded-lg border bg-card shadow-sm',
+        backdrop && 'backdrop-blur-sm bg-card/95',
         className
       )}
       {...props}
@@ -40,7 +43,7 @@ const CardDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLPara
   ({ className, ...props }, ref) => (
     <p
       ref={ref}
-      className={cn('text-sm text-gray-500', className)}
+      className={cn('text-sm text-muted-foreground', className)}
       {...props}
     />
   )

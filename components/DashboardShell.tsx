@@ -4,6 +4,8 @@ import { navigation } from '@/lib/navigation'
 import { Brain } from 'lucide-react'
 import { MobileNavigation } from './MobileNavigation'
 import { BottomNavigation } from './BottomNavigation'
+import { ClientProviders } from './ClientProviders'
+import { ThemeToggle } from './ThemeToggle'
 
 export default function DashboardShell({
   children,
@@ -15,13 +17,16 @@ export default function DashboardShell({
   const user = getUserFromHeaders()
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4 shadow-sm">
-          <div className="flex h-16 shrink-0 items-center gap-2">
-            <Brain className="h-8 w-8 text-brain-600" />
-            <span className="text-xl font-bold">Brain Space</span>
+        <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-card px-6 pb-4 shadow-sm">
+          <div className="flex h-16 shrink-0 items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Brain className="h-8 w-8 text-primary" />
+              <span className="text-xl font-bold">Brain Space</span>
+            </div>
+            <ThemeToggle />
           </div>
           <nav className="flex flex-1 flex-col">
             <ul className="flex flex-1 flex-col gap-y-7">
@@ -35,8 +40,8 @@ export default function DashboardShell({
                           group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold
                           ${
                             currentPath === item.href
-                              ? 'bg-brain-50 text-brain-600'
-                              : 'text-gray-700 hover:text-brain-600 hover:bg-gray-50'
+                              ? 'bg-accent text-accent-foreground'
+                              : 'text-gray-700 hover:text-primary hover:bg-gray-50'
                           }
                         `}
                       >
@@ -49,8 +54,8 @@ export default function DashboardShell({
               </li>
               <li className="mt-auto">
                 <div className="flex items-center gap-x-4 px-2 py-3 text-sm font-semibold leading-6 text-gray-900">
-                  <div className="h-8 w-8 rounded-full bg-brain-100 flex items-center justify-center">
-                    <span className="text-brain-600 font-semibold text-sm">
+                  <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center">
+                    <span className="text-accent-foreground font-semibold text-sm">
                       {user?.email?.charAt(0).toUpperCase() || 'U'}
                     </span>
                   </div>
@@ -61,7 +66,7 @@ export default function DashboardShell({
                 </div>
                 <a
                   href="/api/auth/logout"
-                  className="group flex w-full gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-brain-600"
+                  className="group flex w-full gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-primary"
                 >
                   Sign Out
                 </a>
@@ -86,6 +91,9 @@ export default function DashboardShell({
       
       {/* Bottom navigation for mobile */}
       <BottomNavigation />
+      
+      {/* Client-side providers and animations */}
+      <ClientProviders />
     </div>
   )
 }

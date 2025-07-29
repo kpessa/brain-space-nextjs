@@ -208,15 +208,15 @@ export default function BraindumpClient({ userId }: { userId: string }) {
   }
 
   return (
-      <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(100vh-4rem)]">
+      <div className="bg-gradient-to-br from-primary via-secondary to-primary -m-8 p-8 min-h-[calc(100vh-4rem)]">
         <div className="max-w-7xl mx-auto">
           <header className="mb-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Brain className="w-12 h-12 text-white" />
+                <Brain className="w-12 h-12 text-primary-foreground" />
                 <div>
-                  <h1 className="text-4xl font-bold text-white">Brain Dump</h1>
-                  <p className="text-white/80 text-lg">
+                  <h1 className="text-4xl font-bold text-primary-foreground">Brain Dump</h1>
+                  <p className="text-primary-foreground/80 text-lg">
                     Visualize your thoughts and ideas in interactive mindmaps
                   </p>
                 </div>
@@ -224,7 +224,7 @@ export default function BraindumpClient({ userId }: { userId: string }) {
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 bg-white/10 text-white hover:bg-white/20 border-white/20"
+                  className="flex items-center gap-2 bg-background/10 text-primary-foreground hover:bg-background/20 border-background/20"
                 >
                   <Upload className="w-5 h-5" />
                   Import
@@ -243,7 +243,7 @@ export default function BraindumpClient({ userId }: { userId: string }) {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar with entries list */}
           <div className="lg:col-span-1">
-            <Card className="h-full">
+            <Card className="h-full" backdrop>
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <List className="w-5 h-5 text-brain-500" />
@@ -258,7 +258,7 @@ export default function BraindumpClient({ userId }: { userId: string }) {
                       <SortAsc className="w-3 h-3" />
                       Sort
                     </label>
-                    <select className="w-full text-xs px-2 py-1 border rounded-md bg-white">
+                    <select className="w-full text-xs px-2 py-1 border rounded-md bg-background">
                       <option value="date">Date</option>
                       <option value="topic">Topic</option>
                       <option value="alphabetical">A-Z</option>
@@ -269,7 +269,7 @@ export default function BraindumpClient({ userId }: { userId: string }) {
                       <Layers className="w-3 h-3" />
                       Group
                     </label>
-                    <select className="w-full text-xs px-2 py-1 border rounded-md bg-white">
+                    <select className="w-full text-xs px-2 py-1 border rounded-md bg-background">
                       <option value="none">None</option>
                       <option value="topic">Topic</option>
                       <option value="type">Type</option>
@@ -353,7 +353,7 @@ export default function BraindumpClient({ userId }: { userId: string }) {
 
           {/* Main content area */}
           <div className="lg:col-span-3">
-            <Card className="h-full min-h-[600px]">
+            <Card className="h-full min-h-[600px]" backdrop>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -402,7 +402,7 @@ export default function BraindumpClient({ userId }: { userId: string }) {
                       >
                         {convertLoading ? (
                           <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
                             Converting...
                           </>
                         ) : (

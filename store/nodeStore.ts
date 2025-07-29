@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Node, NodeType } from '@/types/node'
+import type { Node, NodeType, NodeUpdate } from '@/types/node'
 import type { RecurringCompletion, TaskType } from '@/types/recurrence'
 
 interface NodesStore {
@@ -15,6 +15,13 @@ interface NodesStore {
   updateNode: (nodeId: string, updates: Partial<Node>) => Promise<void>
   deleteNode: (nodeId: string) => Promise<void>
   completeRecurringTask: (nodeId: string, date: string) => Promise<void>
+  
+  // Update Actions
+  addNodeUpdate: (nodeId: string, update: Partial<NodeUpdate>) => Promise<void>
+  deleteNodeUpdate: (nodeId: string, updateId: string) => Promise<void>
+  
+  // Bulk Actions
+  bulkUpdateNodes: (updates: Array<{ nodeId: string; updates: Partial<Node> }>) => Promise<void>
 
   // Relationship Actions
   linkAsChild: (parentId: string, childId: string) => Promise<void>
@@ -207,6 +214,51 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       lastRecurringCompletionDate: date,
     })
   },
+  
+  // Add an update to a node
+  addNodeUpdate: async (nodeId: string, update: Partial<NodeUpdate>) => {
+    const node = get().nodes.find(n => n.id === nodeId)
+    if (!node) {
+      set({ error: 'Node not found' })
+      return
+    }
+    
+    try {
+      const updateId = `update-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      const newUpdate: NodeUpdate = {
+        id: updateId,
+        content: update.content || '',
+        timestamp: new Date().toISOString(),
+        userId: update.userId || node.userId,
+        userName: update.userName,
+        type: update.type || 'note',
+        isPinned: update.isPinned || false,
+      }
+      
+      const existingUpdates = node.updates || []
+      const updatedUpdates = [...existingUpdates, newUpdate]
+      
+      await get().updateNode(nodeId, { updates: updatedUpdates })
+    } catch (error) {
+      set({ error: (error as Error).message })
+    }
+  },
+  
+  // Delete an update from a node
+  deleteNodeUpdate: async (nodeId: string, updateId: string) => {
+    const node = get().nodes.find(n => n.id === nodeId)
+    if (!node || !node.updates) {
+      set({ error: 'Node or update not found' })
+      return
+    }
+    
+    try {
+      const updatedUpdates = node.updates.filter(u => u.id !== updateId)
+      await get().updateNode(nodeId, { updates: updatedUpdates })
+    } catch (error) {
+      set({ error: (error as Error).message })
+    }
+  },
 
   // Delete a node
   deleteNode: async (nodeId: string) => {
@@ -219,14 +271,64 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
     try {
       // Dynamically import Firebase
       const { db } = await import('@/lib/firebase')
-      const { doc, deleteDoc } = await import('firebase/firestore')
+      const { doc, deleteDoc, writeBatch, serverTimestamp } = await import('firebase/firestore')
       
-      // Delete from Firestore
-      await deleteDoc(doc(db, 'users', node.userId, 'nodes', nodeId))
+      // Create a batch for all updates
+      const batch = writeBatch(db)
+      
+      // Delete the node itself
+      batch.delete(doc(db, 'users', node.userId, 'nodes', nodeId))
+      
+      // Clean up parent reference: If node has a parent, remove this node from parent's children array
+      if (node.parent) {
+        const parentNode = get().nodes.find(n => n.id === node.parent)
+        if (parentNode && parentNode.children) {
+          const updatedChildren = parentNode.children.filter(childId => childId !== nodeId)
+          batch.update(doc(db, 'users', node.userId, 'nodes', node.parent), {
+            children: updatedChildren,
+            updatedAt: serverTimestamp()
+          })
+        }
+      }
+      
+      // Clean up children references: Remove parent reference from all children
+      if (node.children && node.children.length > 0) {
+        node.children.forEach(childId => {
+          const childNode = get().nodes.find(n => n.id === childId)
+          if (childNode) {
+            batch.update(doc(db, 'users', node.userId, 'nodes', childId), {
+              parent: null,
+              updatedAt: serverTimestamp()
+            })
+          }
+        })
+      }
+      
+      // Commit all changes
+      await batch.commit()
 
       // Update local state
-      const nodes = get().nodes.filter(n => n.id !== nodeId)
-      set({ nodes })
+      const updatedNodes = get().nodes.map(n => {
+        // Remove deleted node from parent's children array
+        if (n.id === node.parent && n.children) {
+          return {
+            ...n,
+            children: n.children.filter(childId => childId !== nodeId),
+            updatedAt: new Date().toISOString()
+          }
+        }
+        // Clear parent reference from children
+        if (node.children?.includes(n.id)) {
+          return {
+            ...n,
+            parent: null,
+            updatedAt: new Date().toISOString()
+          }
+        }
+        return n
+      }).filter(n => n.id !== nodeId)
+      
+      set({ nodes: updatedNodes })
 
       // Clear selection if deleted node was selected
       if (get().selectedNodeId === nodeId) {
@@ -234,6 +336,51 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       }
     } catch (error) {
       set({ error: (error as Error).message })
+    }
+  },
+  
+  // Bulk update multiple nodes
+  bulkUpdateNodes: async (updates: Array<{ nodeId: string; updates: Partial<Node> }>) => {
+    try {
+      // Dynamically import Firebase
+      const { db } = await import('@/lib/firebase')
+      const { writeBatch, doc, serverTimestamp } = await import('firebase/firestore')
+      
+      // Create a batch
+      const batch = writeBatch(db)
+      
+      // Add each update to the batch
+      updates.forEach(({ nodeId, updates: nodeUpdates }) => {
+        const node = get().nodes.find(n => n.id === nodeId)
+        if (node) {
+          const nodeRef = doc(db, 'users', node.userId, 'nodes', nodeId)
+          batch.update(nodeRef, {
+            ...nodeUpdates,
+            updatedAt: serverTimestamp(),
+          })
+        }
+      })
+      
+      // Commit the batch
+      await batch.commit()
+      
+      // Update local state optimistically
+      const updatedNodes = get().nodes.map(node => {
+        const update = updates.find(u => u.nodeId === node.id)
+        if (update) {
+          return { ...node, ...update.updates, updatedAt: new Date().toISOString() }
+        }
+        return node
+      })
+      
+      set({ nodes: updatedNodes })
+    } catch (error) {
+      set({ error: (error as Error).message })
+      // Reload to ensure consistency
+      const userId = get().nodes[0]?.userId
+      if (userId) {
+        await get().loadNodes(userId)
+      }
     }
   },
 
@@ -296,26 +443,138 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
     const node1 = get().getNodeById(nodeId1)
     const node2 = get().getNodeById(nodeId2)
     
-    if (!node1 || !node2) return
+    if (!node1 || !node2) {
+      console.error('unlinkNodes: One or both nodes not found', { nodeId1, nodeId2 })
+      throw new Error('One or both nodes not found')
+    }
+
+    console.log('unlinkNodes: Starting unlink operation', {
+      node1: { id: node1.id, title: node1.title, children: node1.children },
+      node2: { id: node2.id, title: node2.title, parent: node2.parent }
+    })
 
     try {
-      // Check if node1 is parent of node2
-      if (node1.children?.includes(nodeId2)) {
-        await get().updateNode(nodeId1, {
-          children: node1.children.filter(id => id !== nodeId2)
+      // Dynamically import Firebase
+      const { db } = await import('@/lib/firebase')
+      const { writeBatch, doc, serverTimestamp } = await import('firebase/firestore')
+      
+      // Use a batch for atomic updates
+      const batch = writeBatch(db)
+      let actionsPerformed = []
+
+      // Case 1: node1 is parent of node2 (most common case)
+      if (node2.parent === nodeId1) {
+        console.log('Unlinking: node2 has node1 as parent')
+        
+        // Remove parent reference from child
+        batch.update(doc(db, 'users', node2.userId, 'nodes', nodeId2), {
+          parent: null,
+          updatedAt: serverTimestamp()
         })
-        await get().updateNode(nodeId2, { parent: undefined })
+        actionsPerformed.push(`Removed parent reference from "${node2.title}"`)
+        
+        // Remove child from parent's children array (if it exists)
+        if (node1.children?.includes(nodeId2)) {
+          const updatedChildren = node1.children.filter(id => id !== nodeId2)
+          batch.update(doc(db, 'users', node1.userId, 'nodes', nodeId1), {
+            children: updatedChildren,
+            updatedAt: serverTimestamp()
+          })
+          actionsPerformed.push(`Removed "${node2.title}" from "${node1.title}"'s children`)
+        } else {
+          console.warn('Data inconsistency: Child has parent reference but parent doesn\'t have child in array')
+          // Still update parent to ensure consistency
+          batch.update(doc(db, 'users', node1.userId, 'nodes', nodeId1), {
+            children: node1.children || [],
+            updatedAt: serverTimestamp()
+          })
+        }
       }
       
-      // Check if node2 is parent of node1
-      if (node2.children?.includes(nodeId1)) {
-        await get().updateNode(nodeId2, {
-          children: node2.children.filter(id => id !== nodeId1)
+      // Case 2: node2 is parent of node1 (when called in reverse)
+      else if (node1.parent === nodeId2) {
+        console.log('Unlinking: node1 has node2 as parent')
+        
+        // Remove parent reference from child
+        batch.update(doc(db, 'users', node1.userId, 'nodes', nodeId1), {
+          parent: null,
+          updatedAt: serverTimestamp()
         })
-        await get().updateNode(nodeId1, { parent: undefined })
+        actionsPerformed.push(`Removed parent reference from "${node1.title}"`)
+        
+        // Remove child from parent's children array (if it exists)
+        if (node2.children?.includes(nodeId1)) {
+          const updatedChildren = node2.children.filter(id => id !== nodeId1)
+          batch.update(doc(db, 'users', node2.userId, 'nodes', nodeId2), {
+            children: updatedChildren,
+            updatedAt: serverTimestamp()
+          })
+          actionsPerformed.push(`Removed "${node1.title}" from "${node2.title}"'s children`)
+        }
       }
+      
+      // Case 3: Check for any parent-child relationship and fix it
+      else {
+        console.log('Checking for any parent-child relationships to fix')
+        
+        // Check if node1 has node2 in children (inconsistent state)
+        if (node1.children?.includes(nodeId2)) {
+          const updatedChildren = node1.children.filter(id => id !== nodeId2)
+          batch.update(doc(db, 'users', node1.userId, 'nodes', nodeId1), {
+            children: updatedChildren,
+            updatedAt: serverTimestamp()
+          })
+          actionsPerformed.push(`Removed orphaned child reference to "${node2.title}" from "${node1.title}"`)
+        }
+        
+        // Check if node2 has node1 in children (inconsistent state)
+        if (node2.children?.includes(nodeId1)) {
+          const updatedChildren = node2.children.filter(id => id !== nodeId1)
+          batch.update(doc(db, 'users', node2.userId, 'nodes', nodeId2), {
+            children: updatedChildren,
+            updatedAt: serverTimestamp()
+          })
+          actionsPerformed.push(`Removed orphaned child reference to "${node1.title}" from "${node2.title}"`)
+        }
+      }
+      
+      if (actionsPerformed.length === 0) {
+        console.log('No parent-child relationship found between these nodes')
+        throw new Error('No parent-child relationship found between these nodes')
+      }
+      
+      // Commit the batch
+      await batch.commit()
+      console.log('Unlink operation completed:', actionsPerformed)
+      
+      // Update local state optimistically
+      const nodes = get().nodes.map(n => {
+        if (n.id === nodeId1) {
+          return {
+            ...n,
+            parent: n.parent === nodeId2 ? null : n.parent,
+            children: n.children?.filter(id => id !== nodeId2) || [],
+            updatedAt: new Date().toISOString()
+          }
+        }
+        if (n.id === nodeId2) {
+          return {
+            ...n,
+            parent: n.parent === nodeId1 ? null : n.parent,
+            children: n.children?.filter(id => id !== nodeId1) || [],
+            updatedAt: new Date().toISOString()
+          }
+        }
+        return n
+      })
+      
+      set({ nodes })
+      
+      return { success: true, actions: actionsPerformed }
     } catch (error) {
+      console.error('Error in unlinkNodes:', error)
       set({ error: (error as Error).message })
+      throw error
     }
   },
 

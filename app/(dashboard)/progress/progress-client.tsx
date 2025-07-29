@@ -5,22 +5,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Trophy, Star, Target, Calendar, TrendingUp, Award, Crown, Zap, Flame } from 'lucide-react'
 import { useJournalStore } from '@/store/journalStore'
 import { useNodesStore } from '@/store/nodeStore'
-import { LEVELS } from '@/types/journal'
+import { useXPStore } from '@/store/xpStore'
+import { LEVELS } from '@/types/xp'
 
 export default function ProgressClient({ userId }: { userId: string }) {
-  const { entries, userProgress, loadEntriesFromFirestore } = useJournalStore()
+  const { entries, userProgress: journalProgress, loadEntriesFromFirestore } = useJournalStore()
   const { nodes, loadNodes } = useNodesStore()
+  const { userProgress: xpProgress, loadProgress, getNextLevelProgress, getRecentEvents } = useXPStore()
   
   useEffect(() => {
     loadEntriesFromFirestore(userId)
     loadNodes(userId)
-  }, [userId, loadEntriesFromFirestore, loadNodes])
+    loadProgress(userId)
+  }, [userId, loadEntriesFromFirestore, loadNodes, loadProgress])
   
-  const currentLevel = LEVELS.find(l => l.level === userProgress.level) || LEVELS[0]
-  const nextLevel = LEVELS[userProgress.level] || null
-  const xpProgress = nextLevel
-    ? (userProgress.currentXP / (nextLevel.maxXP - nextLevel.minXP)) * 100
-    : 100
+  const currentLevel = LEVELS.find(l => l.level === xpProgress.level) || LEVELS[0]
+  const nextLevel = LEVELS[xpProgress.level] || null
+  const levelProgress = getNextLevelProgress()
+  const xpProgressPercentage = levelProgress.percentage
   
   const completedNodes = nodes.filter(n => n.completed).length
   const totalNodes = nodes.length
@@ -49,9 +51,23 @@ export default function ProgressClient({ userId }: { userId: string }) {
     type: 'node'
   }))
   
-  const recentActivities: Activity[] = [...journalActivities, ...nodeActivities]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5)
+  // Get recent XP events from centralized store
+  const recentXPEvents = getRecentEvents(5)
+  
+  // If we have XP events, use them, otherwise fall back to legacy activities
+  const recentActivities: Activity[] = recentXPEvents.length > 0 
+    ? recentXPEvents.map(event => ({
+        date: event.timestamp,
+        activity: event.metadata?.nodeTitle 
+          ? `Node: ${event.metadata.nodeTitle}` 
+          : event.type.replace(/_/g, ' ').toLowerCase(),
+        xp: event.points,
+        type: event.type.includes('journal') ? 'journal' : 
+              event.type.includes('node') ? 'node' : 'node'
+      }))
+    : [...journalActivities, ...nodeActivities]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 5)
   
   // Dynamic achievements based on real data
   const achievements = [
@@ -68,8 +84,8 @@ export default function ProgressClient({ userId }: { userId: string }) {
       title: 'Week Warrior',
       description: 'Journal for 7 consecutive days',
       icon: '🔥',
-      unlocked: userProgress.currentStreak >= 7,
-      date: userProgress.currentStreak >= 7 ? new Date().toISOString() : null,
+      unlocked: journalProgress.currentStreak >= 7,
+      date: journalProgress.currentStreak >= 7 ? new Date().toISOString() : null,
     },
     {
       id: 3,
@@ -106,7 +122,7 @@ export default function ProgressClient({ userId }: { userId: string }) {
   ]
 
   return (
-      <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(100vh-4rem)]">
+      <div className="bg-gradient-to-br from-primary via-secondary to-primary -m-8 p-8 min-h-[calc(100vh-4rem)]">
         <div className="max-w-6xl mx-auto">
           <header className="text-center mb-8">
             <div className="flex items-center justify-center gap-3 mb-4">
@@ -125,16 +141,16 @@ export default function ProgressClient({ userId }: { userId: string }) {
               <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Crown className="w-8 h-8 text-white" />
               </div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">Level {userProgress.level}</div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">Level {xpProgress.level}</div>
               <div className="text-sm text-gray-600">Hero Level</div>
               <div className="mt-3 bg-gray-200 rounded-full h-2">
                 <div 
                   className="bg-gradient-to-r from-yellow-400 to-orange-500 h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${xpProgress}%` }}
+                  style={{ width: `${xpProgressPercentage}%` }}
                 />
               </div>
               <div className="text-xs text-gray-500 mt-1">
-                {userProgress.totalXP} / {nextLevel ? nextLevel.maxXP : '∞'} XP
+                {xpProgress.totalXP} / {nextLevel ? nextLevel.maxXP : '∞'} XP
               </div>
             </CardContent>
           </Card>
@@ -163,7 +179,7 @@ export default function ProgressClient({ userId }: { userId: string }) {
               <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Calendar className="w-8 h-8 text-white" />
               </div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{userProgress.currentStreak}</div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">{journalProgress.currentStreak}</div>
               <div className="text-sm text-gray-600">Day Streak</div>
               <div className="text-xs text-green-600 mt-2 font-medium">
                 🔥 Keep it going!
@@ -176,7 +192,7 @@ export default function ProgressClient({ userId }: { userId: string }) {
               <div className="w-16 h-16 bg-gradient-to-br from-pink-400 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Zap className="w-8 h-8 text-white" />
               </div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{userProgress.totalXP}</div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">{xpProgress.totalXP}</div>
               <div className="text-sm text-gray-600">Total XP</div>
               <div className="text-xs text-pink-600 mt-2 font-medium">
                 ⚡ {currentLevel.title}

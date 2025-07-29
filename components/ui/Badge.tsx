@@ -19,12 +19,12 @@ export function Badge({
   const baseClasses = 'inline-flex items-center font-medium rounded-full transition-colors'
   
   const variantClasses = {
-    primary: 'bg-brain-100 text-brain-800 hover:bg-brain-200',
-    secondary: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
+    primary: 'bg-primary/10 text-primary hover:bg-primary/20',
+    secondary: 'bg-secondary/10 text-secondary-foreground hover:bg-secondary/20',
     success: 'bg-green-100 text-green-800 hover:bg-green-200',
     warning: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
     danger: 'bg-red-100 text-red-800 hover:bg-red-200',
-    ghost: 'bg-transparent text-gray-600 hover:bg-gray-100',
+    ghost: 'bg-transparent text-muted-foreground hover:bg-accent/10',
   }
   
   const sizeClasses = {

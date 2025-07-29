@@ -10,6 +10,16 @@ export interface Attempt {
   timestamp: string // ISO date
 }
 
+export interface NodeUpdate {
+  id: string
+  content: string
+  timestamp: string // ISO date
+  userId: string
+  userName?: string // Optional display name
+  type?: 'note' | 'status' | 'progress'
+  isPinned?: boolean
+}
+
 export type RelativeUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months'
 
 export type DueDate =
@@ -53,6 +63,7 @@ export type GenAiNodeInput = {
   dueDate?: DueDate
   recurrence?: Recurrence
   completed?: boolean
+  isPersonal?: boolean
 }
 
 export interface Node {
@@ -107,6 +118,9 @@ export interface Node {
   completedAt?: string
   createdAt?: string
   updatedAt?: string
+  
+  // Work/Personal categorization (optional)
+  isPersonal?: boolean
 
   // Recurring task fields (optional)
   taskType?: TaskType
@@ -114,6 +128,9 @@ export interface Node {
   currentStreak?: number
   longestStreak?: number
   lastRecurringCompletionDate?: string
+  
+  // Updates (optional)
+  updates?: NodeUpdate[]
 }
 
 // Helper functions for node operations

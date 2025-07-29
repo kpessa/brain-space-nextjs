@@ -154,25 +154,25 @@ export default function TodosClient({ userId }: { userId: string }) {
   const upcomingTodos = getUpcomingTodos(7).filter(t => !t.completed && !todayTodos.includes(t))
 
   return (
-      <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(100vh-4rem)]">
+      <div className="bg-gradient-to-br from-primary via-secondary to-primary -m-8 p-8 min-h-[calc(100vh-4rem)]">
         <div className="max-w-7xl mx-auto">
           <header className="mb-8">
-            <h1 className="text-4xl font-bold text-white mb-2">Unified Todos</h1>
-            <p className="text-white/80 text-lg">
+            <h1 className="text-4xl font-bold text-primary-foreground mb-2">Unified Todos</h1>
+            <p className="text-primary-foreground/80 text-lg">
               All your tasks from every source in one place
             </p>
           </header>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card className="cursor-pointer hover:shadow-lg transition-all" onClick={() => setFilter('all')}>
+          <Card className="cursor-pointer hover:shadow-lg transition-all" onClick={() => setFilter('all')} backdrop>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Active</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                  <p className="text-sm text-muted-foreground">Total Active</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.total}</p>
                 </div>
-                <Circle className="w-8 h-8 text-gray-400" />
+                <Circle className="w-8 h-8 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
@@ -181,7 +181,7 @@ export default function TodosClient({ userId }: { userId: string }) {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Today</p>
+                  <p className="text-sm text-muted-foreground">Today</p>
                   <p className="text-2xl font-bold text-blue-600">{stats.today}</p>
                 </div>
                 <Calendar className="w-8 h-8 text-blue-400" />

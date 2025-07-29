@@ -176,19 +176,35 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
   },
 
   completeEvening: async (userId: string, data) => {
-    const { currentEntry, progress } = get()
-    if (!currentEntry || !progress) throw new Error('No current entry or progress')
+    let { currentEntry, progress } = get()
+    if (!progress) throw new Error('No progress initialized')
 
     try {
-      // Update the current entry
-      await get().createOrUpdateEntry({
-        ...currentEntry,
-        eveningCompleted: true,
-        sleepIntention: data.sleepIntention,
-        wakeIntention: data.wakeIntention,
-        magicalMoment: data.magicalMoment,
-        morningRitualPlan: data.morningRitualPlan,
-      })
+      // Create entry for today if it doesn't exist
+      if (!currentEntry) {
+        const today = format(new Date(), 'yyyy-MM-dd')
+        await get().createOrUpdateEntry({
+          userId,
+          dayNumber: progress.currentDay || 1,
+          date: today,
+          eveningCompleted: true,
+          sleepIntention: data.sleepIntention,
+          wakeIntention: data.wakeIntention,
+          magicalMoment: data.magicalMoment,
+          morningRitualPlan: data.morningRitualPlan,
+        })
+        currentEntry = get().currentEntry
+      } else {
+        // Update the existing entry
+        await get().createOrUpdateEntry({
+          ...currentEntry,
+          eveningCompleted: true,
+          sleepIntention: data.sleepIntention,
+          wakeIntention: data.wakeIntention,
+          magicalMoment: data.magicalMoment,
+          morningRitualPlan: data.morningRitualPlan,
+        })
+      }
       
       // Update progress
       const { db, doc, updateDoc } = await getFirebase()
@@ -211,26 +227,46 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
   },
 
   completeMorning: async (userId: string, data) => {
-    const { currentEntry, progress } = get()
-    if (!currentEntry || !progress) throw new Error('No current entry or progress')
+    let { currentEntry, progress } = get()
+    if (!progress) throw new Error('No progress initialized')
 
     try {
-      // Update the current entry
-      await get().createOrUpdateEntry({
-        ...currentEntry,
-        morningCompleted: true,
-        actualSleepTime: data.actualSleepTime,
-        actualWakeTime: data.actualWakeTime,
-        ritualCompleted: data.ritualCompleted,
-        mit: data.mit,
-        onePercentImprovement: data.onePercentImprovement,
-        distractionsToMinimize: data.distractionsToMinimize,
-        isComplete: true, // Mark day as complete
-      })
+      // Create entry for today if it doesn't exist
+      if (!currentEntry) {
+        const today = format(new Date(), 'yyyy-MM-dd')
+        await get().createOrUpdateEntry({
+          userId,
+          dayNumber: progress.currentDay || 1,
+          date: today,
+          morningCompleted: true,
+          actualSleepTime: data.actualSleepTime,
+          actualWakeTime: data.actualWakeTime,
+          ritualCompleted: data.ritualCompleted,
+          mit: data.mit,
+          onePercentImprovement: data.onePercentImprovement,
+          distractionsToMinimize: data.distractionsToMinimize,
+          isComplete: false, // Not complete until evening is also done
+        })
+        currentEntry = get().currentEntry
+      } else {
+        // Update the existing entry
+        await get().createOrUpdateEntry({
+          ...currentEntry,
+          morningCompleted: true,
+          actualSleepTime: data.actualSleepTime,
+          actualWakeTime: data.actualWakeTime,
+          ritualCompleted: data.ritualCompleted,
+          mit: data.mit,
+          onePercentImprovement: data.onePercentImprovement,
+          distractionsToMinimize: data.distractionsToMinimize,
+          isComplete: currentEntry.eveningCompleted, // Mark as complete only if evening is also done
+        })
+      }
       
       // Update progress
       const { db, doc, updateDoc } = await getFirebase()
-      const bothCompleted = currentEntry.eveningCompleted
+      const updatedEntry = get().currentEntry
+      const bothCompleted = updatedEntry?.eveningCompleted && updatedEntry?.morningCompleted
       const newProgress = {
         ...progress,
         morningRoutinesCompleted: progress.morningRoutinesCompleted + 1,

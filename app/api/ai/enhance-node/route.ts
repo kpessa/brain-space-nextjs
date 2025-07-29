@@ -3,7 +3,12 @@ import { adminAuth } from '@/lib/firebase-admin'
 import type { NodeType } from '@/types/node'
 
 // This runs on the server, so we can safely use API keys
-async function callOpenAI(text: string) {
+async function callOpenAI(text: string, mode?: string, existingTags?: string[]) {
+  const modeContext = mode ? `Current mode: ${mode}. ` : ''
+  const tagContext = existingTags && existingTags.length > 0 
+    ? `\nPrefer these existing tags when relevant: ${existingTags.join(', ')}` 
+    : ''
+  
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -16,6 +21,8 @@ async function callOpenAI(text: string) {
         {
           role: 'system',
           content: `You are an AI assistant that enhances and categorizes a single thought or task.
+          ${modeContext}${tagContext}
+          
           Analyze the provided text and return a JSON response with:
           - type: The node type (goal, project, task, option, idea, question, problem, insight, thought, concern)
           - title: A concise title (max 100 chars)
@@ -23,7 +30,11 @@ async function callOpenAI(text: string) {
           - tags: Array of relevant tags/categories
           - urgency: 1-10 scale (10 being most urgent)
           - importance: 1-10 scale (10 being most important)
-          - dueDate: Object with date property (ISO string) if a deadline is mentioned`,
+          - dueDate: Object with date property (ISO string) if a deadline is mentioned
+          - isPersonal: boolean (true if personal/family/health related, false if work/professional)
+          
+          For work mode, prefer tags like: work, project, client, team, meeting, task, deadline
+          For personal mode, prefer tags like: personal, family, health, hobby, home, finance, learning`,
         },
         {
           role: 'user',
@@ -44,7 +55,7 @@ async function callOpenAI(text: string) {
   return JSON.parse(data.choices[0].message.content)
 }
 
-async function callAnthropic(text: string) {
+async function callAnthropic(text: string, mode?: string, existingTags?: string[]) {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -58,7 +69,11 @@ async function callAnthropic(text: string) {
       messages: [
         {
           role: 'user',
-          content: `Analyze this single thought or task and enhance it. Return ONLY a valid JSON object with:
+          content: `Analyze this single thought or task and enhance it. 
+          ${mode ? `Current mode: ${mode}. ` : ''}
+          ${existingTags && existingTags.length > 0 ? `Prefer these existing tags when relevant: ${existingTags.join(', ')}` : ''}
+          
+          Return ONLY a valid JSON object with:
           - type: The node type (goal, project, task, option, idea, question, problem, insight, thought, concern)
           - title: A concise title (max 100 chars)
           - description: The full enhanced description
@@ -66,6 +81,10 @@ async function callAnthropic(text: string) {
           - urgency: 1-10 scale (10 being most urgent)
           - importance: 1-10 scale (10 being most important)
           - dueDate: Object with date property (ISO string) if a deadline is mentioned
+          - isPersonal: boolean (true if personal/family/health related, false if work/professional)
+          
+          For work mode, prefer tags like: work, project, client, team, meeting, task, deadline
+          For personal mode, prefer tags like: personal, family, health, hobby, home, finance, learning
 
           Text to analyze: ${text}`,
         },
@@ -89,7 +108,7 @@ async function callAnthropic(text: string) {
   throw new Error('Failed to parse JSON from Anthropic response')
 }
 
-async function callGoogleAI(text: string) {
+async function callGoogleAI(text: string, mode?: string, existingTags?: string[]) {
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`,
     {
@@ -100,7 +119,11 @@ async function callGoogleAI(text: string) {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `Analyze this single thought or task and enhance it. Return ONLY a valid JSON object with:
+            text: `Analyze this single thought or task and enhance it. 
+            ${mode ? `Current mode: ${mode}. ` : ''}
+            ${existingTags && existingTags.length > 0 ? `Prefer these existing tags when relevant: ${existingTags.join(', ')}` : ''}
+            
+            Return ONLY a valid JSON object with:
             - type: The node type (goal, project, task, option, idea, question, problem, insight, thought, concern)
             - title: A concise title (max 100 chars)
             - description: The full enhanced description
@@ -108,6 +131,10 @@ async function callGoogleAI(text: string) {
             - urgency: 1-10 scale (10 being most urgent)
             - importance: 1-10 scale (10 being most important)
             - dueDate: Object with date property (ISO string) if a deadline is mentioned
+            - isPersonal: boolean (true if personal/family/health related, false if work/professional)
+            
+            For work mode, prefer tags like: work, project, client, team, meeting, task, deadline
+            For personal mode, prefer tags like: personal, family, health, hobby, home, finance, learning
 
             Text to analyze: ${text}`
           }]
@@ -137,6 +164,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     text = body.text
     const provider = body.provider || 'openai'
+    const mode = body.mode
+    const existingTags = body.existingTags
 
     // Optional: Verify Firebase auth token
     const authHeader = request.headers.get('authorization')
@@ -165,7 +194,7 @@ export async function POST(request: NextRequest) {
         if (!process.env.ANTHROPIC_API_KEY) {
           throw new Error('Anthropic API key not configured')
         }
-        result = await callAnthropic(text)
+        result = await callAnthropic(text, mode, existingTags)
         break
         
       case 'google':
@@ -173,7 +202,7 @@ export async function POST(request: NextRequest) {
         if (!process.env.GOOGLE_AI_API_KEY) {
           throw new Error('Google AI API key not configured')
         }
-        result = await callGoogleAI(text)
+        result = await callGoogleAI(text, mode, existingTags)
         break
         
       case 'openai':
@@ -181,7 +210,7 @@ export async function POST(request: NextRequest) {
         if (!process.env.OPENAI_API_KEY) {
           throw new Error('OpenAI API key not configured')
         }
-        result = await callOpenAI(text)
+        result = await callOpenAI(text, mode, existingTags)
         break
     }
 
@@ -195,6 +224,7 @@ export async function POST(request: NextRequest) {
         urgency: result.urgency || 5,
         importance: result.importance || 5,
         dueDate: result.dueDate,
+        isPersonal: result.isPersonal !== undefined ? result.isPersonal : (mode === 'personal'),
       },
     })
   } catch (error) {

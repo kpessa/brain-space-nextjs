@@ -98,6 +98,12 @@ export const XP_REWARDS = {
   ALLY_RECOGNIZED: 5,
   NOTES_BONUS: 10, // For writing substantial notes
   STREAK_BONUS: (streak: number) => Math.min(streak * 5, 50), // Max 50 XP for streaks
+  // Node update rewards
+  NODE_UPDATE: 10,          // Basic update
+  NODE_PROGRESS_UPDATE: 15, // Progress type update
+  NODE_STATUS_UPDATE: 12,   // Status type update
+  NODE_UPDATE_MILESTONE: 25, // Every 10th update on a node
+  NODE_COMPLETION: 50,      // When marking node as complete
 }
 
 export const ACHIEVEMENTS_LIST: Omit<Achievement, 'unlockedAt'>[] = [

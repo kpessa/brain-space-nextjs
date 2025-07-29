@@ -34,27 +34,43 @@
 }
 
 @layer base {
+  /* Base theme variables - defaults to colorful light mode */
   :root {
+    --radius: 0.5rem;
+  }
+  
+  /* Colorful theme - light mode */
+  :root,
+  :root.theme-colorful {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 258 90% 53%; /* brain-500 */
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 231 100% 55%; /* space-500 */
+    --secondary-foreground: 210 40% 98%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 258 90% 53%; /* brain-500 */
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    --ring: 258 90% 53%; /* brain-500 */
+    
+    /* Semantic colors */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --error: 0 84% 60%;
+    --error-foreground: 0 0% 100%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
     
     /* Brain theme colors */
     --brain-50: 251 91% 97%;
@@ -81,26 +97,176 @@
     --space-900: 233 50% 28%;
   }
   
-  .dark {
+  /* Professional theme - light mode */
+  :root.theme-professional,
+  :root.light.theme-professional {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 98%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 217 91% 60%; /* Professional blue */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 60%;
+    
+    /* Semantic colors - professional */
+    --success: 142 45% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 70% 45%;
+    --warning-foreground: 0 0% 100%;
+    --error: 0 70% 50%;
+    --error-foreground: 0 0% 100%;
+    --info: 217 70% 50%;
+    --info-foreground: 0 0% 100%;
+    
+    /* Professional blue-gray palette for brain colors */
+    --brain-50: 210 40% 98%;
+    --brain-100: 210 40% 96%;
+    --brain-200: 214 32% 91%;
+    --brain-300: 213 27% 84%;
+    --brain-400: 215 20% 65%;
+    --brain-500: 217 91% 60%;
+    --brain-600: 221 83% 53%;
+    --brain-700: 224 76% 48%;
+    --brain-800: 226 71% 40%;
+    --brain-900: 226 58% 32%;
+    
+    /* Subtle teal for space colors */
+    --space-50: 204 44% 98%;
+    --space-100: 204 44% 96%;
+    --space-200: 204 33% 91%;
+    --space-300: 205 26% 84%;
+    --space-400: 206 20% 65%;
+    --space-500: 207 90% 54%;
+    --space-600: 209 82% 46%;
+    --space-700: 211 74% 39%;
+    --space-800: 213 69% 32%;
+    --space-900: 214 58% 26%;
+  }
+  
+  /* Colorful theme - dark mode */
+  :root.dark,
+  :root.dark.theme-colorful {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 222.2 84% 11%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 222.2 84% 8%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
+    --primary: 258 90% 66%; /* lighter brain color */
     --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 231 100% 66%; /* lighter space color */
+    --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --accent: 258 90% 66%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 62.8% 45%;
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: hsl(212.7, 26.8%, 83.9%);
+    --ring: 258 90% 66%;
+    
+    /* Semantic colors - dark */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 9%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 9%;
+    --error: 0 72% 51%;
+    --error-foreground: 0 0% 100%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 9%;
+    
+    /* Brain theme colors - dark variants */
+    --brain-50: 260 60% 15%;
+    --brain-100: 260 60% 20%;
+    --brain-200: 260 69% 25%;
+    --brain-300: 259 84% 30%;
+    --brain-400: 258 90% 45%;
+    --brain-500: 258 90% 66%;
+    --brain-600: 255 92% 70%;
+    --brain-700: 252 94% 75%;
+    --brain-800: 251 95% 80%;
+    --brain-900: 250 95% 85%;
+    
+    /* Space theme colors - dark variants */
+    --space-50: 234 62% 15%;
+    --space-100: 234 62% 20%;
+    --space-200: 235 75% 25%;
+    --space-300: 234 89% 30%;
+    --space-400: 231 100% 45%;
+    --space-500: 231 100% 66%;
+    --space-600: 227 100% 70%;
+    --space-700: 224 100% 75%;
+    --space-800: 223 100% 80%;
+    --space-900: 222 100% 85%;
+  }
+  
+  /* Professional theme - dark mode */
+  :root.dark.theme-professional {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 16%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 13%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 217 91% 60%;
+    
+    /* Semantic colors - dark professional */
+    --success: 142 30% 50%;
+    --success-foreground: 0 0% 9%;
+    --warning: 38 50% 50%;
+    --warning-foreground: 0 0% 9%;
+    --error: 0 50% 45%;
+    --error-foreground: 0 0% 100%;
+    --info: 217 50% 55%;
+    --info-foreground: 0 0% 9%;
+    
+    /* Professional blue-gray palette - dark variants */
+    --brain-50: 222 47% 13%;
+    --brain-100: 222 47% 15%;
+    --brain-200: 217 33% 17%;
+    --brain-300: 215 25% 27%;
+    --brain-400: 215 20% 45%;
+    --brain-500: 217 91% 60%;
+    --brain-600: 213 94% 68%;
+    --brain-700: 210 96% 74%;
+    --brain-800: 207 97% 80%;
+    --brain-900: 204 98% 86%;
+    
+    --space-50: 222 47% 13%;
+    --space-100: 217 41% 15%;
+    --space-200: 215 37% 17%;
+    --space-300: 213 31% 27%;
+    --space-400: 209 24% 45%;
+    --space-500: 207 90% 54%;
+    --space-600: 204 93% 62%;
+    --space-700: 201 95% 68%;
+    --space-800: 198 97% 74%;
+    --space-900: 195 98% 80%;
   }
   
   * {
@@ -111,6 +277,7 @@
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -148,11 +315,11 @@
   }
 
   .btn-primary {
-    @apply btn bg-brain-500 text-white hover:bg-brain-600 active:bg-brain-700;
+    @apply btn bg-primary text-primary-foreground hover:opacity-90 active:opacity-80;
   }
 
   .btn-secondary {
-    @apply btn bg-space-500 text-white hover:bg-space-600 active:bg-space-700;
+    @apply btn bg-secondary text-secondary-foreground hover:opacity-90 active:opacity-80;
   }
 
   .btn-outline {
@@ -543,5 +710,98 @@ body.mobile-fullscreen-active {
     -webkit-user-select: none;
     -webkit-touch-callout: none;
     user-select: none;
+  }
+}
+
+/* Theme-aware utility classes */
+@layer utilities {
+  /* Primary colors */
+  .bg-primary {
+    background-color: hsl(var(--primary));
+  }
+  .text-primary {
+    color: hsl(var(--primary));
+  }
+  .border-primary {
+    border-color: hsl(var(--primary));
+  }
+  
+  /* Secondary colors */
+  .bg-secondary {
+    background-color: hsl(var(--secondary));
+  }
+  .text-secondary {
+    color: hsl(var(--secondary));
+  }
+  .border-secondary {
+    border-color: hsl(var(--secondary));
+  }
+  
+  /* Accent colors */
+  .bg-accent {
+    background-color: hsl(var(--accent));
+  }
+  .text-accent {
+    color: hsl(var(--accent));
+  }
+  .border-accent {
+    border-color: hsl(var(--accent));
+  }
+  
+  /* Hover states */
+  .hover\:bg-primary:hover {
+    background-color: hsl(var(--primary));
+  }
+  .hover\:text-primary:hover {
+    color: hsl(var(--primary));
+  }
+  .hover\:border-primary:hover {
+    border-color: hsl(var(--primary));
+  }
+  
+  /* Focus states */
+  .focus\:ring-primary:focus {
+    --tw-ring-color: hsl(var(--primary));
+  }
+  
+  /* Semantic colors */
+  .bg-success {
+    background-color: hsl(var(--success));
+  }
+  .text-success {
+    color: hsl(var(--success));
+  }
+  .border-success {
+    border-color: hsl(var(--success));
+  }
+  
+  .bg-error {
+    background-color: hsl(var(--error));
+  }
+  .text-error {
+    color: hsl(var(--error));
+  }
+  .border-error {
+    border-color: hsl(var(--error));
+  }
+  
+  .bg-warning {
+    background-color: hsl(var(--warning));
+  }
+  .text-warning {
+    color: hsl(var(--warning));
+  }
+  .border-warning {
+    border-color: hsl(var(--warning));
+  }
+  
+  .bg-info {
+    background-color: hsl(var(--info));
+  }
+  .text-info {
+    color: hsl(var(--info));
+  }
+  .border-info {
+    border-color: hsl(var(--info));
   }
 }

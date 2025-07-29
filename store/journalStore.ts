@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import type { JournalEntry, UserProgress, Achievement } from '@/types/journal'
 import { XP_REWARDS, LEVELS, ACHIEVEMENTS_LIST } from '@/types/journal'
+import { useXPStore } from './xpStore'
+import { XPEventType } from '@/types/xp'
 
 interface JournalState {
   entries: JournalEntry[]
@@ -50,77 +52,64 @@ export const useJournalStore = create<JournalState>((set, get) => ({
     set({ isSyncing: true })
     
     try {
+      // Calculate journal-specific XP components
+      let journalXP = XP_REWARDS.DAILY_ENTRY
+      journalXP += entryData.gratitude.filter(g => g.trim()).length * XP_REWARDS.GRATITUDE_ITEM
+      if (entryData.dailyQuest.trim()) journalXP += XP_REWARDS.QUEST_DEFINED
+      if (entryData.threats.trim()) journalXP += XP_REWARDS.THREAT_IDENTIFIED
+      if (entryData.allies.trim()) journalXP += XP_REWARDS.ALLY_RECOGNIZED
+      if (entryData.notes.trim().length > 50) journalXP += XP_REWARDS.NOTES_BONUS
 
-    // Calculate XP for this entry
-    let xpEarned = XP_REWARDS.DAILY_ENTRY
-    xpEarned += entryData.gratitude.filter(g => g.trim()).length * XP_REWARDS.GRATITUDE_ITEM
-    if (entryData.dailyQuest.trim()) xpEarned += XP_REWARDS.QUEST_DEFINED
-    if (entryData.threats.trim()) xpEarned += XP_REWARDS.THREAT_IDENTIFIED
-    if (entryData.allies.trim()) xpEarned += XP_REWARDS.ALLY_RECOGNIZED
-    if (entryData.notes.trim().length > 50) xpEarned += XP_REWARDS.NOTES_BONUS
+      // Check streak
+      const today = new Date().toDateString()
+      const yesterday = new Date(Date.now() - 86400000).toDateString()
+      const lastEntry = userProgress.lastEntryDate
+        ? new Date(userProgress.lastEntryDate).toDateString()
+        : null
 
-    // Ensure xpEarned is a valid number
-    xpEarned = isNaN(xpEarned) ? 0 : xpEarned
+      let newStreak = userProgress.currentStreak
+      if (lastEntry === yesterday) {
+        newStreak += 1
+      } else if (lastEntry !== today) {
+        newStreak = 1
+      }
 
-    // Check streak
-    const today = new Date().toDateString()
-    const yesterday = new Date(Date.now() - 86400000).toDateString()
-    const lastEntry = userProgress.lastEntryDate
-      ? new Date(userProgress.lastEntryDate).toDateString()
-      : null
+      // Award XP through centralized store
+      const xpStore = useXPStore.getState()
+      const { xpAwarded, leveledUp, newLevel } = await xpStore.awardXP(XPEventType.JOURNAL_ENTRY, {
+        baseXP: journalXP,
+        streak: newStreak,
+        gratitudeCount: entryData.gratitude.filter(g => g.trim()).length
+      })
 
-    let newStreak = userProgress.currentStreak
-    if (lastEntry === yesterday) {
-      newStreak += 1
-    } else if (lastEntry !== today) {
-      newStreak = 1
-    }
+      // Create new entry with the XP awarded from the centralized store
+      const newEntry: JournalEntry = {
+        ...entryData,
+        id: `entry-${Date.now()}`,
+        xpEarned: xpAwarded,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
 
-    // Add streak bonus
-    const streakBonus = XP_REWARDS.STREAK_BONUS(newStreak)
-    xpEarned += isNaN(streakBonus) ? 0 : streakBonus
+      // Update journal-specific progress
+      const newProgress = {
+        ...userProgress,
+        level: newLevel,
+        currentXP: xpStore.currentXP,
+        totalXP: xpStore.totalXP,
+        currentStreak: newStreak,
+        longestStreak: Math.max(newStreak, userProgress.longestStreak),
+        totalEntries: userProgress.totalEntries + 1,
+        lastEntryDate: new Date().toISOString(),
+      }
 
-    // Create new entry
-    const newEntry: JournalEntry = {
-      ...entryData,
-      id: `entry-${Date.now()}`,
-      xpEarned,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
+      set({
+        entries: [newEntry, ...entries],
+        userProgress: newProgress,
+      })
 
-    // Calculate new level
-    const newTotalXP = userProgress.totalXP + xpEarned
-    let newLevel = LEVELS.findIndex(level => newTotalXP < level.maxXP) + 1
-    if (newLevel === 0) newLevel = LEVELS.length // If no level found (totalXP >= all maxXP), set to max level
-    const currentLevelData = LEVELS[newLevel - 1]
-    // For the max level, calculate currentXP differently to avoid Infinity
-    const newCurrentXP =
-      currentLevelData.maxXP === Infinity
-        ? newTotalXP - currentLevelData.minXP
-        : Math.min(
-            newTotalXP - currentLevelData.minXP,
-            currentLevelData.maxXP - currentLevelData.minXP
-          )
-
-    const newProgress = {
-      ...userProgress,
-      level: newLevel,
-      currentXP: isNaN(newCurrentXP) ? 0 : newCurrentXP,
-      totalXP: isNaN(newTotalXP) ? 0 : newTotalXP,
-      currentStreak: newStreak,
-      longestStreak: Math.max(newStreak, userProgress.longestStreak),
-      totalEntries: userProgress.totalEntries + 1,
-      lastEntryDate: new Date().toISOString(),
-    }
-
-    set({
-      entries: [newEntry, ...entries],
-      userProgress: newProgress,
-    })
-
-    // Check for new achievements
-    get().checkAchievements()
+      // Check for new achievements
+      get().checkAchievements()
     
     // Sync to Firestore if user is authenticated
     if (entryData.userId !== 'demo-user') {
@@ -174,23 +163,20 @@ export const useJournalStore = create<JournalState>((set, get) => ({
 
     // Update user progress if XP changed
     if (xpDiff !== 0) {
-      const newTotalXP = userProgress.totalXP + xpDiff
-      let newLevel = LEVELS.findIndex(level => newTotalXP < level.maxXP) + 1
-      if (newLevel === 0) newLevel = LEVELS.length
-      const currentLevelData = LEVELS[newLevel - 1]
-      const newCurrentXP =
-        currentLevelData.maxXP === Infinity
-          ? newTotalXP - currentLevelData.minXP
-          : Math.min(
-              newTotalXP - currentLevelData.minXP,
-              currentLevelData.maxXP - currentLevelData.minXP
-            )
+      // Award or deduct XP through centralized store
+      const xpStore = useXPStore.getState()
+      if (xpDiff > 0) {
+        await xpStore.awardXP(XPEventType.JOURNAL_ENTRY, { baseXP: xpDiff })
+      } else {
+        // Handle XP reduction if needed
+        xpStore.setXP(xpStore.totalXP + xpDiff)
+      }
 
       const newProgress = {
         ...userProgress,
-        level: newLevel,
-        currentXP: isNaN(newCurrentXP) ? 0 : newCurrentXP,
-        totalXP: isNaN(newTotalXP) ? 0 : newTotalXP,
+        level: xpStore.level,
+        currentXP: xpStore.currentXP,
+        totalXP: xpStore.totalXP,
       }
 
       set({ userProgress: newProgress })
@@ -394,11 +380,9 @@ export const useJournalStore = create<JournalState>((set, get) => ({
       }
     }
 
-    // Calculate level
-    const levelIndex = LEVELS.findIndex(level => totalXP < level.maxXP)
-    const newLevel = levelIndex >= 0 ? levelIndex + 1 : LEVELS.length
-    const currentLevelMinXP = LEVELS[newLevel - 1]?.minXP || 0
-    const currentXP = totalXP - currentLevelMinXP
+    // Sync XP with centralized store
+    const xpStore = useXPStore.getState()
+    xpStore.setXP(totalXP)
 
     // Get last entry date
     const lastEntryDate =
@@ -408,12 +392,12 @@ export const useJournalStore = create<JournalState>((set, get) => ({
           ).date
         : null
 
-    // Create recalculated progress
+    // Create recalculated progress using centralized XP data
     const recalculatedProgress = {
       ...userProgress,
-      level: newLevel,
-      currentXP: Math.max(0, currentXP),
-      totalXP,
+      level: xpStore.level,
+      currentXP: xpStore.currentXP,
+      totalXP: xpStore.totalXP,
       currentStreak,
       longestStreak,
       totalEntries,
