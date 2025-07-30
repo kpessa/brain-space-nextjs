@@ -4,8 +4,8 @@ import BraindumpClient from './braindump-client'
 // Force dynamic rendering because React Flow uses React Context
 export const dynamic = 'force-dynamic'
 
-export default function BraindumpPage() {
-  const user = getUserFromHeaders()
+export default async function BraindumpPage() {
+  const user = await getUserFromHeaders()
   
   if (!user) {
     return null // This shouldn't happen as layout checks auth

@@ -165,6 +165,13 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       set({ error: 'Node not found' })
       return
     }
+    
+    console.log('updateNode called with:', {
+      nodeId,
+      updates,
+      tags: updates.tags,
+      currentNodeTags: node.tags
+    })
 
     try {
       // Dynamically import Firebase

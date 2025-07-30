@@ -48,6 +48,9 @@ export interface TimeSlot {
   timeIndex: number // -2, -1, 0, 1, 2, etc. based on 12pm as 0
   period: 'morning' | 'afternoon' | 'evening' | 'night'
   tasks: TimeboxTask[]
+  isBlocked?: boolean
+  blockReason?: 'meeting' | 'patient-care' | 'admin' | 'lunch' | 'commute' | 'break' | 'personal' | 'custom'
+  blockLabel?: string
 }
 
 interface TimeboxData {
@@ -74,43 +77,62 @@ interface TimeboxState {
   removeTaskFromSlot: (taskId: string, slotId: string) => Promise<void>
   updateTaskInSlot: (taskId: string, updates: Partial<TimeboxTask>) => Promise<void>
   moveTaskBetweenSlots: (taskId: string, fromSlotId: string, toSlotId: string) => Promise<void>
-  initializeTimeSlots: () => void
+  initializeTimeSlots: (intervalMinutes?: 30 | 60 | 120) => void
+  blockTimeSlot: (slotId: string, reason: TimeSlot['blockReason'], label?: string) => Promise<void>
+  unblockTimeSlot: (slotId: string) => Promise<void>
   
   // Firebase actions
   loadTimeboxData: (userId: string, date: string) => Promise<void>
   saveTimeboxData: (userId: string) => Promise<void>
 }
 
+// Helper function to format time display
+const formatTimeDisplay = (hour: number, minute: number): string => {
+  const period = hour >= 12 ? 'pm' : 'am'
+  const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
+  const displayMinute = minute === 0 ? '' : `:${minute.toString().padStart(2, '0')}`
+  return `${displayHour}${displayMinute}${period}`
+}
+
 // Helper function to generate time slots
-const generateTimeSlots = (): TimeSlot[] => {
+const generateTimeSlots = (intervalMinutes: 30 | 60 | 120 = 120): TimeSlot[] => {
   const slots: TimeSlot[] = []
-  const hours = [
-    // Morning (6am - 12pm)
-    { start: '06:00', end: '08:00', display: '6-8am', index: -3, period: 'morning' as const },
-    { start: '08:00', end: '10:00', display: '8-10am', index: -2, period: 'morning' as const },
-    { start: '10:00', end: '12:00', display: '10am-12pm', index: -1, period: 'morning' as const },
-
-    // Afternoon (12pm - 6pm)
-    { start: '12:00', end: '14:00', display: '12-2pm', index: 0, period: 'afternoon' as const },
-    { start: '14:00', end: '16:00', display: '2-4pm', index: 1, period: 'afternoon' as const },
-    { start: '16:00', end: '18:00', display: '4-6pm', index: 2, period: 'afternoon' as const },
-
-    // Evening (6pm - 10pm)
-    { start: '18:00', end: '20:00', display: '6-8pm', index: 3, period: 'evening' as const },
-    { start: '20:00', end: '22:00', display: '8-10pm', index: 4, period: 'evening' as const },
-  ]
-
-  hours.forEach(({ start, end, display, index, period }) => {
+  const startHour = 6 // 6am
+  const endHour = 22 // 10pm
+  
+  let index = 0
+  const noonIndex = Math.floor((12 - startHour) * 60 / intervalMinutes)
+  
+  for (let hour = startHour; hour < endHour; hour += intervalMinutes / 60) {
+    const currentHour = Math.floor(hour)
+    const currentMinute = Math.round((hour - currentHour) * 60)
+    const nextHour = Math.floor(hour + intervalMinutes / 60)
+    const nextMinute = Math.round(((hour + intervalMinutes / 60) - nextHour) * 60)
+    
+    // Determine period
+    let period: 'morning' | 'afternoon' | 'evening' | 'night'
+    if (currentHour < 12) period = 'morning'
+    else if (currentHour < 17) period = 'afternoon'
+    else if (currentHour < 21) period = 'evening'
+    else period = 'night'
+    
+    // Format times
+    const startTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`
+    const endTime = `${nextHour.toString().padStart(2, '0')}:${nextMinute.toString().padStart(2, '0')}`
+    const displayTime = `${formatTimeDisplay(currentHour, currentMinute)}-${formatTimeDisplay(nextHour, nextMinute)}`
+    
     slots.push({
-      id: `slot-${start.replace(':', '')}`,
-      startTime: start,
-      endTime: end,
-      displayTime: display,
-      timeIndex: index,
-      period: period,
+      id: `slot-${startTime.replace(':', '')}`,
+      startTime,
+      endTime,
+      displayTime,
+      timeIndex: index - noonIndex,
+      period,
       tasks: [],
     })
-  })
+    
+    index++
+  }
 
   return slots
 }
@@ -230,8 +252,45 @@ export const useTimeboxStore = create<TimeboxState>((set, get) => ({
     }
   },
 
-  initializeTimeSlots: () => {
-    set({ timeSlots: generateTimeSlots() })
+  initializeTimeSlots: (intervalMinutes?: 30 | 60 | 120) => {
+    const interval = intervalMinutes || 120
+    set({ timeSlots: generateTimeSlots(interval) })
+  },
+  
+  blockTimeSlot: async (slotId: string, reason: TimeSlot['blockReason'], label?: string) => {
+    const { timeSlots } = get()
+    const updatedSlots = timeSlots.map(slot => {
+      if (slot.id === slotId) {
+        return {
+          ...slot,
+          isBlocked: true,
+          blockReason: reason,
+          blockLabel: label,
+          tasks: [] // Clear any tasks when blocking
+        }
+      }
+      return slot
+    })
+    set({ timeSlots: updatedSlots })
+    
+    // Save to Firebase - we need userId from somewhere
+    // For now, we'll save when the user manually saves
+  },
+  
+  unblockTimeSlot: async (slotId: string) => {
+    const { timeSlots } = get()
+    const updatedSlots = timeSlots.map(slot => {
+      if (slot.id === slotId) {
+        return {
+          ...slot,
+          isBlocked: false,
+          blockReason: undefined,
+          blockLabel: undefined
+        }
+      }
+      return slot
+    })
+    set({ timeSlots: updatedSlots })
   },
 
   loadTimeboxData: async (userId: string, date: string) => {

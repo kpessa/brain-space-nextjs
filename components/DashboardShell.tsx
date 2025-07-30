@@ -7,17 +7,18 @@ import { BottomNavigation } from './BottomNavigation'
 import { ClientProviders } from './ClientProviders'
 import { ThemeToggle } from './ThemeToggle'
 
-export default function DashboardShell({
+export default async function DashboardShell({
   children,
   currentPath,
 }: {
   children: React.ReactNode
   currentPath: string
 }) {
-  const user = getUserFromHeaders()
+  const user = await getUserFromHeaders()
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <ClientProviders>
+      <div className="min-h-screen bg-background flex flex-col">
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
         <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-card px-6 pb-4 shadow-sm">
@@ -91,9 +92,7 @@ export default function DashboardShell({
       
       {/* Bottom navigation for mobile */}
       <BottomNavigation />
-      
-      {/* Client-side providers and animations */}
-      <ClientProviders />
     </div>
+    </ClientProviders>
   )
 }

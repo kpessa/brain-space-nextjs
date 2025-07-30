@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
-    clearAuthCookie()
+    await clearAuthCookie()
     
     // Get the origin from the request
     const origin = request.nextUrl.origin

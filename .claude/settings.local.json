@@ -29,7 +29,9 @@
       "Bash(chmod:*)",
       "Bash(node:*)",
       "Bash(sed:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(npx @next/codemod@canary:*)",
+      "Bash(timeout 15 pnpm run dev)"
     ],
     "deny": []
   }

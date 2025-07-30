@@ -29,6 +29,12 @@ interface UserPreferences {
   hidePersonalInWorkMode: boolean
   hideWorkInPersonalMode: boolean
   
+  // Timebox preferences
+  timeboxIntervalMinutes: 30 | 60 | 120
+  workModeTimeboxInterval: 30 | 60 | 120
+  personalModeTimeboxInterval: 30 | 60 | 120
+  autoSwitchTimeboxInterval: boolean // Auto switch interval based on mode
+  
   // Actions
   setMode: (mode: UserMode) => void
   toggleMode: () => void
@@ -42,6 +48,8 @@ interface UserPreferences {
   isWorkTag: (tag: string) => boolean
   isPersonalTag: (tag: string) => boolean
   getEffectiveTheme: () => ThemeMode
+  setTimeboxInterval: (minutes: 30 | 60 | 120) => void
+  getEffectiveTimeboxInterval: () => 30 | 60 | 120
 }
 
 export const useUserPreferencesStore = create<UserPreferences>()(
@@ -59,6 +67,10 @@ export const useUserPreferencesStore = create<UserPreferences>()(
       defaultToCurrentMode: true,
       hidePersonalInWorkMode: true,
       hideWorkInPersonalMode: true,
+      timeboxIntervalMinutes: 120,
+      workModeTimeboxInterval: 30,
+      personalModeTimeboxInterval: 120,
+      autoSwitchTimeboxInterval: true,
       
       // Set mode
       setMode: (mode: UserMode) => {
@@ -151,6 +163,25 @@ export const useUserPreferencesStore = create<UserPreferences>()(
           return 'professional'
         }
         return themeMode
+      },
+      
+      // Set timebox interval
+      setTimeboxInterval: (minutes: 30 | 60 | 120) => {
+        const { currentMode } = get()
+        if (currentMode === 'work') {
+          set({ workModeTimeboxInterval: minutes, timeboxIntervalMinutes: minutes })
+        } else {
+          set({ personalModeTimeboxInterval: minutes, timeboxIntervalMinutes: minutes })
+        }
+      },
+      
+      // Get effective timebox interval based on mode
+      getEffectiveTimeboxInterval: () => {
+        const { currentMode, autoSwitchTimeboxInterval, workModeTimeboxInterval, personalModeTimeboxInterval, timeboxIntervalMinutes } = get()
+        if (autoSwitchTimeboxInterval) {
+          return currentMode === 'work' ? workModeTimeboxInterval : personalModeTimeboxInterval
+        }
+        return timeboxIntervalMinutes
       },
     }),
     {

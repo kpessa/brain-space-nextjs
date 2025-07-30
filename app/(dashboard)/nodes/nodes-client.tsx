@@ -42,9 +42,11 @@ import {
   LinkIcon,
   Trash2,
   MessageSquare,
-  FileText
+  FileText,
+  Mic
 } from 'lucide-react'
 import { format } from 'date-fns'
+import StandupSummaryDialog from '@/components/StandupSummaryDialog'
 
 interface NodeCreateModalProps {
   isOpen: boolean
@@ -842,6 +844,21 @@ export default function NodesClient({ userId }: { userId: string }) {
                   <FileText className="w-4 h-4" />
                   Export Updates
                 </Button>
+                
+                {/* Daily Standup (Work Mode Only) */}
+                {currentMode === 'work' && (
+                  <StandupSummaryDialog
+                    trigger={
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2 bg-background/10 border-background/20 text-primary-foreground hover:bg-background/20"
+                      >
+                        <Mic className="w-4 h-4" />
+                        Daily Standup
+                      </Button>
+                    }
+                  />
+                )}
                 
                 {/* Add Node */}
                 <Button

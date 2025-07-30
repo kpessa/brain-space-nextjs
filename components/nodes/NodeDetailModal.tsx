@@ -9,6 +9,7 @@ import { XPEventType } from '@/types/xp'
 import type { Node, NodeType, NodeUpdate } from '@/types/node'
 import { getNodeTypeIcon, getNodeTypeColor, getEisenhowerQuadrant } from '@/types/node'
 import { NodeBreadcrumb } from './NodeBreadcrumb'
+import { ReenhanceNodeDialog } from './ReenhanceNodeDialog'
 import { useToast } from '@/hooks/useToast'
 import { useXPAnimation } from '@/components/XPGainAnimation'
 import { 
@@ -59,6 +60,7 @@ export function NodeDetailModal({
   const [editedNode, setEditedNode] = useState(node)
   const [newTag, setNewTag] = useState('')
   const [saving, setSaving] = useState(false)
+  const [showReenhanceDialog, setShowReenhanceDialog] = useState(false)
   
   // Updates state
   const [newUpdateContent, setNewUpdateContent] = useState('')
@@ -307,7 +309,7 @@ export function NodeDetailModal({
               {/* Breadcrumb */}
               {parent && !isEditing && (
                 <div className="mt-1">
-                  <NodeBreadcrumb node={node} />
+                  <NodeBreadcrumb node={currentNode} />
                 </div>
               )}
             </div>
@@ -340,6 +342,14 @@ export function NodeDetailModal({
                     onClick={() => setIsEditing(true)}
                   >
                     <Edit3 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowReenhanceDialog(true)}
+                    title="Re-enhance this node with AI"
+                  >
+                    <Sparkles className="w-4 h-4" />
                   </Button>
                   <Button
                     size="sm"
@@ -454,12 +464,12 @@ export function NodeDetailModal({
                     Priority
                   </label>
                   <span className={`inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium ${
-                    getEisenhowerQuadrant(node.urgency, node.importance) === 'do-first' ? 'bg-red-100 text-red-800' :
-                    getEisenhowerQuadrant(node.urgency, node.importance) === 'schedule' ? 'bg-blue-100 text-blue-800' :
-                    getEisenhowerQuadrant(node.urgency, node.importance) === 'delegate' ? 'bg-yellow-100 text-yellow-800' :
+                    getEisenhowerQuadrant(currentNode.urgency, currentNode.importance) === 'do-first' ? 'bg-red-100 text-red-800' :
+                    getEisenhowerQuadrant(currentNode.urgency, currentNode.importance) === 'schedule' ? 'bg-blue-100 text-blue-800' :
+                    getEisenhowerQuadrant(currentNode.urgency, currentNode.importance) === 'delegate' ? 'bg-yellow-100 text-yellow-800' :
                     'bg-gray-100 text-gray-800'
                   }`}>
-                    {getEisenhowerQuadrant(node.urgency, node.importance).replace('-', ' ')}
+                    {getEisenhowerQuadrant(currentNode.urgency, currentNode.importance).replace('-', ' ')}
                   </span>
                 </div>
               </div>
@@ -503,7 +513,7 @@ export function NodeDetailModal({
                   Tags
                 </label>
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {(isEditing ? editedNode.tags : node.tags)?.map((tag) => (
+                  {(isEditing ? editedNode.tags : currentNode.tags)?.map((tag) => (
                     <span
                       key={tag}
                       className="inline-flex items-center px-2 py-1 rounded-md text-sm bg-gray-100 text-gray-700"
@@ -536,11 +546,11 @@ export function NodeDetailModal({
               <div className="pt-4 border-t space-y-2 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4" />
-                  <span>Created: {node.createdAt ? format(new Date(node.createdAt), 'PPp') : 'Unknown'}</span>
+                  <span>Created: {currentNode.createdAt ? format(new Date(currentNode.createdAt), 'PPp') : 'Unknown'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
-                  <span>Updated: {node.updatedAt ? format(new Date(node.updatedAt), 'PPp') : 'Unknown'}</span>
+                  <span>Updated: {currentNode.updatedAt ? format(new Date(currentNode.updatedAt), 'PPp') : 'Unknown'}</span>
                 </div>
               </div>
             </div>
@@ -759,7 +769,7 @@ export function NodeDetailModal({
                     variant="outline"
                     onClick={() => {
                       onClose()
-                      onCreateParent?.(node)
+                      onCreateParent?.(currentNode)
                     }}
                     className="mt-2"
                   >
@@ -832,7 +842,7 @@ export function NodeDetailModal({
                   variant="outline"
                   onClick={() => {
                     onClose()
-                    onCreateChild?.(node)
+                    onCreateChild?.(currentNode)
                   }}
                   className="mt-2"
                 >
@@ -855,6 +865,14 @@ export function NodeDetailModal({
           )}
         </div>
       </div>
+      
+      {/* Re-enhance Dialog */}
+      <ReenhanceNodeDialog
+        isOpen={showReenhanceDialog}
+        onClose={() => setShowReenhanceDialog(false)}
+        node={currentNode}
+        onSuccess={forceRefresh}
+      />
     </Modal>
   )
 }

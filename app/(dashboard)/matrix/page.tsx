@@ -4,8 +4,8 @@ import MatrixClient from './matrix-client'
 // Force dynamic rendering because drag-and-drop uses React Context
 export const dynamic = 'force-dynamic'
 
-export default function MatrixPage() {
-  const user = getUserFromHeaders()
+export default async function MatrixPage() {
+  const user = await getUserFromHeaders()
   
   if (!user) {
     return null // This shouldn't happen as layout checks auth

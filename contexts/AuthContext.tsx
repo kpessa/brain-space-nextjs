@@ -61,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    console.log('[AuthContext] useEffect initialized', {
       timestamp: new Date().toISOString(),
       pathname: typeof window !== 'undefined' ? window.location.pathname : 'SSR',
     })
@@ -75,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       getRedirectResult(auth)
         .then(async (result) => {
           if (result && result.user) {
+            console.log('[AuthContext] Redirect result user found', {
               userEmail: result.user.email,
               timestamp: new Date().toISOString(),
             })
@@ -107,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Listen for auth changes
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        console.log('[AuthContext] Auth state changed', {
           hasUser: !!firebaseUser,
           userEmail: firebaseUser?.email,
           hasSetCookie,
@@ -194,6 +197,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signInWithGoogle = async () => {
+    console.log('[AuthContext] Initiating Google sign-in', {
       timestamp: new Date().toISOString(),
       isProduction: process.env.NODE_ENV === 'production',
     })
@@ -221,6 +225,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Try popup first in development
         const result = await signInWithPopup(auth, provider)
         
+        console.log('[AuthContext] Google sign-in popup successful', {
           userEmail: result.user.email,
           timestamp: new Date().toISOString(),
         })

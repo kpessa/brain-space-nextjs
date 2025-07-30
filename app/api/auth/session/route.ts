@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Set secure HTTP-only cookie
-    setAuthCookie(token)
+    await setAuthCookie(token)
 
     return NextResponse.json({
       success: true,
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE() {
   try {
-    clearAuthCookie()
+    await clearAuthCookie()
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Session deletion error:', error)

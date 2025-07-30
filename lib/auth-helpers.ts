@@ -26,7 +26,7 @@ export async function verifyAuth(
 
     // Fall back to cookie if no header token
     if (!token) {
-      const cookieStore = cookies()
+      const cookieStore = await cookies()
       token = cookieStore.get(AUTH_COOKIE_NAME)?.value
     }
 
@@ -98,8 +98,8 @@ export async function verifyAuth(
 /**
  * Set auth cookie with secure settings
  */
-export function setAuthCookie(token: string) {
-  const cookieStore = cookies()
+export async function setAuthCookie(token: string) {
+  const cookieStore = await cookies()
   
   cookieStore.set(AUTH_COOKIE_NAME, token, {
     httpOnly: true,
@@ -113,8 +113,8 @@ export function setAuthCookie(token: string) {
 /**
  * Clear auth cookie
  */
-export function clearAuthCookie() {
-  const cookieStore = cookies()
+export async function clearAuthCookie() {
+  const cookieStore = await cookies()
   cookieStore.delete(AUTH_COOKIE_NAME)
 }
 
