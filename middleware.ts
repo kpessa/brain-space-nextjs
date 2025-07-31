@@ -59,7 +59,6 @@ export async function middleware(request: NextRequest) {
   // Add user info to headers for server components
   requestHeaders.set('x-user-id', decoded.uid)
   requestHeaders.set('x-user-email', decoded.email || '')
-  requestHeaders.set('x-pathname', pathname)
   
   return NextResponse.next({
     request: {

@@ -9,6 +9,7 @@ import {
   Grid3x3,
   ListTodo,
   Repeat,
+  FileText,
 } from 'lucide-react'
 
 export const navigation = [
@@ -22,4 +23,5 @@ export const navigation = [
   { name: 'Timebox', href: '/timebox', icon: Clock },
   { name: 'Routines', href: '/routines', icon: SunMoon },
   { name: 'Calendar', href: '/calendar', icon: Calendar },
+  { name: 'Status Update', href: '/status-update', icon: FileText },
 ]

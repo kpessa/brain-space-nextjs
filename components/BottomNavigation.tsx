@@ -10,6 +10,7 @@ import {
   MoreHorizontal,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { isNavItemActive } from '@/lib/navigation-utils'
 
 interface NavItem {
   path: string
@@ -46,7 +47,7 @@ export function BottomNavigation() {
       <div className="grid grid-cols-5 h-16 px-2">
         {navItems.map(item => {
           const Icon = item.icon
-          const isActive = pathname === item.path || (item.path !== '#more' && pathname.startsWith(item.path + '/'))
+          const isActive = isNavItemActive(pathname, item.path)
 
           if (item.action) {
             // Render button for "More" action

@@ -2,18 +2,20 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Menu, X, Brain } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { navigation } from '@/lib/navigation'
+import { isNavItemActive } from '@/lib/navigation-utils'
 import { ThemeToggle } from './ThemeToggle'
 
 interface MobileNavigationProps {
-  currentPath: string
   user: any
 }
 
-export function MobileNavigation({ currentPath, user }: MobileNavigationProps) {
+export function MobileNavigation({ user }: MobileNavigationProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const pathname = usePathname()
 
   // Listen for custom event from bottom navigation
   useEffect(() => {
@@ -82,23 +84,27 @@ export function MobileNavigation({ currentPath, user }: MobileNavigationProps) {
             {/* Navigation items */}
             <nav className="flex-1 overflow-y-auto py-4">
               <ul className="space-y-1 px-2">
-                {navigation.map((item) => (
-                  <li key={item.name}>
-                    <Link
-                      href={item.href}
-                      onClick={() => setIsOpen(false)}
-                      className={cn(
-                        "group flex gap-x-3 rounded-md p-3 text-sm leading-6 font-semibold transition-colors",
-                        currentPath === item.href
-                          ? "bg-accent text-accent-foreground"
-                          : "text-foreground/70 hover:text-primary hover:bg-accent/10"
-                      )}
-                    >
-                      <item.icon className="h-6 w-6 shrink-0" />
-                      {item.name}
-                    </Link>
-                  </li>
-                ))}
+                {navigation.map((item) => {
+                  const isActive = isNavItemActive(pathname, item.href)
+                  
+                  return (
+                    <li key={item.name}>
+                      <Link
+                        href={item.href}
+                        onClick={() => setIsOpen(false)}
+                        className={cn(
+                          "group flex gap-x-3 rounded-md p-3 text-sm leading-6 font-semibold transition-colors",
+                          isActive
+                            ? "bg-accent text-accent-foreground"
+                            : "text-foreground/70 hover:text-primary hover:bg-accent/10"
+                        )}
+                      >
+                        <item.icon className="h-6 w-6 shrink-0" />
+                        {item.name}
+                      </Link>
+                    </li>
+                  )
+                })}
               </ul>
             </nav>
 

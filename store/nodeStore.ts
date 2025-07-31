@@ -39,6 +39,7 @@ interface NodesStore {
   getNodeAncestors: (nodeId: string) => Node[]
   getNodeDescendants: (nodeId: string) => Node[]
   selectNode: (nodeId: string | null) => void
+  toggleNodePin: (nodeId: string) => Promise<void>
 
   // Clear state
   clearNodes: () => void
@@ -695,6 +696,16 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
     }
     
     return descendants
+  },
+  
+  toggleNodePin: async (nodeId: string) => {
+    const node = get().getNodeById(nodeId)
+    if (!node) {
+      set({ error: 'Node not found' })
+      return
+    }
+    
+    await get().updateNode(nodeId, { isPinned: !node.isPinned })
   },
 
   clearNodes: () => {

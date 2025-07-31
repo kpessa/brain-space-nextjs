@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { googleCalendarService } from '@/services/googleCalendar'
 import { EightWeekViewComponent } from '@/components/calendar/EightWeekView'
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Settings } from 'lucide-react'
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Settings, TrendingUp } from 'lucide-react'
 import { useCalendarStore } from '@/store/calendarStore'
+import { CalendarStatusDialog } from '@/components/calendar/CalendarStatusDialog'
 
 export default function CalendarClient({ userId }: { userId: string }) {
   const router = useRouter()
@@ -15,6 +16,7 @@ export default function CalendarClient({ userId }: { userId: string }) {
   const [calendars, setCalendars] = useState<any[]>([])
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [showStatusDialog, setShowStatusDialog] = useState(false)
 
   // Check Google Calendar authorization on mount
   useEffect(() => {
@@ -192,6 +194,14 @@ export default function CalendarClient({ userId }: { userId: string }) {
               {isAuthorized && (
                 <>
                   <button
+                    onClick={() => setShowStatusDialog(true)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    title="PTO Planning"
+                  >
+                    <TrendingUp className="h-4 w-4" />
+                    <span>PTO Planning</span>
+                  </button>
+                  <button
                     onClick={() => router.push('/calendar/settings')}
                     className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                     title="Calendar Settings"
@@ -298,6 +308,12 @@ export default function CalendarClient({ userId }: { userId: string }) {
           </>
         )}
         </div>
+        
+        {/* Calendar Status Dialog */}
+        <CalendarStatusDialog 
+          isOpen={showStatusDialog} 
+          onClose={() => setShowStatusDialog(false)} 
+        />
       </div>
   )
 }

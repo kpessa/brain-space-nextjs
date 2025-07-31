@@ -31,7 +31,8 @@
       "Bash(sed:*)",
       "Bash(cp:*)",
       "Bash(npx @next/codemod@canary:*)",
-      "Bash(timeout 15 pnpm run dev)"
+      "Bash(timeout 15 pnpm run dev)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

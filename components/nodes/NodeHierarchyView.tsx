@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { ChevronRight, ChevronDown, GitBranch, GitMerge, Circle, CheckCircle, Square, CheckSquare } from 'lucide-react'
+import { ChevronRight, ChevronDown, GitBranch, GitMerge, Circle, CheckCircle, Square, CheckSquare, Pin } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useNodesStore } from '@/store/nodeStore'
 import type { Node } from '@/types/node'
@@ -34,7 +34,7 @@ function NodeTreeItem({
   onSelect,
   selectedNodes
 }: NodeTreeItemProps) {
-  const { getNodeChildren, updateNode } = useNodesStore()
+  const { getNodeChildren, updateNode, toggleNodePin } = useNodesStore()
   const children = getNodeChildren(node.id)
   const hasChildren = children.length > 0
   const isExpanded = expandedNodes.has(node.id)
@@ -49,6 +49,11 @@ function NodeTreeItem({
   const handleCompletionToggle = (e: React.MouseEvent) => {
     e.stopPropagation()
     updateNode(node.id, { completed: !node.completed })
+  }
+  
+  const handlePinToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    await toggleNodePin(node.id)
   }
 
   const getQuadrantColor = (urgency?: number, importance?: number) => {
@@ -125,6 +130,11 @@ function NodeTreeItem({
         <span className={`flex-1 ${node.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
           {node.title || 'Untitled'}
         </span>
+        
+        {/* Pin indicator */}
+        {node.isPinned && (
+          <Pin className="w-3 h-3 text-yellow-500 fill-yellow-500 flex-shrink-0" />
+        )}
 
         {/* Tags */}
         {node.tags && node.tags.length > 0 && (
@@ -149,6 +159,15 @@ function NodeTreeItem({
 
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handlePinToggle}
+            className="p-1"
+            title={node.isPinned ? "Unpin node" : "Pin node"}
+          >
+            <Pin className={`w-3 h-3 ${node.isPinned ? 'fill-yellow-500 text-yellow-500' : ''}`} />
+          </Button>
           <Button
             size="sm"
             variant="ghost"
@@ -258,9 +277,21 @@ export function NodeHierarchyView({
     return roots
   }, [nodes, showAllAsRoots])
 
+  // Separate pinned and unpinned nodes
+  const { pinnedNodes, unpinnedRootNodes } = useMemo(() => {
+    const pinned = nodes.filter(node => node.isPinned)
+    const unpinnedRoots = rootNodes.filter(node => !node.isPinned)
+    return { pinnedNodes: pinned, unpinnedRootNodes: unpinnedRoots }
+  }, [nodes, rootNodes])
+
   // Filter nodes based on search
-  const filteredRootNodes = useMemo(() => {
-    if (!searchQuery) return rootNodes
+  const { filteredPinnedNodes, filteredRootNodes } = useMemo(() => {
+    if (!searchQuery) {
+      return { 
+        filteredPinnedNodes: pinnedNodes,
+        filteredRootNodes: unpinnedRootNodes 
+      }
+    }
 
     const searchLower = searchQuery.toLowerCase()
     const matchesSearch = (node: Node): boolean => {
@@ -277,8 +308,11 @@ export function NodeHierarchyView({
       return children.some(child => matchesSearch(child))
     }
 
-    return rootNodes.filter(matchesSearch)
-  }, [rootNodes, searchQuery, getNodeChildren])
+    return {
+      filteredPinnedNodes: pinnedNodes.filter(matchesSearch),
+      filteredRootNodes: unpinnedRootNodes.filter(matchesSearch)
+    }
+  }, [pinnedNodes, unpinnedRootNodes, searchQuery, getNodeChildren])
 
   const toggleExpand = (nodeId: string) => {
     setExpandedNodes(prev => {
@@ -338,31 +372,69 @@ export function NodeHierarchyView({
 
       {/* Tree */}
       <div className="p-4 max-h-[600px] overflow-y-auto">
-        {filteredRootNodes.length === 0 ? (
+        {filteredRootNodes.length === 0 && filteredPinnedNodes.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             {searchQuery ? 'No nodes match your search' : 'No nodes found'}
           </div>
         ) : (
-          <div className="space-y-1">
-            <p className="text-xs text-gray-500 mb-2">Root nodes (no parent):</p>
-            {filteredRootNodes.map((node) => (
-              <div key={node.id} className="group relative">
-                <div className="absolute left-0 top-2 w-1 h-6 bg-brain-500 rounded-r opacity-50"></div>
-                <NodeTreeItem
-                  node={node}
-                  level={0}
-                  onCreateChild={onCreateChild}
-                  onCreateParent={onCreateParent}
-                  onNodeClick={onNodeClick}
-                  expandedNodes={expandedNodes}
-                  onToggleExpand={toggleExpand}
-                  selectMode={selectMode}
-                  isSelected={selectedNodes.has(node.id)}
-                  onSelect={onNodeSelect}
-                  selectedNodes={selectedNodes}
-                />
+          <div className="space-y-6">
+            {/* Pinned Nodes Section */}
+            {filteredPinnedNodes.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Pin className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                  <p className="text-sm font-medium text-gray-700">Pinned Nodes ({filteredPinnedNodes.length})</p>
+                </div>
+                <div className="space-y-1 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                  {filteredPinnedNodes.map((node) => (
+                    <div key={node.id} className="group relative">
+                      <NodeTreeItem
+                        node={node}
+                        level={0}
+                        onCreateChild={onCreateChild}
+                        onCreateParent={onCreateParent}
+                        onNodeClick={onNodeClick}
+                        expandedNodes={expandedNodes}
+                        onToggleExpand={toggleExpand}
+                        selectMode={selectMode}
+                        isSelected={selectedNodes.has(node.id)}
+                        onSelect={onNodeSelect}
+                        selectedNodes={selectedNodes}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+            )}
+            
+            {/* Regular Nodes Section */}
+            {filteredRootNodes.length > 0 && (
+              <div>
+                <p className="text-xs text-gray-500 mb-2">
+                  {showAllAsRoots ? 'All nodes:' : 'Root nodes (no parent):'}
+                </p>
+                <div className="space-y-1">
+                  {filteredRootNodes.map((node) => (
+                    <div key={node.id} className="group relative">
+                      <div className="absolute left-0 top-2 w-1 h-6 bg-brain-500 rounded-r opacity-50"></div>
+                      <NodeTreeItem
+                        node={node}
+                        level={0}
+                        onCreateChild={onCreateChild}
+                        onCreateParent={onCreateParent}
+                        onNodeClick={onNodeClick}
+                        expandedNodes={expandedNodes}
+                        onToggleExpand={toggleExpand}
+                        selectMode={selectMode}
+                        isSelected={selectedNodes.has(node.id)}
+                        onSelect={onNodeSelect}
+                        selectedNodes={selectedNodes}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

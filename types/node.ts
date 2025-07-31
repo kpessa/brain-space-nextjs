@@ -121,6 +121,9 @@ export interface Node {
   
   // Work/Personal categorization (optional)
   isPersonal?: boolean
+  
+  // Pin status (optional)
+  isPinned?: boolean
 
   // Recurring task fields (optional)
   taskType?: TaskType

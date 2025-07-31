@@ -188,7 +188,7 @@ export class GoogleCalendarService {
   }
 
   // Get stored access token from Firebase
-  private async getStoredAccessToken(): Promise<string | null> {
+  async getStoredAccessToken(): Promise<string | null> {
     const userId = await this.getCurrentUserId()
     if (!userId) return null
 

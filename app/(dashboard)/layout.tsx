@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import { headers } from 'next/headers'
 import { getUserFromHeaders } from '@/lib/server-auth'
 import DashboardShell from '@/components/DashboardShell'
 
@@ -18,13 +17,9 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  // Get current path for navigation highlighting
-  const headersList = await headers()
-  const pathname = headersList.get('x-pathname') || ''
-
   // User is authenticated, render the dashboard shell
   return (
-    <DashboardShell currentPath={pathname}>
+    <DashboardShell>
       {children}
     </DashboardShell>
   )

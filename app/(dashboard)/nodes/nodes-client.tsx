@@ -43,7 +43,8 @@ import {
   Trash2,
   MessageSquare,
   FileText,
-  Mic
+  Mic,
+  Pin
 } from 'lucide-react'
 import { format } from 'date-fns'
 import StandupSummaryDialog from '@/components/StandupSummaryDialog'
@@ -305,7 +306,7 @@ interface NodeCardProps {
 }
 
 function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected = false, onSelect, selectMode = false, userId, userName }: NodeCardProps) {
-  const { updateNode, deleteNode, getNodeChildren, getNodeParent } = useNodesStore()
+  const { updateNode, deleteNode, getNodeChildren, getNodeParent, toggleNodePin } = useNodesStore()
   const [showDetails, setShowDetails] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
   
@@ -314,6 +315,11 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
 
   const handleCompletionToggle = () => {
     updateNode(node.id, { completed: !node.completed })
+  }
+  
+  const handlePinToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    await toggleNodePin(node.id)
   }
 
   const getQuadrantColor = (urgency?: number, importance?: number) => {
@@ -328,7 +334,7 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
   }
 
   return (
-    <Card className={`hover:shadow-md transition-shadow cursor-pointer ${isSelected ? 'ring-2 ring-brain-500' : ''}`}>
+    <Card className={`hover:shadow-md transition-shadow cursor-pointer ${isSelected ? 'ring-2 ring-brain-500' : ''} ${node.isPinned ? 'bg-yellow-50 border-yellow-300' : ''}`}>
       <CardContent className="p-4" onClick={() => !selectMode && onNodeClick?.(node)}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
@@ -381,6 +387,14 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
             <span className={`px-2 py-1 text-xs font-medium rounded-full ${getQuadrantColor(node.urgency, node.importance)}`}>
               {getEisenhowerQuadrant(node.urgency, node.importance).replace('-', ' ')}
             </span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handlePinToggle}
+              title={node.isPinned ? "Unpin node" : "Pin node"}
+            >
+              <Pin className={`w-4 h-4 ${node.isPinned ? 'fill-yellow-500 text-yellow-500' : ''}`} />
+            </Button>
             <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
               <MoreHorizontal className="w-4 h-4" />
             </Button>
@@ -1097,20 +1111,30 @@ export default function NodesClient({ userId }: { userId: string }) {
           // Grid View
           filteredNodes.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredNodes.map((node) => (
-                <NodeCard 
-                  key={node.id} 
-                  node={node} 
-                  onCreateChild={handleCreateChild}
-                  onCreateParent={handleCreateParent}
-                  onNodeClick={handleNodeClick}
-                  isSelected={selectedNodes.has(node.id)}
-                  onSelect={handleNodeSelect}
-                  selectMode={selectMode}
-                  userId={userId}
-                  userName="Me"
-                />
-              ))}
+              {filteredNodes
+                .sort((a, b) => {
+                  // Sort pinned nodes first
+                  if (a.isPinned && !b.isPinned) return -1
+                  if (!a.isPinned && b.isPinned) return 1
+                  // Then by priority (urgency + importance)
+                  const priorityA = (a.urgency || 0) + (a.importance || 0)
+                  const priorityB = (b.urgency || 0) + (b.importance || 0)
+                  return priorityB - priorityA
+                })
+                .map((node) => (
+                  <NodeCard 
+                    key={node.id} 
+                    node={node} 
+                    onCreateChild={handleCreateChild}
+                    onCreateParent={handleCreateParent}
+                    onNodeClick={handleNodeClick}
+                    isSelected={selectedNodes.has(node.id)}
+                    onSelect={handleNodeSelect}
+                    selectMode={selectMode}
+                    userId={userId}
+                    userName="Me"
+                  />
+                ))}
             </div>
           ) : (
             <Card>

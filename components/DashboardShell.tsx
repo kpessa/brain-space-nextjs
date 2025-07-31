@@ -1,18 +1,15 @@
-import Link from 'next/link'
 import { getUserFromHeaders } from '@/lib/server-auth'
-import { navigation } from '@/lib/navigation'
 import { Brain } from 'lucide-react'
 import { MobileNavigation } from './MobileNavigation'
 import { BottomNavigation } from './BottomNavigation'
 import { ClientProviders } from './ClientProviders'
 import { ThemeToggle } from './ThemeToggle'
+import { DesktopNavigation } from './DesktopNavigation'
 
 export default async function DashboardShell({
   children,
-  currentPath,
 }: {
   children: React.ReactNode
-  currentPath: string
 }) {
   const user = await getUserFromHeaders()
 
@@ -29,31 +26,8 @@ export default async function DashboardShell({
             </div>
             <ThemeToggle />
           </div>
-          <nav className="flex flex-1 flex-col">
-            <ul className="flex flex-1 flex-col gap-y-7">
-              <li>
-                <ul className="-mx-2 space-y-1">
-                  {navigation.map((item) => (
-                    <li key={item.name}>
-                      <Link
-                        href={item.href}
-                        className={`
-                          group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold
-                          ${
-                            currentPath === item.href
-                              ? 'bg-accent text-accent-foreground'
-                              : 'text-gray-700 hover:text-primary hover:bg-gray-50'
-                          }
-                        `}
-                      >
-                        <item.icon className="h-6 w-6 shrink-0" />
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </li>
-              <li className="mt-auto">
+          <DesktopNavigation />
+          <div className="mt-auto">
                 <div className="flex items-center gap-x-4 px-2 py-3 text-sm font-semibold leading-6 text-gray-900">
                   <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center">
                     <span className="text-accent-foreground font-semibold text-sm">
@@ -71,15 +45,12 @@ export default async function DashboardShell({
                 >
                   Sign Out
                 </a>
-              </li>
-            </ul>
-          </nav>
+          </div>
         </div>
       </div>
 
       {/* Mobile header with navigation */}
       <MobileNavigation 
-        currentPath={currentPath} 
         user={user}
       />
 
