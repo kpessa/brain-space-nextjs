@@ -10,6 +10,14 @@ import { Label } from '@/components/ui/Label'
 import { Textarea } from '@/components/ui/Textarea'
 import { ArrowLeft, Plus, X, Heart, Sword, Shield, Users, Scroll, Trash2 } from 'lucide-react'
 import { useJournalStore } from '@/store/journalStore'
+import { 
+  GratitudeSection, 
+  ThreatsSection, 
+  AlliesSection, 
+  QuestSection, 
+  NotesSection 
+} from '@/components/journal'
+import { migrateToArray } from '@/types/journal'
 
 export default function EditJournalEntryClient({ userId }: { userId: string }) {
   const params = useParams()
@@ -21,21 +29,23 @@ export default function EditJournalEntryClient({ userId }: { userId: string }) {
   const entry = entries.find(e => e.id === params.id)
 
   const [formData, setFormData] = useState({
-    gratitude: [''],
+    gratitude: [] as string[],
     dailyQuest: '',
-    threats: '',
-    allies: '',
+    threats: [] as string[],
+    allies: [] as string[],
     notes: '',
+    subQuests: [] as string[],
   })
 
   useEffect(() => {
     if (entry) {
       setFormData({
-        gratitude: entry.gratitude.length > 0 ? entry.gratitude : [''],
+        gratitude: entry.gratitude || [],
         dailyQuest: entry.dailyQuest,
-        threats: entry.threats || '',
-        allies: entry.allies || '',
+        threats: migrateToArray(entry.threats),
+        allies: migrateToArray(entry.allies),
         notes: entry.notes || '',
+        subQuests: [], // Sub-quests not stored yet, future enhancement
       })
     }
   }, [entry])
@@ -55,19 +65,8 @@ export default function EditJournalEntryClient({ userId }: { userId: string }) {
     )
   }
 
-  const handleGratitudeChange = (index: number, value: string) => {
-    const newGratitude = [...formData.gratitude]
-    newGratitude[index] = value
-    setFormData(prev => ({ ...prev, gratitude: newGratitude }))
-  }
-
-  const addGratitudeItem = () => {
-    setFormData(prev => ({ ...prev, gratitude: [...prev.gratitude, ''] }))
-  }
-
-  const removeGratitudeItem = (index: number) => {
-    const newGratitude = formData.gratitude.filter((_, i) => i !== index)
-    setFormData(prev => ({ ...prev, gratitude: newGratitude }))
+  const handleGratitudeChange = (gratitude: string[]) => {
+    setFormData(prev => ({ ...prev, gratitude }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,10 +74,7 @@ export default function EditJournalEntryClient({ userId }: { userId: string }) {
 
     setIsSubmitting(true)
     try {
-      await updateEntry(entry.id, {
-        ...formData,
-        gratitude: formData.gratitude.filter(item => item.trim()),
-      })
+      await updateEntry(entry.id, formData)
       router.push(`/journal/entry/${entry.id}`)
     } catch (error) {
       console.error('Error updating journal entry:', error)
@@ -123,36 +119,11 @@ export default function EditJournalEntryClient({ userId }: { userId: string }) {
                 </div>
                 <CardDescription>What are you grateful for today?</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {formData.gratitude.map((item, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      placeholder={`Gratitude item ${index + 1}`}
-                      value={item}
-                      onChange={(e) => handleGratitudeChange(index, e.target.value)}
-                    />
-                    {formData.gratitude.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeGratitudeItem(index)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addGratitudeItem}
-                  className="w-full"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add More
-                </Button>
+              <CardContent>
+                <GratitudeSection
+                  gratitude={formData.gratitude}
+                  onChange={handleGratitudeChange}
+                />
               </CardContent>
             </Card>
 
@@ -160,18 +131,17 @@ export default function EditJournalEntryClient({ userId }: { userId: string }) {
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <Sword className="w-5 h-5 text-yellow-500" />
+                  <Sword className="w-5 h-5 text-blue-500" />
                   <CardTitle>Daily Quest</CardTitle>
                 </div>
                 <CardDescription>What is your main focus or goal for today?</CardDescription>
               </CardHeader>
               <CardContent>
-                <Textarea
-                  placeholder="Today's quest or main objective..."
-                  value={formData.dailyQuest}
-                  onChange={(e) => setFormData(prev => ({ ...prev, dailyQuest: e.target.value }))}
-                  rows={3}
-                  required
+                <QuestSection
+                  dailyQuest={formData.dailyQuest}
+                  subQuests={formData.subQuests}
+                  onQuestChange={(quest) => setFormData(prev => ({ ...prev, dailyQuest: quest }))}
+                  onSubQuestsChange={(subQuests) => setFormData(prev => ({ ...prev, subQuests }))}
                 />
               </CardContent>
             </Card>
@@ -181,16 +151,14 @@ export default function EditJournalEntryClient({ userId }: { userId: string }) {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Shield className="w-5 h-5 text-orange-500" />
-                  <CardTitle>Threats</CardTitle>
+                  <CardTitle>Threats & Obstacles</CardTitle>
                 </div>
                 <CardDescription>What challenges or obstacles do you face?</CardDescription>
               </CardHeader>
               <CardContent>
-                <Textarea
-                  placeholder="Challenges, obstacles, or things to watch out for..."
-                  value={formData.threats}
-                  onChange={(e) => setFormData(prev => ({ ...prev, threats: e.target.value }))}
-                  rows={3}
+                <ThreatsSection
+                  threats={formData.threats}
+                  onChange={(threats) => setFormData(prev => ({ ...prev, threats }))}
                 />
               </CardContent>
             </Card>
@@ -200,16 +168,14 @@ export default function EditJournalEntryClient({ userId }: { userId: string }) {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-green-500" />
-                  <CardTitle>Allies</CardTitle>
+                  <CardTitle>Allies & Resources</CardTitle>
                 </div>
                 <CardDescription>Who or what supports you on your journey?</CardDescription>
               </CardHeader>
               <CardContent>
-                <Textarea
-                  placeholder="People, resources, or things that help you..."
-                  value={formData.allies}
-                  onChange={(e) => setFormData(prev => ({ ...prev, allies: e.target.value }))}
-                  rows={3}
+                <AlliesSection
+                  allies={formData.allies}
+                  onChange={(allies) => setFormData(prev => ({ ...prev, allies }))}
                 />
               </CardContent>
             </Card>
@@ -219,16 +185,14 @@ export default function EditJournalEntryClient({ userId }: { userId: string }) {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Scroll className="w-5 h-5 text-purple-500" />
-                  <CardTitle>Additional Notes</CardTitle>
+                  <CardTitle>Adventure Notes</CardTitle>
                 </div>
                 <CardDescription>Any other thoughts or reflections?</CardDescription>
               </CardHeader>
               <CardContent>
-                <Textarea
-                  placeholder="Additional thoughts, insights, or reflections..."
-                  value={formData.notes}
-                  onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                  rows={4}
+                <NotesSection
+                  notes={formData.notes}
+                  onChange={(notes) => setFormData(prev => ({ ...prev, notes }))}
                 />
               </CardContent>
             </Card>

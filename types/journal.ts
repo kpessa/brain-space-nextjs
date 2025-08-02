@@ -5,12 +5,32 @@ export interface JournalEntry {
   date: string
   gratitude: string[]
   dailyQuest: string
-  threats: string
-  allies: string
+  threats: string | string[]  // Support both for backward compatibility
+  allies: string | string[]   // Support both for backward compatibility
   notes: string
   xpEarned: number
   createdAt: string
   updatedAt: string
+}
+
+// Helper type guards
+export const isStringArray = (value: string | string[]): value is string[] => {
+  return Array.isArray(value)
+}
+
+// Migration helpers
+export const migrateToArray = (value: string | string[]): string[] => {
+  if (isStringArray(value)) return value
+  if (!value || value.trim() === '') return []
+  // Split by common delimiters if it looks like a list
+  if (value.includes('\n')) {
+    return value.split('\n').filter(item => item.trim())
+  }
+  if (value.includes(',')) {
+    return value.split(',').map(item => item.trim()).filter(Boolean)
+  }
+  // Otherwise treat as single item
+  return [value]
 }
 
 export interface UserProgress {
@@ -92,11 +112,13 @@ export const LEVELS: Level[] = [
 
 export const XP_REWARDS = {
   DAILY_ENTRY: 25,
-  GRATITUDE_ITEM: 5,
-  QUEST_DEFINED: 10,
-  THREAT_IDENTIFIED: 5,
-  ALLY_RECOGNIZED: 5,
-  NOTES_BONUS: 10, // For writing substantial notes
+  GRATITUDE_ITEM: 5,        // Per item
+  QUEST_DEFINED: 10,        // Main quest
+  SUB_QUEST: 3,            // Per sub-quest
+  THREAT_IDENTIFIED: 5,     // Per threat
+  ALLY_RECOGNIZED: 5,       // Per ally
+  NOTES_BONUS: 10,         // For writing substantial notes (100+ chars)
+  COMPLETION_BONUS: 15,    // All sections filled
   STREAK_BONUS: (streak: number) => Math.min(streak * 5, 50), // Max 50 XP for streaks
   // Node update rewards
   NODE_UPDATE: 10,          // Basic update

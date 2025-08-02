@@ -10,6 +10,14 @@ import { Label } from '@/components/ui/Label'
 import { Textarea } from '@/components/ui/Textarea'
 import { ArrowLeft, Plus, X, Heart, Sword, Shield, Users, Scroll } from 'lucide-react'
 import { useJournalStore } from '@/store/journalStore'
+import { 
+  GratitudeSection, 
+  ThreatsSection, 
+  AlliesSection, 
+  QuestSection, 
+  NotesSection 
+} from '@/components/journal'
+import { migrateToArray } from '@/types/journal'
 
 export default function NewJournalEntryClient({ userId }: { userId: string }) {
   const router = useRouter()
@@ -17,17 +25,16 @@ export default function NewJournalEntryClient({ userId }: { userId: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [formData, setFormData] = useState({
-    gratitude: ['', '', ''],
+    gratitude: [] as string[],
     dailyQuest: '',
-    threats: '',
-    allies: '',
+    threats: [] as string[],
+    allies: [] as string[],
     notes: '',
+    subQuests: [] as string[], // Optional sub-quests
   })
 
-  const handleGratitudeChange = (index: number, value: string) => {
-    const newGratitude = [...formData.gratitude]
-    newGratitude[index] = value
-    setFormData({ ...formData, gratitude: newGratitude })
+  const handleGratitudeChange = (gratitude: string[]) => {
+    setFormData({ ...formData, gratitude })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,16 +80,11 @@ export default function NewJournalEntryClient({ userId }: { userId: string }) {
               </div>
               <CardDescription>What are you grateful for today?</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.gratitude.map((item, index) => (
-                <div key={index} className="flex gap-2">
-                  <Input
-                    placeholder={`Gratitude #${index + 1}`}
-                    value={item}
-                    onChange={(e) => handleGratitudeChange(index, e.target.value)}
-                  />
-                </div>
-              ))}
+            <CardContent>
+              <GratitudeSection
+                gratitude={formData.gratitude}
+                onChange={handleGratitudeChange}
+              />
             </CardContent>
           </Card>
 
@@ -96,12 +98,11 @@ export default function NewJournalEntryClient({ userId }: { userId: string }) {
               <CardDescription>What&apos;s your main quest for today?</CardDescription>
             </CardHeader>
             <CardContent>
-              <Textarea
-                placeholder="Today's main objective..."
-                value={formData.dailyQuest}
-                onChange={(e) => setFormData({ ...formData, dailyQuest: e.target.value })}
-                required
-                className="min-h-[100px]"
+              <QuestSection
+                dailyQuest={formData.dailyQuest}
+                subQuests={formData.subQuests}
+                onQuestChange={(quest) => setFormData({ ...formData, dailyQuest: quest })}
+                onSubQuestsChange={(subQuests) => setFormData({ ...formData, subQuests })}
               />
             </CardContent>
           </Card>
@@ -116,11 +117,9 @@ export default function NewJournalEntryClient({ userId }: { userId: string }) {
               <CardDescription>What challenges might you face today?</CardDescription>
             </CardHeader>
             <CardContent>
-              <Textarea
-                placeholder="Potential challenges..."
-                value={formData.threats}
-                onChange={(e) => setFormData({ ...formData, threats: e.target.value })}
-                className="min-h-[80px]"
+              <ThreatsSection
+                threats={formData.threats}
+                onChange={(threats) => setFormData({ ...formData, threats })}
               />
             </CardContent>
           </Card>
@@ -135,11 +134,9 @@ export default function NewJournalEntryClient({ userId }: { userId: string }) {
               <CardDescription>Who or what can help you succeed?</CardDescription>
             </CardHeader>
             <CardContent>
-              <Textarea
-                placeholder="People, tools, or resources that can help..."
-                value={formData.allies}
-                onChange={(e) => setFormData({ ...formData, allies: e.target.value })}
-                className="min-h-[80px]"
+              <AlliesSection
+                allies={formData.allies}
+                onChange={(allies) => setFormData({ ...formData, allies })}
               />
             </CardContent>
           </Card>
@@ -154,11 +151,9 @@ export default function NewJournalEntryClient({ userId }: { userId: string }) {
               <CardDescription>Any other thoughts or reflections?</CardDescription>
             </CardHeader>
             <CardContent>
-              <Textarea
-                placeholder="Additional thoughts..."
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="min-h-[100px]"
+              <NotesSection
+                notes={formData.notes}
+                onChange={(notes) => setFormData({ ...formData, notes })}
               />
             </CardContent>
           </Card>
