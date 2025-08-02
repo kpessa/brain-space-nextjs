@@ -48,8 +48,13 @@ export function QuestSection({
     const trimmed = tempMainQuest.trim()
     if (trimmed) {
       onQuestChange(trimmed)
-      setIsEditingMain(false)
     }
+    setIsEditingMain(false)
+  }
+
+  const handleMainQuestCancel = () => {
+    setTempMainQuest(dailyQuest)
+    setIsEditingMain(false)
   }
 
   const handleMainQuestKeyDown = (e: React.KeyboardEvent) => {
@@ -77,6 +82,12 @@ export function QuestSection({
       onSubQuestsChange([...subQuests, trimmedValue])
       setIsAddingSubQuest(false)
     }
+    setTempSubQuest('')
+  }
+
+  const handleSubQuestCancel = () => {
+    setEditingSubIndex(null)
+    setIsAddingSubQuest(false)
     setTempSubQuest('')
   }
 
@@ -141,15 +152,35 @@ export function QuestSection({
             Define your main quest
           </Button>
         ) : isEditingMain ? (
-          <Textarea
-            ref={mainInputRef}
-            value={tempMainQuest}
-            onChange={(e) => setTempMainQuest(e.target.value)}
-            onKeyDown={handleMainQuestKeyDown}
-            onBlur={handleMainQuestSave}
-            placeholder="What's your main objective for today?"
-            className="min-h-[80px]"
-          />
+          <div className="space-y-2">
+            <Textarea
+              ref={mainInputRef}
+              value={tempMainQuest}
+              onChange={(e) => setTempMainQuest(e.target.value)}
+              onKeyDown={handleMainQuestKeyDown}
+              placeholder="What's your main objective for today?"
+              className="min-h-[80px]"
+            />
+            <div className="flex gap-2 justify-end">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleMainQuestCancel}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="primary"
+                onClick={handleMainQuestSave}
+                disabled={!tempMainQuest.trim()}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
         ) : (
           <div 
             className="p-4 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
@@ -181,16 +212,34 @@ export function QuestSection({
             return (
               <div key={index} className="group">
                 {editingSubIndex === index ? (
-                  <div className="flex gap-2">
+                  <div className="space-y-2">
                     <Input
                       ref={subInputRef}
                       value={tempSubQuest}
                       onChange={(e) => setTempSubQuest(e.target.value)}
                       onKeyDown={(e) => handleSubQuestKeyDown(e, index)}
-                      onBlur={() => handleSubQuestSave(index)}
                       placeholder="Sub-quest objective"
-                      className="flex-1"
+                      className="w-full"
                     />
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={handleSubQuestCancel}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="primary"
+                        onClick={() => handleSubQuestSave(index)}
+                        disabled={!tempSubQuest.trim()}
+                      >
+                        Save
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className={cn(
@@ -239,22 +288,34 @@ export function QuestSection({
 
           {/* Add new sub-quest */}
           {isAddingSubQuest ? (
-            <div className="flex gap-2">
+            <div className="space-y-2">
               <Input
                 ref={subInputRef}
                 value={tempSubQuest}
                 onChange={(e) => setTempSubQuest(e.target.value)}
                 onKeyDown={(e) => handleSubQuestKeyDown(e)}
-                onBlur={() => {
-                  if (tempSubQuest.trim()) {
-                    handleSubQuestSave()
-                  } else {
-                    setIsAddingSubQuest(false)
-                  }
-                }}
                 placeholder="Sub-quest objective"
-                className="flex-1"
+                className="w-full"
               />
+              <div className="flex gap-2 justify-end">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSubQuestCancel}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="primary"
+                  onClick={() => handleSubQuestSave()}
+                  disabled={!tempSubQuest.trim()}
+                >
+                  Save
+                </Button>
+              </div>
             </div>
           ) : (
             <Button

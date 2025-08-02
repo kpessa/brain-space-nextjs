@@ -56,6 +56,12 @@ export function AlliesSection({ allies, onChange }: AlliesSectionProps) {
     setTempValue('')
   }
 
+  const handleCancel = () => {
+    setEditingIndex(null)
+    setIsAddingNew(false)
+    setTempValue('')
+  }
+
   const handleRemove = (index: number) => {
     const newAllies = allies.filter((_, i) => i !== index)
     onChange(newAllies)
@@ -165,16 +171,34 @@ export function AlliesSection({ allies, onChange }: AlliesSectionProps) {
         return (
           <div key={index} className="group">
             {editingIndex === index ? (
-              <div className="flex gap-2">
+              <div className="space-y-2">
                 <Input
                   ref={inputRef}
                   value={tempValue}
                   onChange={(e) => setTempValue(e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, index)}
-                  onBlur={() => handleSave(index)}
                   placeholder="Who or what can help you?"
-                  className="flex-1"
+                  className="w-full"
                 />
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCancel}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="primary"
+                    onClick={() => handleSave(index)}
+                    disabled={!tempValue.trim()}
+                  >
+                    Save
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className={cn(
@@ -209,22 +233,34 @@ export function AlliesSection({ allies, onChange }: AlliesSectionProps) {
 
       {/* Add new ally */}
       {isAddingNew ? (
-        <div className="flex gap-2">
+        <div className="space-y-2">
           <Input
             ref={inputRef}
             value={tempValue}
             onChange={(e) => setTempValue(e.target.value)}
             onKeyDown={(e) => handleKeyDown(e)}
-            onBlur={() => {
-              if (tempValue.trim()) {
-                handleSave()
-              } else {
-                setIsAddingNew(false)
-              }
-            }}
             placeholder="Who or what can help you?"
-            className="flex-1"
+            className="w-full"
           />
+          <div className="flex gap-2 justify-end">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={handleCancel}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="primary"
+              onClick={() => handleSave()}
+              disabled={!tempValue.trim()}
+            >
+              Save
+            </Button>
+          </div>
         </div>
       ) : (
         <Button

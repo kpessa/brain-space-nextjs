@@ -46,6 +46,12 @@ export function GratitudeSection({ gratitude, onChange }: GratitudeSectionProps)
     setTempValue('')
   }
 
+  const handleCancel = () => {
+    setEditingIndex(null)
+    setIsAddingNew(false)
+    setTempValue('')
+  }
+
   const handleRemove = (index: number) => {
     const newGratitude = gratitude.filter((_, i) => i !== index)
     onChange(newGratitude)
@@ -83,16 +89,34 @@ export function GratitudeSection({ gratitude, onChange }: GratitudeSectionProps)
       {gratitude.map((item, index) => (
         <div key={index} className="group">
           {editingIndex === index ? (
-            <div className="flex gap-2">
+            <div className="space-y-2">
               <Input
                 ref={inputRef}
                 value={tempValue}
                 onChange={(e) => setTempValue(e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
-                onBlur={() => handleSave(index)}
                 placeholder="What are you grateful for?"
-                className="flex-1"
+                className="w-full"
               />
+              <div className="flex gap-2 justify-end">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="primary"
+                  onClick={() => handleSave(index)}
+                  disabled={!tempValue.trim()}
+                >
+                  Save
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
@@ -117,22 +141,34 @@ export function GratitudeSection({ gratitude, onChange }: GratitudeSectionProps)
 
       {/* Add new gratitude */}
       {isAddingNew ? (
-        <div className="flex gap-2">
+        <div className="space-y-2">
           <Input
             ref={inputRef}
             value={tempValue}
             onChange={(e) => setTempValue(e.target.value)}
             onKeyDown={(e) => handleKeyDown(e)}
-            onBlur={() => {
-              if (tempValue.trim()) {
-                handleSave()
-              } else {
-                setIsAddingNew(false)
-              }
-            }}
             placeholder="What are you grateful for?"
-            className="flex-1"
+            className="w-full"
           />
+          <div className="flex gap-2 justify-end">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={handleCancel}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="primary"
+              onClick={() => handleSave()}
+              disabled={!tempValue.trim()}
+            >
+              Save
+            </Button>
+          </div>
         </div>
       ) : (
         <Button
