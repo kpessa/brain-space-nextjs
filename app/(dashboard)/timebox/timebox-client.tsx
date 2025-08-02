@@ -14,7 +14,9 @@ import { cn } from '@/lib/utils'
 import StandupSummaryDialog from '@/components/StandupSummaryDialog'
 import TimeboxRecommendationsDialog from '@/components/TimeboxRecommendationsDialog'
 import ScheduleSettingsDialog from '@/components/ScheduleSettingsDialog'
-import { type NodeType, getNodeTypeIcon } from '@/types/node'
+import { NodeDetailModal } from '@/components/nodes/NodeDetailModal'
+import { NodeRelationshipModal } from '@/components/nodes/NodeRelationshipModal'
+import { type Node, type NodeType, getNodeTypeIcon } from '@/types/node'
 
 // Helper to get priority color
 function getPriorityColor(importance?: number, urgency?: number) {
@@ -90,6 +92,21 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   const dragNodeRef = useRef<HTMLDivElement>(null)
   const { selectedCalendarIds } = useCalendarStore()
   const { isConnected, getEvents } = useGoogleCalendar()
+  
+  // Node detail modal state
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
+  const [showNodeDetail, setShowNodeDetail] = useState(false)
+  
+  // Node relationship modal state
+  const [relationshipModal, setRelationshipModal] = useState<{
+    isOpen: boolean
+    sourceNode: Node | null
+    type: 'parent' | 'child'
+  }>({
+    isOpen: false,
+    sourceNode: null,
+    type: 'child'
+  })
   
   const effectiveInterval = getEffectiveTimeboxInterval()
   
@@ -355,6 +372,30 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     setHoveredSlotId(null)
   }
   
+  const handleTaskClick = (task: TimeboxTask) => {
+    if (task.nodeId) {
+      setSelectedNodeId(task.nodeId)
+      setShowNodeDetail(true)
+    }
+  }
+  
+  // Handlers for relationship creation
+  const handleCreateChild = (parentNode: Node) => {
+    setRelationshipModal({
+      isOpen: true,
+      sourceNode: parentNode,
+      type: 'child'
+    })
+  }
+
+  const handleCreateParent = (childNode: Node) => {
+    setRelationshipModal({
+      isOpen: true,
+      sourceNode: childNode,
+      type: 'parent'
+    })
+  }
+  
   const handleDragOver = (e: React.DragEvent, slotId: string) => {
     e.preventDefault()
     setHoveredSlotId(slotId)
@@ -439,8 +480,8 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   }
 
   return (
-      <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(100vh-4rem)] flex flex-col">
-        <div className="max-w-7xl mx-auto flex-1 flex flex-col">
+    <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
+      <div className="max-w-7xl mx-auto flex-1 flex flex-col overflow-hidden">
           <header className="mb-4 flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -635,9 +676,9 @@ export default function TimeboxClient({ userId }: { userId: string }) {
             )}
           </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1 overflow-hidden">
           {/* Unscheduled Tasks */}
-          <Card className="lg:col-span-1 flex flex-col">
+          <Card className="lg:col-span-1 flex flex-col overflow-hidden">
             <CardHeader className="flex-shrink-0">
               <div className="flex items-center justify-between mb-3">
                 <div>
@@ -705,7 +746,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="overflow-y-auto p-2" style={{ maxHeight: '70vh' }}>
+            <CardContent className="overflow-y-auto p-2 flex-1">
               <div className="space-y-1.5">
                 {unscheduledNodes.map((node) => (
                   <div
@@ -788,7 +829,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
           </Card>
 
           {/* Time Blocks */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 250px)' }}>
             <div 
               className="pr-2 space-y-2"
             >
@@ -819,44 +860,166 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                     </div>
                   </CardHeader>
                   <div className={cn(
-                    "transition-all duration-300 ease-in-out overflow-hidden",
-                    showPastSlots ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                    "transition-all duration-300 ease-in-out",
+                    showPastSlots ? "max-h-[calc(70vh-200px)] opacity-100" : "max-h-0 opacity-0"
                   )}>
-                    <CardContent className="pt-0">
-                      <div className="space-y-3">
+                    <CardContent className="pt-0 overflow-y-auto" style={{ maxHeight: 'calc(70vh - 200px)' }}>
+                      <div className="space-y-2">
                         {pastSlots.map((slot) => (
-                          <div
-                            key={slot.id}
+                          <Card 
+                            key={slot.id} 
+                            id={slot.id}
                             className={cn(
-                              "flex items-center gap-3 p-3 bg-gray-50 rounded-lg border",
-                              currentTimeSlotId === slot.id && "ring-1 ring-orange-300"
+                              "transition-all duration-300 hover:shadow-lg opacity-75",
+                              hoveredSlotId === slot.id && "ring-2 ring-brain-400",
+                              currentTimeSlotId === slot.id && selectedDate === format(new Date(), 'yyyy-MM-dd') && "ring-2 ring-orange-400 bg-orange-50"
                             )}
                           >
-                            {/* Time indicator */}
-                            <div className="flex-shrink-0">
-                              <div className={cn(
-                                "w-3 h-8 rounded-full",
-                                timeBlockColors[slot.period]
-                              )} />
-                            </div>
-                            
-                            {/* Time and content */}
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <div className="font-medium text-gray-900">{slot.displayTime}</div>
-                                <div className="text-sm text-gray-500">
-                                  {slot.isBlocked ? 'Blocked' : slot.tasks.length > 0 ? `${slot.tasks.length} task${slot.tasks.length !== 1 ? 's' : ''}` : 'Empty'}
+                            <CardContent className="p-3">
+                              <div className="flex items-start gap-3">
+                                {/* Time indicator */}
+                                <div className="flex-shrink-0">
+                                  <div className={cn(
+                                    "w-3 h-full rounded-full min-h-[50px]",
+                                    timeBlockColors[slot.period]
+                                  )} />
+                                </div>
+                                
+                                {/* Time label */}
+                                <div className="flex-shrink-0 w-24">
+                                  <div className="text-base font-bold text-gray-900">{slot.displayTime}</div>
+                                  <div className="text-xs text-gray-500">
+                                    {slot.isBlocked ? 'Blocked' : `${slot.tasks.length} task${slot.tasks.length !== 1 ? 's' : ''}`}
+                                  </div>
+                                </div>
+                                
+                                {/* Block content */}
+                                <div className="flex-1">
+                                  {/* Tasks in this block */}
+                                  {slot.tasks.length > 0 && (
+                                    <div className="space-y-1.5 mb-3">
+                                      {slot.tasks.map((task) => (
+                                        <div
+                                          key={task.id}
+                                          className={cn(
+                                            "flex items-center gap-2 p-1.5 rounded border",
+                                            task.isCalendarEvent ? "cursor-default" : "cursor-move",
+                                            task.isCalendarEvent ? "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-300" : getPriorityColor(task.importance, task.urgency),
+                                            task.status === 'completed' && "opacity-60"
+                                          )}
+                                          draggable={!task.isCalendarEvent}
+                                          onDragStart={() => !task.isCalendarEvent && handleDragStart(task)}
+                                          onDragEnd={handleDragEnd}
+                                        >
+                                          {task.isCalendarEvent ? (
+                                            <Calendar className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                                          ) : (
+                                            <button
+                                              onClick={() => updateTaskInSlot(task.id, {
+                                                status: task.status === 'completed' ? 'pending' : 'completed',
+                                                completedAt: task.status === 'completed' ? undefined : new Date().toISOString()
+                                              })}
+                                              className="flex-shrink-0"
+                                            >
+                                              {task.status === 'completed' ? (
+                                                <CheckCircle className="w-4 h-4 text-green-600" />
+                                              ) : (
+                                                <div className="w-4 h-4 border-2 border-gray-400 rounded-full" />
+                                              )}
+                                            </button>
+                                          )}
+                                          <div 
+                                            className={cn(
+                                              "flex-1 min-w-0",
+                                              task.nodeId && "cursor-pointer hover:opacity-80"
+                                            )}
+                                            onClick={() => handleTaskClick(task)}
+                                          >
+                                            <span className={cn(
+                                              "text-sm text-gray-700 block truncate",
+                                              task.status === 'completed' && "line-through",
+                                              task.nodeId && "hover:text-brain-600"
+                                            )}>
+                                              {task.label}
+                                            </span>
+                                            {task.calendarLocation && (
+                                              <span className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                                                <MapPin className="w-3 h-3" />
+                                                {task.calendarLocation}
+                                              </span>
+                                            )}
+                                          </div>
+                                          {/* Work/Personal/Calendar indicator */}
+                                          {task.isCalendarEvent ? (
+                                            <span className="text-xs px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                                              Cal
+                                            </span>
+                                          ) : task.isPersonal !== undefined && (
+                                            <span className={cn(
+                                              "text-xs px-1.5 py-0.5 rounded-full",
+                                              task.isPersonal 
+                                                ? "bg-purple-100 text-purple-700"
+                                                : "bg-blue-100 text-blue-700"
+                                            )}>
+                                              {task.isPersonal ? 'P' : 'W'}
+                                            </span>
+                                          )}
+                                          {!task.isCalendarEvent && (
+                                            <button
+                                              onClick={() => removeTaskFromSlot(task.id, slot.id)}
+                                              className="opacity-0 hover:opacity-100 transition-opacity"
+                                            >
+                                              <X className="w-4 h-4 text-gray-500 hover:text-red-500" />
+                                            </button>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  
+                                  {/* Drop zone or blocked indicator */}
+                                  {slot.isBlocked ? (
+                                    <div className="p-4 bg-gray-100 rounded-lg flex items-center justify-between">
+                                      <div className="flex items-center gap-3">
+                                        <div className="text-gray-500">
+                                          {blockReasonIcons[slot.blockReason || 'custom']}
+                                        </div>
+                                        <div>
+                                          <div className="text-sm font-medium text-gray-700">
+                                            {slot.blockLabel || slot.blockReason?.replace('-', ' ').toUpperCase() || 'Blocked'}
+                                          </div>
+                                          <div className="text-xs text-gray-500">Time blocked</div>
+                                        </div>
+                                      </div>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => unblockTimeSlot(slot.id)}
+                                        className="text-gray-500 hover:text-red-600"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div 
+                                      className={cn(
+                                        "p-3 border-2 border-dashed rounded-lg text-center transition-colors",
+                                        hoveredSlotId === slot.id 
+                                          ? "border-brain-400 bg-brain-50" 
+                                          : "border-gray-300 text-gray-500"
+                                      )}
+                                      onDragOver={(e) => handleDragOver(e, slot.id)}
+                                      onDrop={(e) => handleDrop(e, slot.id)}
+                                      onDragLeave={() => setHoveredSlotId(null)}
+                                    >
+                                      <Zap className="w-5 h-5 mx-auto mb-1 opacity-50" />
+                                      <div className="text-xs">Drop nodes here</div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
-                              
-                              {/* Show task summaries for past slots */}
-                              {slot.tasks.length > 0 && (
-                                <div className="mt-1 text-sm text-gray-600">
-                                  {slot.tasks.map(task => task.label).join(', ')}
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                            </CardContent>
+                          </Card>
                         ))}
                       </div>
                     </CardContent>
@@ -928,10 +1091,17 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                                     )}
                                   </button>
                                 )}
-                                <div className="flex-1 min-w-0">
+                                <div 
+                                  className={cn(
+                                    "flex-1 min-w-0",
+                                    task.nodeId && "cursor-pointer hover:opacity-80"
+                                  )}
+                                  onClick={() => handleTaskClick(task)}
+                                >
                                   <span className={cn(
                                     "text-sm text-gray-700 block truncate",
-                                    task.status === 'completed' && "line-through"
+                                    task.status === 'completed' && "line-through",
+                                    task.nodeId && "hover:text-brain-600"
                                   )}>
                                     {task.label}
                                   </span>
@@ -1059,7 +1229,45 @@ export default function TimeboxClient({ userId }: { userId: string }) {
             </div>
           </CardContent>
         </Card>
-        </div>
       </div>
+      
+      {/* Node Detail Modal */}
+      {showNodeDetail && selectedNodeId && nodes.find(n => n.id === selectedNodeId) && (
+        <NodeDetailModal
+          isOpen={showNodeDetail}
+          onClose={() => {
+            setShowNodeDetail(false)
+            setSelectedNodeId(null)
+            // Refresh to update any changed node titles in timebox
+            loadNodes(userId)
+          }}
+          node={nodes.find(n => n.id === selectedNodeId)!}
+          userId={userId}
+          userName="Me"
+          onCreateChild={handleCreateChild}
+          onCreateParent={handleCreateParent}
+          onRelationshipChange={() => {
+            // Refresh nodes if relationships change
+            loadNodes(userId)
+          }}
+        />
+      )}
+      
+      {/* Node Relationship Modal */}
+      {relationshipModal.sourceNode && (
+        <NodeRelationshipModal
+          isOpen={relationshipModal.isOpen}
+          onClose={() => setRelationshipModal({ ...relationshipModal, isOpen: false })}
+          sourceNode={relationshipModal.sourceNode}
+          relationshipType={relationshipModal.type}
+          userId={userId}
+          onSuccess={() => {
+            setRelationshipModal({ isOpen: false, sourceNode: null, type: 'child' })
+            // Refresh nodes to update relationships
+            loadNodes(userId)
+          }}
+        />
+      )}
+    </div>
   )
 }
