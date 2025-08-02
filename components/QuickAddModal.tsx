@@ -5,7 +5,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useNodesStore } from '@/store/nodeStore'
 import { createAIService } from '@/services/ai'
-import type { Node, NodeType } from '@/types/node'
+import type { Node, NodeType, Recurrence } from '@/types/node'
 import { 
   Zap, 
   Brain,
@@ -21,7 +21,9 @@ import {
   Search,
   MessageSquare,
   Puzzle,
-  Calendar
+  Calendar,
+  Repeat,
+  Sparkles
 } from 'lucide-react'
 
 interface QuickAddModalProps {
@@ -48,12 +50,53 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [useAI, setUseAI] = useState(true)
   const [createCalendarEvent, setCreateCalendarEvent] = useState(false)
+  const [makeRecurring, setMakeRecurring] = useState(false)
+  const [recurrencePattern, setRecurrencePattern] = useState<Recurrence | null>(null)
+  const [aiSuggestedRecurrence, setAiSuggestedRecurrence] = useState<any>(null)
+  const [isCheckingRecurrence, setIsCheckingRecurrence] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [preview, setPreview] = useState<any>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   
   const { createNode } = useNodesStore()
   const aiService = createAIService()
+
+  // Check for recurrence pattern when input changes
+  useEffect(() => {
+    const checkRecurrence = async () => {
+      if (!input.trim() || input.length < 10) {
+        setAiSuggestedRecurrence(null)
+        return
+      }
+
+      setIsCheckingRecurrence(true)
+      try {
+        const response = await fetch('/api/ai/suggest-recurrence', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: input })
+        })
+
+        if (response.ok) {
+          const suggestion = await response.json()
+          setAiSuggestedRecurrence(suggestion)
+          
+          // Auto-enable recurring if AI is confident
+          if (suggestion.shouldRecur && suggestion.confidence > 0.7) {
+            setMakeRecurring(true)
+            setRecurrencePattern(suggestion.pattern)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check recurrence:', error)
+      } finally {
+        setIsCheckingRecurrence(false)
+      }
+    }
+
+    const timer = setTimeout(checkRecurrence, 500) // Debounce
+    return () => clearTimeout(timer)
+  }, [input])
 
   // Focus input when modal opens
   useEffect(() => {
@@ -71,6 +114,10 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
       setPreview(null)
       setError(null)
       setCreateCalendarEvent(false)
+      setMakeRecurring(false)
+      setRecurrencePattern(null)
+      setAiSuggestedRecurrence(null)
+      setIsCheckingRecurrence(false)
     }
   }, [isOpen])
 
@@ -111,11 +158,23 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
           nodeData.dueDate = { type: 'exact', date: result.nodeData.dueDate.date }
         }
         
+        // Add recurrence if enabled
+        if (makeRecurring && recurrencePattern) {
+          nodeData.recurrence = recurrencePattern
+          nodeData.taskType = 'recurring'
+        }
+        
         setPreview(result.nodeData)
       }
 
       if (!preview) {
         // Direct submission
+        // Add recurrence if enabled (for non-AI path)
+        if (makeRecurring && recurrencePattern) {
+          nodeData.recurrence = recurrencePattern
+          nodeData.taskType = 'recurring'
+        }
+        
         const newNode = await createNode(nodeData)
         
         // Handle calendar event creation if requested
@@ -142,10 +201,18 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
     if (!preview || !userId) return
 
     try {
-      const newNode = await createNode({
+      const nodeData = {
         ...preview,
         userId: userId || 'anonymous',
-      })
+      }
+      
+      // Add recurrence if enabled
+      if (makeRecurring && recurrencePattern) {
+        nodeData.recurrence = recurrencePattern
+        nodeData.taskType = 'recurring'
+      }
+      
+      const newNode = await createNode(nodeData)
       
       // Handle calendar event creation if requested
       if (createCalendarEvent && newNode) {
@@ -223,6 +290,24 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
                     Create Event
                   </label>
                 </div>
+                
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="quickAddRecurring"
+                    checked={makeRecurring}
+                    onChange={(e) => setMakeRecurring(e.target.checked)}
+                    className="rounded"
+                    disabled={isProcessing}
+                  />
+                  <label htmlFor="quickAddRecurring" className="text-sm text-gray-700 flex items-center gap-1">
+                    <Repeat className="w-4 h-4" />
+                    Recurring Task
+                    {isCheckingRecurrence && (
+                      <Loader2 className="w-3 h-3 animate-spin ml-1" />
+                    )}
+                  </label>
+                </div>
               </div>
               
               <div className="text-xs text-gray-500 flex items-center gap-1">
@@ -230,6 +315,97 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
                 Press ⌘+Enter to submit
               </div>
             </div>
+
+            {/* AI Recurrence Suggestion */}
+            {aiSuggestedRecurrence && aiSuggestedRecurrence.shouldRecur && !makeRecurring && (
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 flex items-start gap-2">
+                <Sparkles className="w-4 h-4 text-purple-600 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm text-purple-800">
+                    AI detected this might be a recurring task: <strong>{aiSuggestedRecurrence.reasoning}</strong>
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setMakeRecurring(true)
+                      setRecurrencePattern(aiSuggestedRecurrence.pattern)
+                    }}
+                    className="mt-2"
+                  >
+                    Make it recurring
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Recurrence Configuration */}
+            {makeRecurring && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium text-gray-700">Recurrence Pattern</h4>
+                  {aiSuggestedRecurrence && (
+                    <span className="text-xs text-purple-600 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      AI suggested
+                    </span>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-4 gap-2">
+                  {(['daily', 'weekly', 'monthly', 'custom'] as const).map((freq) => (
+                    <button
+                      key={freq}
+                      type="button"
+                      onClick={() => setRecurrencePattern({ 
+                        ...recurrencePattern,
+                        frequency: freq 
+                      } as Recurrence)}
+                      className={`px-3 py-1.5 text-sm rounded-lg capitalize transition-colors ${
+                        recurrencePattern?.frequency === freq
+                          ? 'bg-brain-600 text-white'
+                          : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {freq}
+                    </button>
+                  ))}
+                </div>
+
+                {recurrencePattern?.frequency === 'weekly' && (
+                  <div>
+                    <label className="text-xs text-gray-600 block mb-1">Days of Week</label>
+                    <div className="grid grid-cols-7 gap-1">
+                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => {
+                            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+                            const currentDays = recurrencePattern.daysOfWeek || []
+                            const dayName = days[idx]
+                            setRecurrencePattern({
+                              ...recurrencePattern,
+                              daysOfWeek: currentDays.includes(dayName as any)
+                                ? currentDays.filter(d => d !== dayName)
+                                : [...currentDays, dayName as any]
+                            })
+                          }}
+                          className={`px-2 py-1 text-xs rounded transition-colors ${
+                            recurrencePattern.daysOfWeek?.includes(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][idx] as any)
+                              ? 'bg-brain-600 text-white'
+                              : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          {day}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {error && (
               <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">
@@ -301,6 +477,17 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
                   {preview.dueDate && (
                     <div className="mt-2 text-xs text-gray-500">
                       Due: {new Date(preview.dueDate.date).toLocaleDateString()}
+                    </div>
+                  )}
+                  
+                  {(makeRecurring && recurrencePattern) && (
+                    <div className="mt-2 flex items-center gap-1 text-xs text-purple-600">
+                      <Repeat className="w-3 h-3" />
+                      <span>
+                        Recurring {recurrencePattern.frequency}
+                        {recurrencePattern.frequency === 'weekly' && recurrencePattern.daysOfWeek?.length ? 
+                          ` on ${recurrencePattern.daysOfWeek.join(', ')}` : ''}
+                      </span>
                     </div>
                   )}
                 </div>

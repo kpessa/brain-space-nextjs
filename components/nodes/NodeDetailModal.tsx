@@ -7,7 +7,7 @@ import { useNodesStore } from '@/store/nodeStore'
 import { useXPStore } from '@/store/xpStore'
 import { useCalendarStore } from '@/store/calendarStore'
 import { XPEventType } from '@/types/xp'
-import type { Node, NodeType, NodeUpdate } from '@/types/node'
+import type { Node, NodeType, NodeUpdate, Recurrence } from '@/types/node'
 import { getNodeTypeIcon, getNodeTypeColor, getEisenhowerQuadrant } from '@/types/node'
 import { NodeBreadcrumb } from './NodeBreadcrumb'
 import { ReenhanceNodeDialog } from './ReenhanceNodeDialog'
@@ -30,7 +30,8 @@ import {
   Info,
   Link,
   AlertCircle,
-  Sparkles
+  Sparkles,
+  Repeat
 } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { CalendarEventModal } from '@/components/CalendarEventModal'
@@ -64,6 +65,8 @@ export function NodeDetailModal({
   const [newTag, setNewTag] = useState('')
   const [saving, setSaving] = useState(false)
   const [showReenhanceDialog, setShowReenhanceDialog] = useState(false)
+  const [showRecurrenceConfig, setShowRecurrenceConfig] = useState(false)
+  const [recurrencePattern, setRecurrencePattern] = useState<Recurrence | null>(node.recurrence || null)
   
   // Updates state
   const [newUpdateContent, setNewUpdateContent] = useState('')
@@ -135,6 +138,22 @@ export function NodeDetailModal({
       setIsEditing(false)
     } catch (error) {
       // Failed to save
+    } finally {
+      setSaving(false)
+    }
+  }
+  
+  const handleSaveRecurrence = async () => {
+    setSaving(true)
+    try {
+      await updateNode(currentNode.id, {
+        recurrence: recurrencePattern,
+        taskType: recurrencePattern ? 'recurring' : 'one-time'
+      })
+      setShowRecurrenceConfig(false)
+      toast.success('Recurrence pattern updated!')
+    } catch (error) {
+      toast.error('Failed to update recurrence pattern')
     } finally {
       setSaving(false)
     }
@@ -364,6 +383,15 @@ export function NodeDetailModal({
                   <Button
                     size="sm"
                     variant="outline"
+                    onClick={() => setShowRecurrenceConfig(true)}
+                    title={currentNode.recurrence ? "Edit recurrence" : "Make recurring"}
+                    className={currentNode.recurrence ? "text-purple-600 border-purple-600" : ""}
+                  >
+                    <Repeat className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={() => setShowReenhanceDialog(true)}
                     title="Re-enhance this node with AI"
                   >
@@ -572,6 +600,30 @@ export function NodeDetailModal({
                       ? format(new Date(currentNode.dueDate.date), 'PPP')
                       : `${currentNode.dueDate.offset} ${currentNode.dueDate.unit} from creation`
                     }
+                  </div>
+                </div>
+              )}
+              
+              {/* Recurrence */}
+              {currentNode.recurrence && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Repeat className="w-4 h-4 inline mr-1" />
+                    Recurrence Pattern
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-purple-100 text-purple-800">
+                      {currentNode.recurrence.frequency}
+                      {currentNode.recurrence.frequency === 'weekly' && currentNode.recurrence.daysOfWeek?.length ? 
+                        ` on ${currentNode.recurrence.daysOfWeek.join(', ')}` : ''}
+                      {currentNode.recurrence.timesPerInterval && currentNode.recurrence.timesPerInterval > 1 ?
+                        ` (${currentNode.recurrence.timesPerInterval}x)` : ''}
+                    </span>
+                    {currentNode.currentStreak && currentNode.currentStreak > 0 && (
+                      <span className="text-sm text-gray-600">
+                        Current streak: {currentNode.currentStreak} days
+                      </span>
+                    )}
                   </div>
                 </div>
               )}
@@ -945,6 +997,139 @@ export function NodeDetailModal({
             forceRefresh()
           }}
         />
+      )}
+      
+      {/* Recurrence Configuration Modal */}
+      {showRecurrenceConfig && (
+        <Modal
+          isOpen={showRecurrenceConfig}
+          onClose={() => {
+            setShowRecurrenceConfig(false)
+            setRecurrencePattern(currentNode.recurrence || null)
+          }}
+          title="Configure Recurrence"
+          size="md"
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Recurrence Pattern
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {(['daily', 'weekly', 'monthly', 'custom'] as const).map((freq) => (
+                  <button
+                    key={freq}
+                    type="button"
+                    onClick={() => setRecurrencePattern({ 
+                      ...recurrencePattern,
+                      frequency: freq 
+                    } as Recurrence)}
+                    className={`px-3 py-2 text-sm rounded-lg capitalize transition-colors ${
+                      recurrencePattern?.frequency === freq
+                        ? 'bg-brain-600 text-white'
+                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {freq}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {recurrencePattern?.frequency === 'weekly' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Days of Week
+                </label>
+                <div className="grid grid-cols-7 gap-1">
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => {
+                        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+                        const currentDays = recurrencePattern.daysOfWeek || []
+                        const dayName = days[idx]
+                        setRecurrencePattern({
+                          ...recurrencePattern,
+                          daysOfWeek: currentDays.includes(dayName as any)
+                            ? currentDays.filter(d => d !== dayName)
+                            : [...currentDays, dayName as any]
+                        })
+                      }}
+                      className={`px-2 py-2 text-xs rounded transition-colors ${
+                        recurrencePattern.daysOfWeek?.includes(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][idx] as any)
+                          ? 'bg-brain-600 text-white'
+                          : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {day}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {recurrencePattern?.frequency === 'daily' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Times per day (optional)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={recurrencePattern.timesPerInterval || 1}
+                  onChange={(e) => setRecurrencePattern({
+                    ...recurrencePattern,
+                    timesPerInterval: parseInt(e.target.value)
+                  })}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brain-500"
+                />
+              </div>
+            )}
+            
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 flex items-start gap-2">
+              <Sparkles className="w-4 h-4 text-purple-600 mt-0.5" />
+              <div className="text-sm text-purple-800">
+                <p className="font-medium mb-1">AI Tip:</p>
+                <p>Recurring tasks help build habits and ensure regular progress. They're perfect for maintenance tasks, daily practices, or periodic reviews.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              {recurrencePattern && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setRecurrencePattern(null)
+                    handleSaveRecurrence()
+                  }}
+                  className="text-red-600 hover:bg-red-50"
+                >
+                  Remove Recurrence
+                </Button>
+              )}
+              <div className="flex-1" />
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowRecurrenceConfig(false)
+                  setRecurrencePattern(currentNode.recurrence || null)
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSaveRecurrence}
+                disabled={saving || !recurrencePattern}
+              >
+                {saving ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </Modal>
   )
