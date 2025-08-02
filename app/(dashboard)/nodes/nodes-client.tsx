@@ -611,6 +611,7 @@ export default function NodesClient({ userId }: { userId: string }) {
   const [viewMode, setViewMode] = useState<'grid' | 'tree' | 'graph'>('grid')
   const [selectMode, setSelectMode] = useState(false)
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set())
+  const [showCompleted, setShowCompleted] = useState(false)
   const [relationshipModal, setRelationshipModal] = useState<{
     isOpen: boolean
     sourceNode: Node | null
@@ -635,6 +636,11 @@ export default function NodesClient({ userId }: { userId: string }) {
   const filteredNodes = nodes.filter(node => {
     // First check if node should be shown based on mode
     if (!shouldShowNode(node.tags, node.isPersonal, currentMode, hidePersonalInWorkMode, hideWorkInPersonalMode)) {
+      return false
+    }
+    
+    // Filter out completed nodes if showCompleted is false
+    if (!showCompleted && node.completed) {
       return false
     }
     
@@ -921,8 +927,11 @@ export default function NodesClient({ userId }: { userId: string }) {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Completed</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {filteredNodes.filter(n => n.completed).length}
+                    {nodes.filter(n => n.completed).length}
                   </p>
+                  {!showCompleted && nodes.filter(n => n.completed).length > 0 && (
+                    <p className="text-xs text-gray-500">Hidden</p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -1040,6 +1049,20 @@ export default function NodesClient({ userId }: { userId: string }) {
                     <option key={tag} value={tag}>#{tag}</option>
                   ))}
                 </select>
+                
+                {/* Show Completed Toggle */}
+                <div className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg bg-white">
+                  <input
+                    type="checkbox"
+                    id="showCompleted"
+                    checked={showCompleted}
+                    onChange={(e) => setShowCompleted(e.target.checked)}
+                    className="rounded border-gray-300 text-brain-600 focus:ring-brain-500"
+                  />
+                  <label htmlFor="showCompleted" className="text-sm font-medium text-gray-700 select-none cursor-pointer">
+                    Show completed
+                  </label>
+                </div>
               </div>
             </div>
           </CardContent>
