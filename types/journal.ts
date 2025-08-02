@@ -4,7 +4,8 @@ export interface JournalEntry {
   userId: string
   date: string
   gratitude: string[]
-  dailyQuest: string
+  dailyQuest?: string         // Legacy field for backward compatibility
+  quests: string[]           // New array field for all quests
   threats: string | string[]  // Support both for backward compatibility
   allies: string | string[]   // Support both for backward compatibility
   notes: string
@@ -31,6 +32,20 @@ export const migrateToArray = (value: string | string[]): string[] => {
   }
   // Otherwise treat as single item
   return [value]
+}
+
+// Migration helper for quests
+export const migrateQuestsToArray = (entry: { dailyQuest?: string, quests?: string[] }): string[] => {
+  // If already has quests array, return it
+  if (entry.quests && entry.quests.length > 0) {
+    return entry.quests
+  }
+  // If has legacy dailyQuest, convert to array
+  if (entry.dailyQuest && entry.dailyQuest.trim()) {
+    return [entry.dailyQuest]
+  }
+  // Otherwise return empty array
+  return []
 }
 
 export interface UserProgress {
@@ -113,8 +128,7 @@ export const LEVELS: Level[] = [
 export const XP_REWARDS = {
   DAILY_ENTRY: 25,
   GRATITUDE_ITEM: 5,        // Per item
-  QUEST_DEFINED: 10,        // Main quest
-  SUB_QUEST: 3,            // Per sub-quest
+  QUEST_ITEM: 10,          // Per quest (unified reward)
   THREAT_IDENTIFIED: 5,     // Per threat
   ALLY_RECOGNIZED: 5,       // Per ally
   NOTES_BONUS: 10,         // For writing substantial notes (100+ chars)

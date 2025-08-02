@@ -26,11 +26,10 @@ export default function NewJournalEntryClient({ userId }: { userId: string }) {
 
   const [formData, setFormData] = useState({
     gratitude: [] as string[],
-    dailyQuest: '',
+    quests: [] as string[],
     threats: [] as string[],
     allies: [] as string[],
     notes: '',
-    subQuests: [] as string[], // Optional sub-quests
   })
 
   const handleGratitudeChange = (gratitude: string[]) => {
@@ -88,21 +87,19 @@ export default function NewJournalEntryClient({ userId }: { userId: string }) {
             </CardContent>
           </Card>
 
-          {/* Daily Quest */}
+          {/* Quests */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Sword className="w-5 h-5 text-blue-500" />
-                <CardTitle>Daily Quest</CardTitle>
+                <CardTitle>Quests</CardTitle>
               </div>
-              <CardDescription>What&apos;s your main quest for today?</CardDescription>
+              <CardDescription>What are your objectives for today?</CardDescription>
             </CardHeader>
             <CardContent>
               <QuestSection
-                dailyQuest={formData.dailyQuest}
-                subQuests={formData.subQuests}
-                onQuestChange={(quest) => setFormData({ ...formData, dailyQuest: quest })}
-                onSubQuestsChange={(subQuests) => setFormData({ ...formData, subQuests })}
+                quests={formData.quests}
+                onChange={(quests) => setFormData({ ...formData, quests })}
               />
             </CardContent>
           </Card>
@@ -165,7 +162,7 @@ export default function NewJournalEntryClient({ userId }: { userId: string }) {
                 Cancel
               </Button>
             </Link>
-            <Button type="submit" disabled={isSubmitting || !formData.dailyQuest}>
+            <Button type="submit" disabled={isSubmitting || formData.quests.length === 0}>
               {isSubmitting ? 'Creating Entry...' : 'Create Entry'}
             </Button>
           </div>

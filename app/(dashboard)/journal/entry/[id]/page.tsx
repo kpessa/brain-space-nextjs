@@ -68,18 +68,31 @@ export default function JournalEntryView() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            {/* Daily Quest */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Sword className="w-5 h-5 text-yellow-500" />
-                  <CardTitle>Daily Quest</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 whitespace-pre-wrap">{entry.dailyQuest}</p>
-              </CardContent>
-            </Card>
+            {/* Quests */}
+            {((entry.quests && entry.quests.length > 0) || entry.dailyQuest) && (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Sword className="w-5 h-5 text-yellow-500" />
+                    <CardTitle>Quests</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {entry.quests && entry.quests.length > 0 ? (
+                    <ul className="space-y-2">
+                      {entry.quests.map((quest, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <Sword className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                          <span className="text-gray-700">{quest}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : entry.dailyQuest ? (
+                    <p className="text-gray-700 whitespace-pre-wrap">{entry.dailyQuest}</p>
+                  ) : null}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Gratitude */}
             {entry.gratitude.length > 0 && (
@@ -168,12 +181,17 @@ export default function JournalEntryView() {
                       <span className="font-medium">+{entry.gratitude.length * 5} XP</span>
                     </div>
                   )}
-                  {entry.dailyQuest && (
+                  {entry.quests && entry.quests.length > 0 ? (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Quests ({entry.quests.length})</span>
+                      <span className="font-medium">+{entry.quests.length * 10} XP</span>
+                    </div>
+                  ) : entry.dailyQuest ? (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Quest Defined</span>
                       <span className="font-medium">+10 XP</span>
                     </div>
-                  )}
+                  ) : null}
                   {entry.threats && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Threats Identified</span>

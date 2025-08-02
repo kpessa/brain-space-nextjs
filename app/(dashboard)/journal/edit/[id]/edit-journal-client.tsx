@@ -30,22 +30,21 @@ export default function EditJournalEntryClient({ userId }: { userId: string }) {
 
   const [formData, setFormData] = useState({
     gratitude: [] as string[],
-    dailyQuest: '',
+    quests: [] as string[],
     threats: [] as string[],
     allies: [] as string[],
     notes: '',
-    subQuests: [] as string[],
   })
 
   useEffect(() => {
     if (entry) {
+      const { migrateQuestsToArray } = require('@/types/journal')
       setFormData({
         gratitude: entry.gratitude || [],
-        dailyQuest: entry.dailyQuest,
+        quests: migrateQuestsToArray(entry),
         threats: migrateToArray(entry.threats),
         allies: migrateToArray(entry.allies),
         notes: entry.notes || '',
-        subQuests: [], // Sub-quests not stored yet, future enhancement
       })
     }
   }, [entry])
@@ -127,21 +126,19 @@ export default function EditJournalEntryClient({ userId }: { userId: string }) {
               </CardContent>
             </Card>
 
-            {/* Daily Quest */}
+            {/* Quests */}
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Sword className="w-5 h-5 text-blue-500" />
-                  <CardTitle>Daily Quest</CardTitle>
+                  <CardTitle>Quests</CardTitle>
                 </div>
-                <CardDescription>What is your main focus or goal for today?</CardDescription>
+                <CardDescription>What are your objectives for today?</CardDescription>
               </CardHeader>
               <CardContent>
                 <QuestSection
-                  dailyQuest={formData.dailyQuest}
-                  subQuests={formData.subQuests}
-                  onQuestChange={(quest) => setFormData(prev => ({ ...prev, dailyQuest: quest }))}
-                  onSubQuestsChange={(subQuests) => setFormData(prev => ({ ...prev, subQuests }))}
+                  quests={formData.quests}
+                  onChange={(quests) => setFormData(prev => ({ ...prev, quests }))}
                 />
               </CardContent>
             </Card>

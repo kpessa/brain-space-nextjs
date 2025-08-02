@@ -55,7 +55,11 @@ export const useJournalStore = create<JournalState>((set, get) => ({
       // Calculate journal-specific XP components
       let journalXP = XP_REWARDS.DAILY_ENTRY
       journalXP += entryData.gratitude.filter(g => g.trim()).length * XP_REWARDS.GRATITUDE_ITEM
-      if (entryData.dailyQuest.trim()) journalXP += XP_REWARDS.QUEST_DEFINED
+      
+      // Handle quests array
+      if (entryData.quests) {
+        journalXP += entryData.quests.filter(q => q.trim()).length * XP_REWARDS.QUEST_ITEM
+      }
       
       // Handle threats as array (with backward compatibility)
       if (Array.isArray(entryData.threats)) {
@@ -436,8 +440,8 @@ export const useJournalStore = create<JournalState>((set, get) => ({
       )
       const snapshot = await getDocs(entriesQuery)
       
-      // Import migration helper once
-      const { migrateToArray } = await import('@/types/journal')
+      // Import migration helpers once
+      const { migrateToArray, migrateQuestsToArray } = await import('@/types/journal')
       
       const entries: JournalEntry[] = []
       snapshot.forEach(doc => {
@@ -447,10 +451,14 @@ export const useJournalStore = create<JournalState>((set, get) => ({
         const threats = typeof data.threats === 'string' ? migrateToArray(data.threats) : data.threats
         const allies = typeof data.allies === 'string' ? migrateToArray(data.allies) : data.allies
         
+        // Migrate quests to array if needed
+        const quests = migrateQuestsToArray(data)
+        
         entries.push({
           ...data,
           threats,
           allies,
+          quests,
           id: doc.id,
           createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
           updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
