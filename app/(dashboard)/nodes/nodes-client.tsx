@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
@@ -19,6 +19,8 @@ import { UpdateExportModal } from '@/components/nodes/UpdateExportModal'
 import { BulkTagModal } from '@/components/nodes/BulkTagModal'
 import { useUserPreferencesStore, shouldShowNode } from '@/store/userPreferencesStore'
 import { ModeToggle } from '@/components/ModeToggle'
+import { RecurrenceDialog } from '@/components/RecurrenceDialog'
+import { RecurrencePattern } from '@/types/recurrence'
 import { 
   Network, 
   Plus, 
@@ -44,7 +46,9 @@ import {
   MessageSquare,
   FileText,
   Mic,
-  Pin
+  Pin,
+  Repeat,
+  Edit
 } from 'lucide-react'
 import { format } from 'date-fns'
 import StandupSummaryDialog from '@/components/StandupSummaryDialog'
@@ -309,9 +313,26 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
   const { updateNode, deleteNode, getNodeChildren, getNodeParent, toggleNodePin } = useNodesStore()
   const [showDetails, setShowDetails] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [showRecurrenceDialog, setShowRecurrenceDialog] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   
   const parent = getNodeParent(node.id)
   const children = getNodeChildren(node.id)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as HTMLElement)) {
+        setShowDropdown(false)
+      }
+    }
+
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showDropdown])
 
   const handleCompletionToggle = () => {
     updateNode(node.id, { completed: !node.completed })
@@ -320,6 +341,80 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
   const handlePinToggle = async (e: React.MouseEvent) => {
     e.stopPropagation()
     await toggleNodePin(node.id)
+  }
+
+  const handleSaveRecurrence = async (
+    nodeId: string, 
+    pattern: RecurrencePattern | undefined,
+    taskType: 'recurring' | 'habit'
+  ) => {
+    console.log('=== handleSaveRecurrence called ===')
+    console.log('nodeId:', nodeId)
+    console.log('pattern:', pattern)
+    console.log('taskType:', taskType)
+    
+    if (!pattern) {
+      // Remove recurrence
+      console.log('Removing recurrence')
+      await updateNode(nodeId, {
+        taskType: 'one-time',
+        recurrence: undefined,
+      } as any)
+    } else {
+      // Transform RecurrencePattern to Recurrence structure
+      const recurrence: any = {
+        frequency: pattern.type as any,
+        interval: pattern.frequency || 1,
+      }
+      
+      // Only add optional fields if they have values
+      if (pattern.daysOfWeek && pattern.daysOfWeek.length > 0) {
+        recurrence.daysOfWeek = pattern.daysOfWeek.map(d => {
+          const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+          return days[d] as any
+        })
+      }
+      
+      if (pattern.endDate) {
+        recurrence.endDate = pattern.endDate
+      }
+      
+      console.log('Transformed recurrence object:', recurrence)
+      
+      const updateData = {
+        taskType,
+        recurrence,
+      }
+      
+      console.log('Updating node with:', updateData)
+      
+      await updateNode(nodeId, updateData as any)
+      
+      // Wait a moment and then check if the update persisted
+      setTimeout(async () => {
+        const { db } = await import('@/lib/firebase')
+        const { doc, getDoc } = await import('firebase/firestore')
+        
+        // Get the node from the store
+        const nodeStore = useNodesStore.getState()
+        const currentNode = nodeStore.nodes.find(n => n.id === nodeId)
+        if (currentNode) {
+          const docRef = doc(db, 'users', currentNode.userId, 'nodes', nodeId)
+          const docSnap = await getDoc(docRef)
+          
+          if (docSnap.exists()) {
+            const data = docSnap.data()
+            console.log('Direct Firestore check after 1 second:', {
+              id: nodeId,
+              taskType: data.taskType,
+              recurrence: data.recurrence,
+              allKeys: Object.keys(data)
+            })
+          }
+        }
+      }, 1000)
+    }
+    setShowRecurrenceDialog(false)
   }
 
   const getQuadrantColor = (urgency?: number, importance?: number) => {
@@ -395,14 +490,68 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
             >
               <Pin className={`w-4 h-4 ${node.isPinned ? 'fill-yellow-500 text-yellow-500' : ''}`} />
             </Button>
-            <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
+            <div className="relative" ref={dropdownRef}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowDropdown(!showDropdown)
+                }}
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+              
+              {showDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-card dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-gray-700 z-50">
+                  <div className="py-1">
+                    <button
+                      className="flex items-center w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent dark:hover:bg-gray-700"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowRecurrenceDialog(true)
+                        setShowDropdown(false)
+                      }}
+                    >
+                      <Repeat className="w-4 h-4 mr-2" />
+                      {(node as any).taskType === 'recurring' || (node as any).taskType === 'habit' 
+                        ? 'Edit Recurrence' 
+                        : 'Make Recurring'}
+                    </button>
+                    <button
+                      className="flex items-center w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent dark:hover:bg-gray-700"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowUpdateModal(true)
+                        setShowDropdown(false)
+                      }}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
+                    </button>
+                    <div className="border-t border-border dark:border-gray-700 my-1"></div>
+                    <button
+                      className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        if (confirm('Are you sure you want to delete this node?')) {
+                          await deleteNode(node.id)
+                        }
+                        setShowDropdown(false)
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Relationships */}
-        {(parent || children.length > 0) && (
+        {/* Relationships and Recurrence */}
+        {(parent || children.length > 0 || (node as any).taskType === 'recurring' || (node as any).taskType === 'habit') && (
           <div className="flex items-center gap-2 mb-2 text-xs">
             {parent && (
               <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded">
@@ -414,6 +563,12 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
               <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded">
                 <GitBranch className="w-3 h-3" />
                 <span>{children.length} {children.length === 1 ? 'child' : 'children'}</span>
+              </div>
+            )}
+            {((node as any).taskType === 'recurring' || (node as any).taskType === 'habit') && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded">
+                <Repeat className="w-3 h-3" />
+                <span>{(node as any).taskType === 'habit' ? 'Habit' : 'Recurring'}</span>
               </div>
             )}
           </div>
@@ -597,6 +752,29 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
           node={node}
           userId={userId}
           userName={userName}
+        />
+      )}
+      
+      {showRecurrenceDialog && (
+        <RecurrenceDialog
+          taskId={node.id}
+          taskLabel={node.title || node.description || 'Untitled'}
+          currentPattern={(node as any).recurrence ? {
+            type: (node as any).recurrence.frequency,
+            frequency: (node as any).recurrence.interval,
+            daysOfWeek: (node as any).recurrence.daysOfWeek?.map((day: string) => {
+              const dayMap: Record<string, number> = {
+                'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+                'Thursday': 4, 'Friday': 5, 'Saturday': 6
+              }
+              return dayMap[day]
+            }),
+            startDate: node.createdAt?.split('T')[0] || format(new Date(), 'yyyy-MM-dd'),
+            endDate: (node as any).recurrence.endDate,
+          } : undefined}
+          currentTaskType={(node as any).taskType}
+          onSave={handleSaveRecurrence}
+          onClose={() => setShowRecurrenceDialog(false)}
         />
       )}
     </Card>

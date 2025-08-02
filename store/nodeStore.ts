@@ -74,12 +74,33 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       const nodes: Node[] = []
       snapshot.forEach(doc => {
         const data = doc.data()
-        nodes.push({
+        
+        // Debug log for first few nodes
+        if (nodes.length < 3) {
+          console.log('Loading node from Firestore:', {
+            id: doc.id,
+            title: data.title,
+            taskType: data.taskType,
+            recurrence: data.recurrence,
+            rawData: data
+          })
+        }
+        
+        const nodeData = {
           ...data,
           id: doc.id,
           createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
           updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
-        } as Node)
+          // Explicitly include fields that might be undefined
+          taskType: data.taskType || undefined,
+          recurrence: data.recurrence || undefined,
+          recurringCompletions: data.recurringCompletions || undefined,
+          currentStreak: data.currentStreak || undefined,
+          longestStreak: data.longestStreak || undefined,
+          lastRecurringCompletionDate: data.lastRecurringCompletionDate || undefined,
+        } as Node
+        
+        nodes.push(nodeData)
       })
 
       set({
@@ -171,7 +192,11 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       nodeId,
       updates,
       tags: updates.tags,
-      currentNodeTags: node.tags
+      currentNodeTags: node.tags,
+      taskType: updates.taskType,
+      recurrence: updates.recurrence,
+      currentTaskType: node.taskType,
+      currentRecurrence: node.recurrence
     })
 
     try {
@@ -180,10 +205,37 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore')
       
       // Update in Firestore
-      await updateDoc(doc(db, 'users', node.userId, 'nodes', nodeId), {
+      const firestoreUpdate = {
         ...updates,
         updatedAt: serverTimestamp(),
-      })
+      }
+      
+      console.log('Sending to Firestore:', firestoreUpdate)
+      
+      try {
+        await updateDoc(doc(db, 'users', node.userId, 'nodes', nodeId), firestoreUpdate)
+        console.log('Firestore update completed successfully')
+      } catch (updateError) {
+        console.error('Error updating Firestore:', updateError)
+        throw updateError
+      }
+      
+      // Verify the update by reading back from Firestore
+      try {
+        const { getDoc } = await import('firebase/firestore')
+        const updatedDoc = await getDoc(doc(db, 'users', node.userId, 'nodes', nodeId))
+        const verifyData = updatedDoc.data()
+        console.log('Verification - data in Firestore after update:', {
+          id: updatedDoc.id,
+          exists: updatedDoc.exists(),
+          taskType: verifyData?.taskType,
+          recurrence: verifyData?.recurrence,
+          hasRecurrence: !!verifyData?.recurrence,
+          allFields: Object.keys(verifyData || {})
+        })
+      } catch (verifyError) {
+        console.error('Error verifying update:', verifyError)
+      }
 
       // Update local state optimistically
       const nodes = get().nodes.map(n => 
@@ -191,12 +243,20 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
           ? { ...n, ...updates, updatedAt: new Date().toISOString() } 
           : n
       )
+      
+      const updatedNode = nodes.find(n => n.id === nodeId)
+      console.log('Updated node in local state:', {
+        id: updatedNode?.id,
+        title: updatedNode?.title,
+        taskType: updatedNode?.taskType,
+        recurrence: updatedNode?.recurrence
+      })
 
       set({ nodes })
     } catch (error) {
+      console.error('Error in updateNode:', error)
       set({ error: (error as Error).message })
-      // Reload to ensure consistency
-      await get().loadNodes(node.userId)
+      // Don't reload automatically - let the component handle it
     }
   },
 

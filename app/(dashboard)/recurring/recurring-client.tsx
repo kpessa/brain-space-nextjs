@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { useNodesStore } from '@/store/nodeStore'
 import { RecurrenceDialog } from '@/components/RecurrenceDialog'
+import { NodeSelectorModal } from '@/components/nodes/NodeSelectorModal'
 import { 
   shouldTaskOccurOnDate, 
   formatRecurrencePattern,
@@ -30,16 +31,35 @@ export default function RecurringClient({ userId }: { userId: string }) {
   const { nodes, isLoading: loading, error, loadNodes, updateNode } = useNodesStore()
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [showRecurrenceDialog, setShowRecurrenceDialog] = useState(false)
+  const [showNodeSelector, setShowNodeSelector] = useState(false)
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
 
   useEffect(() => {
+    console.log('Recurring page mounting, loading nodes for userId:', userId)
     loadNodes(userId)
   }, [userId, loadNodes])
 
   // Get all recurring tasks
+  console.log('=== Recurring Page Debug ===')
+  console.log('All nodes:', nodes.length)
+  console.log('Sample nodes:', nodes.slice(0, 3).map(n => ({ 
+    id: n.id, 
+    title: n.title, 
+    taskType: n.taskType,
+    recurrence: n.recurrence 
+  })))
+  
   const recurringNodes = nodes.filter(
     node => node.taskType === 'recurring' || node.taskType === 'habit'
   )
+  
+  console.log('Filtered recurring nodes:', recurringNodes.length)
+  console.log('Recurring nodes:', recurringNodes.map(n => ({ 
+    id: n.id, 
+    title: n.title, 
+    taskType: n.taskType,
+    recurrence: n.recurrence 
+  })))
 
   // Get tasks for selected date
   const tasksForDate = recurringNodes.filter(node => {
@@ -103,14 +123,21 @@ export default function RecurringClient({ userId }: { userId: string }) {
       })
     } else {
       // Update recurrence
-      const recurrence = {
+      const recurrence: any = {
         frequency: pattern.type as any,
-        interval: pattern.frequency,
-        daysOfWeek: pattern.daysOfWeek?.map(d => {
+        interval: pattern.frequency || 1,
+      }
+      
+      // Only add optional fields if they have values
+      if (pattern.daysOfWeek && pattern.daysOfWeek.length > 0) {
+        recurrence.daysOfWeek = pattern.daysOfWeek.map(d => {
           const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
           return days[d] as any
-        }),
-        endDate: pattern.endDate,
+        })
+      }
+      
+      if (pattern.endDate) {
+        recurrence.endDate = pattern.endDate
       }
       await updateNode(nodeId, {
         taskType,
@@ -123,6 +150,12 @@ export default function RecurringClient({ userId }: { userId: string }) {
 
   const navigateDate = (days: number) => {
     setSelectedDate(prevDate => days > 0 ? addDays(prevDate, days) : subDays(prevDate, Math.abs(days)))
+  }
+
+  const handleNodeSelected = (node: Node) => {
+    setSelectedNode(node)
+    setShowNodeSelector(false)
+    setShowRecurrenceDialog(true)
   }
 
   if (loading) {
@@ -255,17 +288,27 @@ export default function RecurringClient({ userId }: { userId: string }) {
                   <Repeat className="w-5 h-5 text-purple-600" />
                   <CardTitle>All Recurring Tasks</CardTitle>
                 </div>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    // Create a new task and open recurrence dialog
-                    setSelectedNode({ id: 'new', title: 'New Task' } as Node)
-                    setShowRecurrenceDialog(true)
-                  }}
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowNodeSelector(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    From Existing
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      // Create a new task and open recurrence dialog
+                      setSelectedNode({ id: 'new', title: 'New Task' } as Node)
+                      setShowRecurrenceDialog(true)
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Create New
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -318,6 +361,14 @@ export default function RecurringClient({ userId }: { userId: string }) {
             </CardContent>
           </Card>
         </div>
+
+        {/* Node Selector Modal */}
+        <NodeSelectorModal
+          isOpen={showNodeSelector}
+          onClose={() => setShowNodeSelector(false)}
+          onSelectNode={handleNodeSelected}
+          userId={userId}
+        />
 
         {/* Recurrence Dialog */}
         {showRecurrenceDialog && selectedNode && (
