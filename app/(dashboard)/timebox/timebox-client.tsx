@@ -8,7 +8,7 @@ import { useTimeboxStore, type TimeboxTask } from '@/store/timeboxStore'
 import { useNodesStore } from '@/store/nodeStore'
 import { useUserPreferencesStore, shouldShowNode } from '@/store/userPreferencesStore'
 import { useCalendarStore } from '@/store/calendarStore'
-import { googleCalendarService } from '@/services/googleCalendar'
+import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
 import { format, addDays, subDays, startOfDay, endOfDay } from 'date-fns'
 import { cn } from '@/lib/utils'
 import StandupSummaryDialog from '@/components/StandupSummaryDialog'
@@ -88,16 +88,18 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   const [selectedNodeType, setSelectedNodeType] = useState<NodeType | 'all'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const dragNodeRef = useRef<HTMLDivElement>(null)
-  const { isAuthenticated, selectedCalendarIds } = useCalendarStore()
+  const { selectedCalendarIds } = useCalendarStore()
+  const { isConnected, getEvents } = useGoogleCalendar()
   
   const effectiveInterval = getEffectiveTimeboxInterval()
   
-  // Initialize selectedDate on client side to avoid hydration mismatch
+  // Note: selectedDate is now initialized in the store to avoid hydration issues
+  
+  // Prevent hydration mismatch by ensuring client-side rendering
+  const [isClient, setIsClient] = useState(false)
   useEffect(() => {
-    if (!selectedDate) {
-      setSelectedDate(new Date().toISOString().split('T')[0])
-    }
-  }, [selectedDate, setSelectedDate])
+    setIsClient(true)
+  }, [])
   
   // Initialize time slots with correct interval
   useEffect(() => {
@@ -114,12 +116,12 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   
   // Load calendar events when sync is enabled
   useEffect(() => {
-    if (calendarSyncEnabled && isAuthenticated) {
+    if (calendarSyncEnabled && isConnected) {
       loadCalendarEvents()
     } else {
       setCalendarEvents([])
     }
-  }, [calendarSyncEnabled, isAuthenticated, selectedDate, selectedCalendarIds])
+  }, [calendarSyncEnabled, isConnected, selectedDate, selectedCalendarIds])
   
   // Find current time slot for highlighting
   useEffect(() => {
@@ -174,7 +176,20 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   // Load calendar events
   const loadCalendarEvents = async () => {
     try {
+      // Validate selectedDate before using it
+      if (!selectedDate) {
+        console.warn('[TimeboxClient] No selectedDate available, skipping calendar load')
+        return
+      }
+
       const dateObj = new Date(selectedDate)
+      
+      // Check if the date is valid
+      if (isNaN(dateObj.getTime())) {
+        console.error('[TimeboxClient] Invalid selectedDate:', selectedDate)
+        return
+      }
+
       const startTime = startOfDay(dateObj)
       const endTime = endOfDay(dateObj)
       
@@ -187,7 +202,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
       
       for (const calendarId of calendarsToLoad) {
         try {
-          const events = await googleCalendarService.listEvents(
+          const events = await getEvents(
             calendarId,
             startTime,
             endTime
@@ -204,7 +219,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
               calendarEventId: event.id,
               calendarId: calendarId,
               calendarSummary: event.description,
-              calendarLocation: event.location,
+              calendarLocation: (event as any).location,
               isCalendarEvent: true,
               timeboxStartTime: format(startDate, 'HH:mm'),
               timeboxDuration: Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60)),
@@ -296,12 +311,12 @@ export default function TimeboxClient({ userId }: { userId: string }) {
       const existingCalendarIds = slot.tasks.filter(t => t.calendarEventId).map(t => t.calendarEventId)
       
       const filteredCalendarTasks = calendarTasksInSlot.filter(calTask => {
-        // Check if this calendar event is already linked to a node
+        // Check if this calendar event is already linked to a node that's scheduled in this slot
         const linkedNode = nodes.find(n => n.calendarEventId === calTask.calendarEventId)
         if (linkedNode && existingNodeIds.includes(linkedNode.id)) {
-          return false // Skip, already have the node version
+          return false // Skip, already have the node version in this slot
         }
-        // Check if we already have this calendar event
+        // Check if we already have this calendar event in this slot
         if (existingCalendarIds.includes(calTask.calendarEventId)) {
           return false
         }
@@ -414,8 +429,8 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     }
   }, [displaySlots, selectedDate, isSlotInPast])
   
-  // Show loading state until selectedDate is initialized to prevent hydration mismatch
-  if (!selectedDate) {
+  // Show loading state until client-side hydration and selectedDate is initialized
+  if (!isClient || !selectedDate) {
     return (
       <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(100vh-4rem)] flex items-center justify-center">
         <div className="text-white">Loading...</div>
@@ -473,7 +488,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                     </Button>
                   }
                 />
-                {isAuthenticated && (
+                {isConnected && (
                   <Button
                     variant={calendarSyncEnabled ? "primary" : "outline"}
                     size="sm"

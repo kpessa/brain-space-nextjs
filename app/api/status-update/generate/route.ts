@@ -226,11 +226,11 @@ export async function POST(request: NextRequest) {
     }
     
     // Get calendar events
-    let outOfOffice: any[] = []
-    let appointments: any[] = []
-    let workTravel: any[] = []
-    let suggestedPTO: string[] = []
-    let criticalEvents: any[] = [] // Keep for backward compatibility
+    const outOfOffice: any[] = []
+    const appointments: any[] = []
+    const workTravel: any[] = []
+    const suggestedPTO: string[] = []
+    const criticalEvents: any[] = [] // Keep for backward compatibility
     let eventCategorizations: any[] = [] // Store for returning to client
     
     try {

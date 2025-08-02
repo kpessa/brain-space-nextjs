@@ -1,18 +1,34 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+interface Calendar {
+  id: string
+  summary: string
+  primary?: boolean
+  backgroundColor?: string
+}
+
 interface CalendarStore {
   selectedCalendarIds: Set<string>
   setSelectedCalendarIds: (ids: Set<string>) => void
   addSelectedCalendarId: (id: string) => void
   removeSelectedCalendarId: (id: string) => void
   toggleCalendarSelection: (id: string) => void
+  
+  // Google Calendar Auth State
+  isAuthenticated: boolean
+  setIsAuthenticated: (isAuth: boolean) => void
+  calendars: Calendar[]
+  setCalendars: (calendars: Calendar[]) => void
+  get selectedCalendars(): string[]
 }
 
 export const useCalendarStore = create<CalendarStore>()(
   persist(
-    set => ({
+    (set, get) => ({
       selectedCalendarIds: new Set<string>(),
+      isAuthenticated: false,
+      calendars: [],
 
       setSelectedCalendarIds: ids => set({ selectedCalendarIds: ids }),
 
@@ -38,6 +54,15 @@ export const useCalendarStore = create<CalendarStore>()(
           }
           return { selectedCalendarIds: newSet }
         }),
+        
+      setIsAuthenticated: isAuth => set({ isAuthenticated: isAuth }),
+      
+      setCalendars: calendars => set({ calendars }),
+      
+      get selectedCalendars() {
+        const state = get()
+        return Array.from(state.selectedCalendarIds)
+      },
     }),
     {
       name: 'calendar-preferences',

@@ -116,7 +116,7 @@ export default function BraindumpClient({ userId }: { userId: string }) {
     nodes.push(rootNode)
     
     // Create category nodes and thought nodes
-    let categoryY = 200
+    const categoryY = 200
     result.categories?.forEach((category: any, catIndex: number) => {
       const categoryId = `category-${catIndex}`
       const categoryNode: BrainDumpNode = {

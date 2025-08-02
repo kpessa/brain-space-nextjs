@@ -154,7 +154,7 @@ function analyzeCommitments(
   const dailyMeetingCounts: Record<string, number> = {}
   
   // Initialize months
-  let currentDate = new Date(startDate)
+  const currentDate = new Date(startDate)
   while (currentDate <= endDate) {
     const monthKey = format(currentDate, 'yyyy-MM')
     const monthStart = startOfMonth(currentDate)

@@ -64,6 +64,8 @@ export type GenAiNodeInput = {
   recurrence?: Recurrence
   completed?: boolean
   isPersonal?: boolean
+  calendarEventId?: string // Google Calendar event ID
+  calendarId?: string // Google Calendar ID
 }
 
 export interface Node {
@@ -134,6 +136,10 @@ export interface Node {
   
   // Updates (optional)
   updates?: NodeUpdate[]
+  
+  // Google Calendar integration (optional)
+  calendarEventId?: string // Google Calendar event ID
+  calendarId?: string // Google Calendar ID
 }
 
 // Helper functions for node operations

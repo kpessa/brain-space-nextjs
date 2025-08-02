@@ -48,10 +48,14 @@ import {
   Mic,
   Pin,
   Repeat,
-  Edit
+  Edit,
+  Calendar,
+  CalendarPlus
 } from 'lucide-react'
 import { format } from 'date-fns'
 import StandupSummaryDialog from '@/components/StandupSummaryDialog'
+import { CalendarEventModal } from '@/components/CalendarEventModal'
+import { BulkScheduleImportModal } from '@/components/BulkScheduleImportModal'
 
 interface NodeCreateModalProps {
   isOpen: boolean
@@ -315,6 +319,7 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
   const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
   const [showRecurrenceDialog, setShowRecurrenceDialog] = useState(false)
+  const [showCalendarModal, setShowCalendarModal] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   
   const parent = getNodeParent(node.id)
@@ -429,82 +434,89 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
   }
 
   return (
-    <Card className={`hover:shadow-md transition-shadow cursor-pointer ${isSelected ? 'ring-2 ring-brain-500' : ''} ${node.isPinned ? 'bg-yellow-50 border-yellow-300' : ''}`}>
-      <CardContent className="p-4" onClick={() => !selectMode && onNodeClick?.(node)}>
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              {selectMode ? (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onSelect?.(node.id, !isSelected)
-                  }}
-                  className="flex-shrink-0"
-                >
-                  {isSelected ? (
-                    <CheckSquare className="w-5 h-5 text-brain-600" />
-                  ) : (
-                    <Square className="w-5 h-5 text-gray-400" />
-                  )}
-                </button>
+    <Card className={`hover:shadow-md transition-shadow cursor-pointer overflow-hidden ${isSelected ? 'ring-2 ring-brain-500' : ''} ${node.isPinned ? 'bg-yellow-50 border-yellow-300' : ''}`}>
+      <CardContent className="p-3" onClick={() => !selectMode && onNodeClick?.(node)}>
+        <div className="flex items-start gap-2 mb-2">
+          {/* Checkbox/Complete button */}
+          {selectMode ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onSelect?.(node.id, !isSelected)
+              }}
+              className="flex-shrink-0 mt-0.5"
+            >
+              {isSelected ? (
+                <CheckSquare className="w-4 h-4 text-brain-600" />
               ) : (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleCompletionToggle()
-                  }}
-                  className="flex-shrink-0"
-                >
-                  {node.completed ? (
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                  ) : (
-                    <Circle className="w-5 h-5 text-gray-400" />
-                  )}
-                </button>
+                <Square className="w-4 h-4 text-gray-400" />
               )}
-              <div className="flex items-center gap-2">
-                <span className="text-lg">{getNodeTypeIcon(node.type)}</span>
-                <h3 className={`font-medium ${node.completed ? 'line-through text-gray-500' : 'text-gray-900'} line-clamp-2`}>
+            </button>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleCompletionToggle()
+              }}
+              className="flex-shrink-0 mt-0.5"
+            >
+              {node.completed ? (
+                <CheckCircle className="w-4 h-4 text-green-600" />
+              ) : (
+                <Circle className="w-4 h-4 text-gray-400" />
+              )}
+            </button>
+          )}
+          
+          {/* Main content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start gap-2">
+              <span className="text-base flex-shrink-0">{getNodeTypeIcon(node.type)}</span>
+              <div className="flex-1 min-w-0">
+                <h3 className={`font-medium text-sm ${node.completed ? 'line-through text-gray-500' : 'text-gray-900'} line-clamp-1`}>
                   {node.title || node.description?.substring(0, 100) || 'Untitled'}
                 </h3>
+                {node.description && node.description !== node.title && (
+                  <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                    {node.description}
+                  </p>
+                )}
               </div>
             </div>
-            
-            {node.description && node.description !== node.title && (
-              <p className="text-sm text-gray-600 mb-2 line-clamp-3">
-                {node.description}
-              </p>
-            )}
           </div>
           
-          <div className="flex items-center gap-2 ml-4">
-            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getQuadrantColor(node.urgency, node.importance)}`}>
-              {getEisenhowerQuadrant(node.urgency, node.importance).replace('-', ' ')}
-            </span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handlePinToggle}
-              title={node.isPinned ? "Unpin node" : "Pin node"}
-            >
-              <Pin className={`w-4 h-4 ${node.isPinned ? 'fill-yellow-500 text-yellow-500' : ''}`} />
-            </Button>
+          {/* Actions */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {node.isPinned && (
+              <Pin className={`w-3 h-3 fill-yellow-500 text-yellow-500`} />
+            )}
             <div className="relative" ref={dropdownRef}>
               <Button 
                 variant="ghost" 
                 size="sm" 
+                className="h-6 w-6 p-0"
                 onClick={(e) => {
                   e.stopPropagation()
                   setShowDropdown(!showDropdown)
                 }}
               >
-                <MoreHorizontal className="w-4 h-4" />
+                <MoreHorizontal className="w-3 h-3" />
               </Button>
               
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-48 bg-card dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-gray-700 z-50">
                   <div className="py-1">
+                    <button
+                      className="flex items-center w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent dark:hover:bg-gray-700"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handlePinToggle(e)
+                        setShowDropdown(false)
+                      }}
+                    >
+                      <Pin className="w-4 h-4 mr-2" />
+                      {node.isPinned ? 'Unpin' : 'Pin'}
+                    </button>
                     <button
                       className="flex items-center w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent dark:hover:bg-gray-700"
                       onClick={(e) => {
@@ -526,16 +538,77 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
                         setShowDropdown(false)
                       }}
                     >
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Updates {node.updates && node.updates.length > 0 && `(${node.updates.length})`}
+                    </button>
+                    <button
+                      className="flex items-center w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent dark:hover:bg-gray-700"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowCalendarModal(true)
+                        setShowDropdown(false)
+                      }}
+                    >
+                      {node.calendarEventId ? (
+                        <>
+                          <Calendar className="w-4 h-4 mr-2" />
+                          View Calendar Event
+                        </>
+                      ) : (
+                        <>
+                          <CalendarPlus className="w-4 h-4 mr-2" />
+                          Add to Calendar
+                        </>
+                      )}
+                    </button>
+                    <button
+                      className="flex items-center w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent dark:hover:bg-gray-700"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onCreateChild?.(node)
+                        setShowDropdown(false)
+                      }}
+                    >
+                      <GitBranch className="w-4 h-4 mr-2" />
+                      Add Child Node
+                    </button>
+                    <button
+                      className="flex items-center w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent dark:hover:bg-gray-700"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onCreateParent?.(node)
+                        setShowDropdown(false)
+                      }}
+                    >
+                      <GitMerge className="w-4 h-4 mr-2" />
+                      Add Parent Node
+                    </button>
+                    <button
+                      className="flex items-center w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent dark:hover:bg-gray-700"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowDetails(!showDetails)
+                        setShowDropdown(false)
+                      }}
+                    >
                       <Edit className="w-4 h-4 mr-2" />
-                      Edit
+                      {showDetails ? 'Hide' : 'Show'} Details
                     </button>
                     <div className="border-t border-border dark:border-gray-700 my-1"></div>
                     <button
                       className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                       onClick={async (e) => {
                         e.stopPropagation()
-                        if (confirm('Are you sure you want to delete this node?')) {
-                          await deleteNode(node.id)
+                        const hasRelationships = parent || children.length > 0
+                        if (hasRelationships) {
+                          const message = `This node has relationships:\n${parent ? '- 1 parent node\n' : ''}${children.length > 0 ? `- ${children.length} child node(s)\n` : ''}\nDeleting will unlink all relationships. Continue?`
+                          if (window.confirm(message)) {
+                            await deleteNode(node.id)
+                          }
+                        } else {
+                          if (window.confirm('Are you sure you want to delete this node?')) {
+                            await deleteNode(node.id)
+                          }
                         }
                         setShowDropdown(false)
                       }}
@@ -550,199 +623,99 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
           </div>
         </div>
 
-        {/* Relationships and Recurrence */}
-        {(parent || children.length > 0 || (node as any).taskType === 'recurring' || (node as any).taskType === 'habit') && (
-          <div className="flex items-center gap-2 mb-2 text-xs">
-            {parent && (
-              <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded">
-                <GitMerge className="w-3 h-3" />
-                <span>Child of: {parent.title || 'Untitled'}</span>
-              </div>
-            )}
-            {children.length > 0 && (
-              <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                <GitBranch className="w-3 h-3" />
-                <span>{children.length} {children.length === 1 ? 'child' : 'children'}</span>
-              </div>
-            )}
-            {((node as any).taskType === 'recurring' || (node as any).taskType === 'habit') && (
-              <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded">
-                <Repeat className="w-3 h-3" />
-                <span>{(node as any).taskType === 'habit' ? 'Habit' : 'Recurring'}</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className={`px-2 py-1 text-xs font-medium rounded ${getNodeTypeColor(node.type)} bg-opacity-10`}>
+        {/* Tags and metadata */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1 flex-wrap min-w-0">
+            <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${getNodeTypeColor(node.type)} bg-opacity-10`}>
               {node.type}
             </span>
-            
+            <span className={`px-1.5 py-0.5 text-xs rounded-full ${getQuadrantColor(node.urgency, node.importance)}`}>
+              {getEisenhowerQuadrant(node.urgency, node.importance).replace('-', ' ')}
+            </span>
             {node.tags && node.tags.length > 0 && (
-              <div className="flex gap-1">
+              <>
                 {node.tags.slice(0, 2).map((tag: string) => (
-                  <span key={tag} className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                  <span key={tag} className="px-1.5 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
                     #{tag}
                   </span>
                 ))}
                 {node.tags.length > 2 && (
-                  <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                  <span className="px-1.5 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
                     +{node.tags.length - 2}
                   </span>
                 )}
-              </div>
+              </>
             )}
-          </div>
-          
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <Clock className="w-3 h-3" />
-            {node.updatedAt ? new Date(node.updatedAt).toLocaleDateString() : 'Recently'}
+            {parent && (
+              <span className="px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 rounded flex items-center gap-0.5">
+                <GitMerge className="w-2.5 h-2.5" />
+                Child
+              </span>
+            )}
+            {children.length > 0 && (
+              <span className="px-1.5 py-0.5 text-xs bg-blue-100 text-blue-700 rounded flex items-center gap-0.5">
+                <GitBranch className="w-2.5 h-2.5" />
+                {children.length}
+              </span>
+            )}
+            {((node as any).taskType === 'recurring' || (node as any).taskType === 'habit') && (
+              <span className="px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 rounded flex items-center gap-0.5">
+                <Repeat className="w-2.5 h-2.5" />
+              </span>
+            )}
+            {node.calendarEventId && (
+              <span className="px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded flex items-center gap-0.5">
+                <Calendar className="w-2.5 h-2.5" />
+              </span>
+            )}
           </div>
         </div>
 
         {showDetails && (
-          <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
-            {/* Breadcrumb */}
-            {parent && (
+          <div className="mt-3 pt-3 border-t border-gray-200 space-y-2">
+            {/* Relationships */}
+            {(parent || children.length > 0) && (
               <div className="space-y-1">
-                <div className="text-xs font-medium text-gray-500">Path:</div>
-                <NodeBreadcrumb node={node} />
+                {parent && (
+                  <div className="text-xs">
+                    <span className="font-medium text-gray-600">Parent:</span>{' '}
+                    <span className="text-purple-600 hover:underline cursor-pointer">
+                      {parent.title || 'Untitled'}
+                    </span>
+                  </div>
+                )}
+                
+                {children.length > 0 && (
+                  <div className="text-xs">
+                    <span className="font-medium text-gray-600">Children ({children.length}):</span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {children.map((child) => (
+                        <span 
+                          key={child.id}
+                          className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100 cursor-pointer"
+                        >
+                          {child.title || 'Untitled'}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             
-            {/* Relationships */}
-            <div className="space-y-2">
-              {parent && (
-                <div className="text-xs">
-                  <span className="font-medium text-gray-600">Parent:</span>{' '}
-                  <span className="text-purple-600 hover:underline cursor-pointer">
-                    {parent.title || 'Untitled'}
-                  </span>
-                </div>
-              )}
-              
-              {children.length > 0 && (
-                <div className="text-xs">
-                  <span className="font-medium text-gray-600">Children ({children.length}):</span>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {children.map((child) => (
-                      <span 
-                        key={child.id}
-                        className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100 cursor-pointer"
-                      >
-                        {child.title || 'Untitled'}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            
             {/* Metadata */}
-            <div className="space-y-1 text-xs text-gray-600">
-              <div>
-                <strong>Created:</strong> {node.createdAt ? new Date(node.createdAt).toLocaleString() : 'Unknown'}
-              </div>
-              <div>
-                <strong>Updated:</strong> {node.updatedAt ? new Date(node.updatedAt).toLocaleString() : 'Unknown'}
-              </div>
-              {node.tags && node.tags.length > 0 && (
-                <div>
-                  <strong>All Tags:</strong> {node.tags.join(', ')}
-                </div>
-              )}
+            <div className="text-xs text-gray-500">
               {node.urgency && node.importance && (
-                <div>
-                  <strong>Priority:</strong> Urgency {node.urgency}/10, Importance {node.importance}/10
-                </div>
+                <div>Priority: Urgency {node.urgency}/10, Importance {node.importance}/10</div>
               )}
+              {node.dueDate?.type === 'exact' && (
+                <div>Due: {new Date(node.dueDate.date).toLocaleDateString()}</div>
+              )}
+              <div>Updated: {node.updatedAt ? new Date(node.updatedAt).toLocaleDateString() : 'Unknown'}</div>
             </div>
           </div>
         )}
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={(e) => {
-              e.stopPropagation()
-              setShowDetails(!showDetails)
-            }}
-            className="text-xs"
-          >
-            {showDetails ? 'Less' : 'More'} Details
-          </Button>
-          
-          {/* Updates button */}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={(e) => {
-              e.stopPropagation()
-              setShowUpdateModal(true)
-            }}
-            className="text-xs flex items-center gap-1 relative"
-          >
-            <MessageSquare className="w-3 h-3" />
-            Updates
-            {node.updates && node.updates.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                {node.updates.length}
-              </span>
-            )}
-          </Button>
-          
-          {/* Relationship buttons */}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={(e) => {
-              e.stopPropagation()
-              onCreateChild?.(node)
-            }}
-            className="text-xs flex items-center gap-1"
-          >
-            <GitBranch className="w-3 h-3" />
-            Add Child
-          </Button>
-          
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={(e) => {
-              e.stopPropagation()
-              onCreateParent?.(node)
-            }}
-            className="text-xs flex items-center gap-1"
-          >
-            <GitMerge className="w-3 h-3" />
-            Add Parent
-          </Button>
-          
-          <Button 
-            size="sm" 
-            variant="danger" 
-            onClick={(e) => {
-              e.stopPropagation()
-              const hasRelationships = parent || children.length > 0
-              if (hasRelationships) {
-                const message = `This node has relationships:\n${parent ? '- 1 parent node\n' : ''}${children.length > 0 ? `- ${children.length} child node(s)\n` : ''}\nDeleting will unlink all relationships. Continue?`
-                if (window.confirm(message)) {
-                  deleteNode(node.id)
-                }
-              } else {
-                if (window.confirm('Are you sure you want to delete this node?')) {
-                  deleteNode(node.id)
-                }
-              }
-            }} 
-            className="text-xs"
-          >
-            Delete
-          </Button>
-        </div>
       </CardContent>
       
       {showUpdateModal && (
@@ -777,6 +750,22 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
           onClose={() => setShowRecurrenceDialog(false)}
         />
       )}
+      
+      {showCalendarModal && (
+        <CalendarEventModal
+          isOpen={showCalendarModal}
+          onClose={() => setShowCalendarModal(false)}
+          node={node}
+          onEventCreated={async (eventId, calendarId) => {
+            // Update node with calendar event info
+            await updateNode(node.id, {
+              calendarEventId: eventId,
+              calendarId: calendarId
+            })
+            setShowCalendarModal(false)
+          }}
+        />
+      )}
     </Card>
   )
 }
@@ -802,6 +791,7 @@ export default function NodesClient({ userId }: { userId: string }) {
     node: Node | null
   }>({ isOpen: false, node: null })
   const [showExportModal, setShowExportModal] = useState(false)
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false)
   
   const { nodes, isLoading, loadNodes, deleteNode } = useNodesStore()
   const { currentMode, hidePersonalInWorkMode, hideWorkInPersonalMode } = useUserPreferencesStore()
@@ -1041,6 +1031,16 @@ export default function NodesClient({ userId }: { userId: string }) {
                 >
                   <FileText className="w-4 h-4" />
                   Export Updates
+                </Button>
+                
+                {/* Bulk Import */}
+                <Button
+                  variant="outline"
+                  onClick={() => setShowBulkImportModal(true)}
+                  className="flex items-center gap-2 bg-background/10 border-background/20 text-primary-foreground hover:bg-background/20"
+                >
+                  <Calendar className="w-4 h-4" />
+                  Bulk Import
                 </Button>
                 
                 {/* Daily Standup (Work Mode Only) */}
@@ -1441,6 +1441,16 @@ export default function NodesClient({ userId }: { userId: string }) {
             setSelectMode(false)
           }}
           selectedNodeIds={selectedNodes}
+        />
+        
+        <BulkScheduleImportModal
+          isOpen={showBulkImportModal}
+          onClose={() => {
+            setShowBulkImportModal(false)
+            // Reload nodes to show newly imported ones
+            loadNodes(userId)
+          }}
+          userId={userId}
         />
         </div>
       </div>

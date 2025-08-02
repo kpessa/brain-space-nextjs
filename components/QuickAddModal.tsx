@@ -20,7 +20,8 @@ import {
   AlertTriangle,
   Search,
   MessageSquare,
-  Puzzle
+  Puzzle,
+  Calendar
 } from 'lucide-react'
 
 interface QuickAddModalProps {
@@ -46,6 +47,7 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
   const [input, setInput] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [useAI, setUseAI] = useState(true)
+  const [createCalendarEvent, setCreateCalendarEvent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [preview, setPreview] = useState<any>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -68,6 +70,7 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
       setInput('')
       setPreview(null)
       setError(null)
+      setCreateCalendarEvent(false)
     }
   }, [isOpen])
 
@@ -113,7 +116,15 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
 
       if (!preview) {
         // Direct submission
-        await createNode(nodeData)
+        const newNode = await createNode(nodeData)
+        
+        // Handle calendar event creation if requested
+        if (createCalendarEvent && newNode) {
+          window.dispatchEvent(new CustomEvent('createCalendarEventForNode', { 
+            detail: { nodeId: newNode.id, node: newNode }
+          }))
+        }
+        
         onClose()
       } else {
         // Show preview
@@ -131,10 +142,20 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
     if (!preview || !userId) return
 
     try {
-      await createNode({
+      const newNode = await createNode({
         ...preview,
         userId: userId || 'anonymous',
       })
+      
+      // Handle calendar event creation if requested
+      if (createCalendarEvent && newNode) {
+        // Store a flag to handle calendar creation after modal closes
+        // This will be handled by the parent component or a separate service
+        window.dispatchEvent(new CustomEvent('createCalendarEventForNode', { 
+          detail: { nodeId: newNode.id, node: newNode }
+        }))
+      }
+      
       onClose()
     } catch (error) {
       console.error('Failed to create node:', error)
@@ -172,19 +193,36 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="quickAddUseAI"
-                  checked={useAI}
-                  onChange={(e) => setUseAI(e.target.checked)}
-                  className="rounded"
-                  disabled={isProcessing}
-                />
-                <label htmlFor="quickAddUseAI" className="text-sm text-gray-700 flex items-center gap-1">
-                  <Brain className="w-4 h-4" />
-                  AI Enhancement
-                </label>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="quickAddUseAI"
+                    checked={useAI}
+                    onChange={(e) => setUseAI(e.target.checked)}
+                    className="rounded"
+                    disabled={isProcessing}
+                  />
+                  <label htmlFor="quickAddUseAI" className="text-sm text-gray-700 flex items-center gap-1">
+                    <Brain className="w-4 h-4" />
+                    AI Enhancement
+                  </label>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="quickAddCalendarEvent"
+                    checked={createCalendarEvent}
+                    onChange={(e) => setCreateCalendarEvent(e.target.checked)}
+                    className="rounded"
+                    disabled={isProcessing}
+                  />
+                  <label htmlFor="quickAddCalendarEvent" className="text-sm text-gray-700 flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    Create Event
+                  </label>
+                </div>
               </div>
               
               <div className="text-xs text-gray-500 flex items-center gap-1">
@@ -259,9 +297,24 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
                       {preview.importance && <span>Importance: {preview.importance}/10</span>}
                     </div>
                   )}
+                  
+                  {preview.dueDate && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      Due: {new Date(preview.dueDate.date).toLocaleDateString()}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
+            
+            {createCalendarEvent && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-blue-600" />
+                <span className="text-sm text-blue-800">
+                  A Google Calendar event will be created for this node
+                </span>
+              </div>
+            )}
 
             <div className="flex gap-3">
               <Button

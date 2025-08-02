@@ -32,7 +32,12 @@
       "Bash(cp:*)",
       "Bash(npx @next/codemod@canary:*)",
       "Bash(timeout 15 pnpm run dev)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(timeout 10 pnpm run dev)",
+      "Bash(pkill:*)",
+      "Bash(true)",
+      "Bash(env)",
+      "Bash(pnpm lint:*)"
     ],
     "deny": []
   }

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useScheduleStore } from './scheduleStore'
 
 export type UserMode = 'work' | 'personal' | 'all'
 export type ThemeMode = 'colorful' | 'professional'
@@ -34,6 +35,7 @@ interface UserPreferences {
   workModeTimeboxInterval: 30 | 60 | 120
   personalModeTimeboxInterval: 30 | 60 | 120
   autoSwitchTimeboxInterval: boolean // Auto switch interval based on mode
+  calendarSyncEnabled: boolean // Enable calendar sync in timebox view
   
   // Actions
   setMode: (mode: UserMode) => void
@@ -52,11 +54,24 @@ interface UserPreferences {
   getEffectiveTimeboxInterval: () => 30 | 60 | 120
 }
 
+// Initialize mode based on schedule
+const getInitialMode = (): UserMode => {
+  if (typeof window === 'undefined') return 'work'
+  
+  // Check if schedule store is available
+  const scheduleStore = useScheduleStore.getState()
+  if (scheduleStore.preferences.autoSwitchMode) {
+    return scheduleStore.getSuggestedMode()
+  }
+  
+  return 'work'
+}
+
 export const useUserPreferencesStore = create<UserPreferences>()(
   persist(
     (set, get) => ({
       // Initial state
-      currentMode: 'work',
+      currentMode: getInitialMode(),
       themeMode: 'colorful',
       darkMode: false,
       autoThemeInWorkMode: true,
@@ -71,6 +86,7 @@ export const useUserPreferencesStore = create<UserPreferences>()(
       workModeTimeboxInterval: 30,
       personalModeTimeboxInterval: 120,
       autoSwitchTimeboxInterval: true,
+      calendarSyncEnabled: false,
       
       // Set mode
       setMode: (mode: UserMode) => {

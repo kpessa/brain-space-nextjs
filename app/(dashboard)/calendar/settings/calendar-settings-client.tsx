@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { useCalendarStore } from '@/store/calendarStore'
-import { googleCalendarService } from '@/services/googleCalendar'
+import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
 
 // Google icon component
 const GoogleIcon = () => (
@@ -32,65 +32,40 @@ const GoogleIcon = () => (
 
 export default function CalendarSettingsClient({ userId }: { userId: string }) {
   const { selectedCalendarIds, toggleCalendarSelection } = useCalendarStore()
-  const [isGoogleConnected, setIsGoogleConnected] = useState(false)
+  const { 
+    isConnected,
+    isLoading,
+    connect,
+    disconnect,
+    getCalendars
+  } = useGoogleCalendar()
   const [availableCalendars, setAvailableCalendars] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    checkGoogleConnection()
-  }, [])
+    if (isConnected) {
+      loadCalendars()
+    }
+  }, [isConnected])
 
-  const checkGoogleConnection = async () => {
+  const loadCalendars = async () => {
     try {
-      // Wait for Google APIs to load
-      let attempts = 0
-      while (!googleCalendarService.isReady() && attempts < 10) {
-        await new Promise(resolve => setTimeout(resolve, 500))
-        attempts++
-      }
-
-      if (!googleCalendarService.isReady()) {
-        console.error('Google Calendar APIs failed to load')
-        setIsLoading(false)
-        return
-      }
-
-      // Check if already authorized
-      const authorized = await googleCalendarService.authorize(true)
-      setIsGoogleConnected(authorized)
-      
-      if (authorized) {
-        const calendars = await googleCalendarService.listCalendars()
-        setAvailableCalendars(calendars)
-      }
+      const calendars = await getCalendars()
+      setAvailableCalendars(calendars)
     } catch (error) {
-      console.error('Error checking Google connection:', error)
-    } finally {
-      setIsLoading(false)
+      console.error('Error loading calendars:', error)
     }
   }
 
   const handleGoogleConnect = async () => {
-    try {
-      setIsLoading(true)
-      const authorized = await googleCalendarService.authorize(false)
-      setIsGoogleConnected(authorized)
-      
-      if (authorized) {
-        const calendars = await googleCalendarService.listCalendars()
-        setAvailableCalendars(calendars)
-      }
-    } catch (error) {
-      console.error('Error connecting to Google:', error)
-    } finally {
-      setIsLoading(false)
+    const success = await connect()
+    if (success) {
+      await loadCalendars()
     }
   }
 
   const handleGoogleDisconnect = async () => {
     try {
-      await googleCalendarService.signOut()
-      setIsGoogleConnected(false)
+      await disconnect()
       setAvailableCalendars([])
       // Clear all selected calendars
       selectedCalendarIds.forEach(id => toggleCalendarSelection(id))
@@ -141,7 +116,7 @@ export default function CalendarSettingsClient({ userId }: { userId: string }) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {isGoogleConnected && (
+                  {isConnected && (
                     <div className="flex items-center gap-2 text-green-600">
                       <Check className="w-5 h-5" />
                       <span className="text-sm font-medium">Connected</span>
@@ -155,7 +130,7 @@ export default function CalendarSettingsClient({ userId }: { userId: string }) {
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brain-600"></div>
                 </div>
-              ) : !isGoogleConnected ? (
+              ) : !isConnected ? (
                 <div className="text-center py-4">
                   <p className="text-sm text-gray-600 mb-4">
                     Sign in with Google to sync your calendars and events
@@ -213,7 +188,7 @@ export default function CalendarSettingsClient({ userId }: { userId: string }) {
           </Card>
 
           {/* Connected Calendars Summary */}
-          {isGoogleConnected && googleCalendarCount > 0 && (
+          {isConnected && googleCalendarCount > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Connected Services</CardTitle>

@@ -29,6 +29,7 @@ export interface TimeboxTask {
   timeboxDuration?: number
   timeboxDate?: string
   isTimedTask?: boolean
+  isPersonal?: boolean
   // Completion tracking
   status?: 'pending' | 'in-progress' | 'completed' | 'deferred'
   completedAt?: string // ISO timestamp
@@ -38,6 +39,12 @@ export interface TimeboxTask {
   nodeId?: string
   // User reference
   userId?: string
+  // Calendar integration
+  calendarEventId?: string
+  calendarId?: string
+  calendarSummary?: string
+  calendarLocation?: string
+  isCalendarEvent?: boolean
 }
 
 export interface TimeSlot {
@@ -138,7 +145,7 @@ const generateTimeSlots = (intervalMinutes: 30 | 60 | 120 = 120): TimeSlot[] => 
 }
 
 export const useTimeboxStore = create<TimeboxState>((set, get) => ({
-  selectedDate: new Date().toISOString().split('T')[0],
+  selectedDate: new Date().toISOString().split('T')[0], // Initialize with today's date
   timeSlots: generateTimeSlots(),
   draggedTask: null,
   hoveredSlotId: null,

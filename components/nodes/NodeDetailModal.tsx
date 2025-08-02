@@ -5,6 +5,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useNodesStore } from '@/store/nodeStore'
 import { useXPStore } from '@/store/xpStore'
+import { useCalendarStore } from '@/store/calendarStore'
 import { XPEventType } from '@/types/xp'
 import type { Node, NodeType, NodeUpdate } from '@/types/node'
 import { getNodeTypeIcon, getNodeTypeColor, getEisenhowerQuadrant } from '@/types/node'
@@ -17,6 +18,7 @@ import {
   Circle, 
   Clock, 
   Calendar,
+  CalendarPlus,
   Tag,
   GitBranch,
   GitMerge,
@@ -31,6 +33,7 @@ import {
   Sparkles
 } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
+import { CalendarEventModal } from '@/components/CalendarEventModal'
 
 interface NodeDetailModalProps {
   isOpen: boolean
@@ -68,6 +71,7 @@ export function NodeDetailModal({
   const [isAddingUpdate, setIsAddingUpdate] = useState(false)
   const [enableAIEnhancement, setEnableAIEnhancement] = useState(true) // Default checked
   const [isEnhancing, setIsEnhancing] = useState(false)
+  const [showCalendarModal, setShowCalendarModal] = useState(false)
   
   const toast = useToast()
   const { awardXP } = useXPStore()
@@ -83,6 +87,8 @@ export function NodeDetailModal({
     unlinkNodes,
     getNodeById 
   } = useNodesStore()
+  
+  const { calendars } = useCalendarStore()
   
   const [refreshKey, setRefreshKey] = useState(0)
   
@@ -346,6 +352,18 @@ export function NodeDetailModal({
                   <Button
                     size="sm"
                     variant="outline"
+                    onClick={() => setShowCalendarModal(true)}
+                    title={currentNode.calendarEventId ? "View calendar event" : "Add to calendar"}
+                  >
+                    {currentNode.calendarEventId ? (
+                      <Calendar className="w-4 h-4" />
+                    ) : (
+                      <CalendarPlus className="w-4 h-4" />
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={() => setShowReenhanceDialog(true)}
                     title="Re-enhance this node with AI"
                   >
@@ -541,6 +559,43 @@ export function NodeDetailModal({
                   />
                 )}
               </div>
+              
+              {/* Due Date */}
+              {currentNode.dueDate && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Calendar className="w-4 h-4 inline mr-1" />
+                    Due Date
+                  </label>
+                  <div className="text-gray-800">
+                    {currentNode.dueDate.type === 'exact' 
+                      ? format(new Date(currentNode.dueDate.date), 'PPP')
+                      : `${currentNode.dueDate.offset} ${currentNode.dueDate.unit} from creation`
+                    }
+                  </div>
+                </div>
+              )}
+              
+              {/* Calendar Event */}
+              {currentNode.calendarEventId && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <CalendarPlus className="w-4 h-4 inline mr-1" />
+                    Calendar Event
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-green-100 text-green-800">
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Event Created
+                    </span>
+                    {currentNode.calendarId && currentNode.calendarId !== 'primary' && (
+                      <span className="text-sm text-gray-600">
+                        in {calendars.find(cal => cal.id === currentNode.calendarId)?.summary || currentNode.calendarId}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
               
               {/* Metadata */}
               <div className="pt-4 border-t space-y-2 text-sm text-gray-600">
@@ -873,6 +928,24 @@ export function NodeDetailModal({
         node={currentNode}
         onSuccess={forceRefresh}
       />
+      
+      {/* Calendar Event Modal */}
+      {showCalendarModal && (
+        <CalendarEventModal
+          isOpen={showCalendarModal}
+          onClose={() => setShowCalendarModal(false)}
+          node={currentNode}
+          onEventCreated={async (eventId, calendarId) => {
+            // Update node with calendar event info
+            await updateNode(currentNode.id, {
+              calendarEventId: eventId,
+              calendarId: calendarId
+            })
+            setShowCalendarModal(false)
+            forceRefresh()
+          }}
+        />
+      )}
     </Modal>
   )
 }

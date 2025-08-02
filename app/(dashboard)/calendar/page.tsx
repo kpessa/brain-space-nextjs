@@ -1,5 +1,7 @@
+import { Suspense } from 'react'
 import { getUserFromHeaders } from '@/lib/server-auth'
 import CalendarClient from './calendar-client'
+import { CalendarSkeleton } from '@/components/calendar/CalendarSkeleton'
 
 export default async function CalendarPage() {
   const user = await getUserFromHeaders()
@@ -8,5 +10,9 @@ export default async function CalendarPage() {
     return null // This shouldn't happen as layout checks auth
   }
 
-  return <CalendarClient userId={user.uid} />
+  return (
+    <Suspense fallback={<CalendarSkeleton />}>
+      <CalendarClient userId={user.uid} />
+    </Suspense>
+  )
 }

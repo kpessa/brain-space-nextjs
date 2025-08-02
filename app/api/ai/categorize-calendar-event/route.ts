@@ -192,7 +192,7 @@ function mockCategorization(events: CalendarEvent[]) {
       const summary = event.summary.toLowerCase()
       let category: 'appointment' | 'pto' | 'work_travel' = 'pto'
       let oooType = 'Time Off'
-      let confidence = 0.8
+      const confidence = 0.8
       let reasoning = ''
       
       // Simple heuristics

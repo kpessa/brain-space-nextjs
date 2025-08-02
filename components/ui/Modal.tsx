@@ -58,12 +58,12 @@ export function Modal({
       
       {/* Modal */}
       <div className={cn(
-        'relative bg-card rounded-lg shadow-xl w-full border',
+        'relative bg-card rounded-lg shadow-xl w-full border flex flex-col max-h-[90vh]',
         sizeClasses[size]
       )}>
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between p-6 border-b">
+          <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
             {title && (
               <h2 className="text-lg font-semibold text-foreground">{title}</h2>
             )}
@@ -82,7 +82,7 @@ export function Modal({
         )}
         
         {/* Content */}
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto">
           {children}
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { googleCalendarService } from '@/services/googleCalendar'
+import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
 import { EightWeekViewComponent } from '@/components/calendar/EightWeekView'
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Settings, TrendingUp } from 'lucide-react'
 import { useCalendarStore } from '@/store/calendarStore'
@@ -10,69 +10,42 @@ import { CalendarStatusDialog } from '@/components/calendar/CalendarStatusDialog
 
 export default function CalendarClient({ userId }: { userId: string }) {
   const router = useRouter()
-  const { selectedCalendarIds } = useCalendarStore()
+  const { selectedCalendarIds, setIsAuthenticated, setCalendars: setCalendarsInStore } = useCalendarStore()
+  const { 
+    isConnected,
+    isLoading,
+    isReady,
+    connect,
+    getCalendars,
+    getEvents
+  } = useGoogleCalendar()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [events, setEvents] = useState<any[]>([])
   const [calendars, setCalendars] = useState<any[]>([])
-  const [isAuthorized, setIsAuthorized] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
   const [showStatusDialog, setShowStatusDialog] = useState(false)
+  const [isClient, setIsClient] = useState(false)
 
-  // Check Google Calendar authorization on mount
+  // Prevent hydration mismatch
   useEffect(() => {
-    checkAuthorization()
+    setIsClient(true)
   }, [])
 
-  // Load events when authorized or selection changes
+  // Update calendar store when connection status changes
   useEffect(() => {
-    if (isAuthorized) {
+    setIsAuthenticated(isConnected)
+  }, [isConnected, setIsAuthenticated])
+
+  // Load events when connected or selection changes
+  useEffect(() => {
+    if (isConnected) {
       loadCalendarsAndEvents()
     }
-  }, [isAuthorized, currentDate, selectedCalendarIds])
-
-  const checkAuthorization = async () => {
-    try {
-      // First try manual initialization
-      // Checking Google Calendar authorization...
-      const initStatus = await googleCalendarService.initializeManually()
-      // Initialization status check
-
-      // Wait for Google APIs to load
-      let attempts = 0
-      while (!googleCalendarService.isReady() && attempts < 10) {
-        await new Promise(resolve => setTimeout(resolve, 500))
-        attempts++
-      }
-
-      if (!googleCalendarService.isReady()) {
-        // Google Calendar APIs failed to load after manual init
-        // Final status check
-        setIsLoading(false)
-        return
-      }
-
-      // Try to authorize with existing token
-      const authorized = await googleCalendarService.authorize(true)
-      setIsAuthorized(authorized)
-    } catch (error) {
-      // Error checking authorization
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  }, [isConnected, currentDate, selectedCalendarIds])
 
   const handleAuthorize = async () => {
-    try {
-      setIsLoading(true)
-      const authorized = await googleCalendarService.authorize(false)
-      setIsAuthorized(authorized)
-      if (authorized) {
-        await loadCalendarsAndEvents()
-      }
-    } catch (error) {
-      // Error authorizing
-    } finally {
-      setIsLoading(false)
+    const success = await connect()
+    if (success) {
+      await loadCalendarsAndEvents()
     }
   }
 
@@ -85,8 +58,9 @@ export default function CalendarClient({ userId }: { userId: string }) {
   const loadCalendarsAndEvents = async () => {
     try {
       // Load calendars
-      const calendarList = await googleCalendarService.listCalendars()
+      const calendarList = await getCalendars()
       setCalendars(calendarList)
+      setCalendarsInStore(calendarList) // Update store
 
       // Load events from selected calendars only
       const allEvents: any[] = []
@@ -104,7 +78,7 @@ export default function CalendarClient({ userId }: { userId: string }) {
 
       for (const calendar of calendarsToLoad) {
         try {
-          const calendarEvents = await googleCalendarService.listEvents(
+          const calendarEvents = await getEvents(
             calendar.id,
             timeMin,
             timeMax
@@ -181,6 +155,17 @@ export default function CalendarClient({ userId }: { userId: string }) {
     setCurrentDate(newDate)
   }
 
+  // Show loading state until client-side hydration
+  if (!isClient) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brain-600"></div>
+        </div>
+      </div>
+    )
+  }
+
   return (
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-6">
@@ -191,7 +176,7 @@ export default function CalendarClient({ userId }: { userId: string }) {
             </div>
             
             <div className="flex items-center space-x-2">
-              {isAuthorized && (
+              {isConnected && (
                 <>
                   <button
                     onClick={() => setShowStatusDialog(true)}
@@ -220,7 +205,7 @@ export default function CalendarClient({ userId }: { userId: string }) {
             </div>
           </div>
 
-        {!isAuthorized && !isLoading && (
+        {!isConnected && !isLoading && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
             <h3 className="text-lg font-semibold text-yellow-900 mb-2">
               Connect Your Google Calendar
@@ -243,7 +228,7 @@ export default function CalendarClient({ userId }: { userId: string }) {
           </div>
         )}
 
-        {isAuthorized && !isLoading && (
+        {isConnected && !isLoading && (
           <>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
@@ -270,10 +255,10 @@ export default function CalendarClient({ userId }: { userId: string }) {
               </div>
               
               <div className="text-lg font-semibold text-gray-900">
-                {new Date(currentDate).toLocaleDateString('en-US', { 
+                {isClient ? new Date(currentDate).toLocaleDateString('en-US', { 
                   month: 'long', 
                   year: 'numeric' 
-                })}
+                }) : ''}
               </div>
             </div>
 
