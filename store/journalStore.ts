@@ -56,8 +56,21 @@ export const useJournalStore = create<JournalState>((set, get) => ({
       let journalXP = XP_REWARDS.DAILY_ENTRY
       journalXP += entryData.gratitude.filter(g => g.trim()).length * XP_REWARDS.GRATITUDE_ITEM
       if (entryData.dailyQuest.trim()) journalXP += XP_REWARDS.QUEST_DEFINED
-      if (entryData.threats.trim()) journalXP += XP_REWARDS.THREAT_IDENTIFIED
-      if (entryData.allies.trim()) journalXP += XP_REWARDS.ALLY_RECOGNIZED
+      
+      // Handle threats as array (with backward compatibility)
+      if (Array.isArray(entryData.threats)) {
+        journalXP += entryData.threats.filter(t => t.trim()).length * XP_REWARDS.THREAT_IDENTIFIED
+      } else if (typeof entryData.threats === 'string' && entryData.threats.trim()) {
+        journalXP += XP_REWARDS.THREAT_IDENTIFIED
+      }
+      
+      // Handle allies as array (with backward compatibility)
+      if (Array.isArray(entryData.allies)) {
+        journalXP += entryData.allies.filter(a => a.trim()).length * XP_REWARDS.ALLY_RECOGNIZED
+      } else if (typeof entryData.allies === 'string' && entryData.allies.trim()) {
+        journalXP += XP_REWARDS.ALLY_RECOGNIZED
+      }
+      
       if (entryData.notes.trim().length > 50) journalXP += XP_REWARDS.NOTES_BONUS
 
       // Check streak
@@ -423,11 +436,21 @@ export const useJournalStore = create<JournalState>((set, get) => ({
       )
       const snapshot = await getDocs(entriesQuery)
       
+      // Import migration helper once
+      const { migrateToArray } = await import('@/types/journal')
+      
       const entries: JournalEntry[] = []
       snapshot.forEach(doc => {
         const data = doc.data()
+        
+        // Migrate threats and allies to arrays if needed
+        const threats = typeof data.threats === 'string' ? migrateToArray(data.threats) : data.threats
+        const allies = typeof data.allies === 'string' ? migrateToArray(data.allies) : data.allies
+        
         entries.push({
           ...data,
+          threats,
+          allies,
           id: doc.id,
           createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
           updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
