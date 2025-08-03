@@ -37,7 +37,9 @@
       "Bash(pkill:*)",
       "Bash(true)",
       "Bash(env)",
-      "Bash(pnpm lint:*)"
+      "Bash(pnpm lint:*)",
+      "Bash(vercel:*)",
+      "Bash(git pull:*)"
     ],
     "deny": []
   }

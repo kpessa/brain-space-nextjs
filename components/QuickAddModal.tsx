@@ -32,6 +32,10 @@ interface QuickAddModalProps {
   userId?: string
 }
 
+// Simple cache for AI recurrence suggestions
+const recurrenceCache = new Map<string, { suggestion: any; timestamp: number }>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
 const NODE_TYPE_ICONS: Record<NodeType, React.ReactNode> = {
   goal: <Target className="w-4 h-4" />,
   project: <Folder className="w-4 h-4" />,
@@ -54,6 +58,13 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
   const [recurrencePattern, setRecurrencePattern] = useState<Recurrence | null>(null)
   const [aiSuggestedRecurrence, setAiSuggestedRecurrence] = useState<any>(null)
   const [isCheckingRecurrence, setIsCheckingRecurrence] = useState(false)
+  const [autoDetectRecurrence, setAutoDetectRecurrence] = useState(() => {
+    // Load preference from localStorage
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('autoDetectRecurrence') !== 'false'
+    }
+    return true
+  })
   const [error, setError] = useState<string | null>(null)
   const [preview, setPreview] = useState<any>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -64,8 +75,20 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
   // Check for recurrence pattern when input changes
   useEffect(() => {
     const checkRecurrence = async () => {
-      if (!input.trim() || input.length < 10) {
+      if (!autoDetectRecurrence || !input.trim() || input.length < 10) {
         setAiSuggestedRecurrence(null)
+        return
+      }
+
+      // Check cache first
+      const cacheKey = input.trim().toLowerCase()
+      const cached = recurrenceCache.get(cacheKey)
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        setAiSuggestedRecurrence(cached.suggestion)
+        if (cached.suggestion.shouldRecur && cached.suggestion.confidence > 0.7) {
+          setMakeRecurring(true)
+          setRecurrencePattern(cached.suggestion.pattern)
+        }
         return
       }
 
@@ -81,6 +104,9 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
           const suggestion = await response.json()
           setAiSuggestedRecurrence(suggestion)
           
+          // Cache the result
+          recurrenceCache.set(cacheKey, { suggestion, timestamp: Date.now() })
+          
           // Auto-enable recurring if AI is confident
           if (suggestion.shouldRecur && suggestion.confidence > 0.7) {
             setMakeRecurring(true)
@@ -94,9 +120,9 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
       }
     }
 
-    const timer = setTimeout(checkRecurrence, 500) // Debounce
+    const timer = setTimeout(checkRecurrence, 1000) // Increased debounce to 1s
     return () => clearTimeout(timer)
-  }, [input])
+  }, [input, autoDetectRecurrence])
 
   // Focus input when modal opens
   useEffect(() => {
@@ -120,6 +146,56 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
       setIsCheckingRecurrence(false)
     }
   }, [isOpen])
+
+  const handleAutoDetectToggle = (checked: boolean) => {
+    setAutoDetectRecurrence(checked)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('autoDetectRecurrence', checked.toString())
+    }
+  }
+
+  const handleCheckRecurrence = async () => {
+    if (!input.trim() || input.length < 10 || isCheckingRecurrence) return
+
+    // Check cache first
+    const cacheKey = input.trim().toLowerCase()
+    const cached = recurrenceCache.get(cacheKey)
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      setAiSuggestedRecurrence(cached.suggestion)
+      if (cached.suggestion.shouldRecur && cached.suggestion.confidence > 0.7) {
+        setMakeRecurring(true)
+        setRecurrencePattern(cached.suggestion.pattern)
+      }
+      return
+    }
+
+    setIsCheckingRecurrence(true)
+    try {
+      const response = await fetch('/api/ai/suggest-recurrence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: input })
+      })
+
+      if (response.ok) {
+        const suggestion = await response.json()
+        setAiSuggestedRecurrence(suggestion)
+        
+        // Cache the result
+        recurrenceCache.set(cacheKey, { suggestion, timestamp: Date.now() })
+        
+        // Auto-enable recurring if AI is confident
+        if (suggestion.shouldRecur && suggestion.confidence > 0.7) {
+          setMakeRecurring(true)
+          setRecurrencePattern(suggestion.pattern)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check recurrence:', error)
+    } finally {
+      setIsCheckingRecurrence(false)
+    }
+  }
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
@@ -303,7 +379,7 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
                   <label htmlFor="quickAddRecurring" className="text-sm text-gray-700 flex items-center gap-1">
                     <Repeat className="w-4 h-4" />
                     Recurring Task
-                    {isCheckingRecurrence && (
+                    {isCheckingRecurrence && autoDetectRecurrence && (
                       <Loader2 className="w-3 h-3 animate-spin ml-1" />
                     )}
                   </label>
@@ -314,6 +390,50 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
                 <Keyboard className="w-3 h-3" />
                 Press ⌘+Enter to submit
               </div>
+            </div>
+
+            {/* Recurrence Detection Settings */}
+            <div className="border-t pt-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="autoDetectRecurrence"
+                    checked={autoDetectRecurrence}
+                    onChange={(e) => handleAutoDetectToggle(e.target.checked)}
+                    className="rounded"
+                  />
+                  <label htmlFor="autoDetectRecurrence" className="text-sm text-gray-700 flex items-center gap-1">
+                    <Sparkles className="w-4 h-4" />
+                    Auto-detect recurrence patterns
+                  </label>
+                </div>
+                {!autoDetectRecurrence && input.trim().length >= 10 && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCheckRecurrence}
+                    disabled={isCheckingRecurrence}
+                    className="text-xs"
+                  >
+                    {isCheckingRecurrence ? (
+                      <>
+                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                        Checking...
+                      </>
+                    ) : (
+                      <>
+                        <Repeat className="w-3 h-3 mr-1" />
+                        Check recurrence
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+              {autoDetectRecurrence && (
+                <p className="text-xs text-gray-500">AI will automatically suggest recurrence patterns as you type</p>
+              )}
             </div>
 
             {/* AI Recurrence Suggestion */}

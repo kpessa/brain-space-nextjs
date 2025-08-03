@@ -5,7 +5,7 @@ import LoginClient from './login-client'
 
 export default async function LoginPage() {
   // Check if already authenticated server-side
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const token = cookieStore.get('firebase-auth-token')?.value
   
   if (token) {

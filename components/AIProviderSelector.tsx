@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Sparkles, Brain, Zap } from 'lucide-react'
+import { useAIProviders } from '@/hooks/useAIProviders'
 
 interface AIProvider {
   id: string
@@ -11,54 +12,41 @@ interface AIProvider {
 }
 
 export function AIProviderSelector() {
-  const [providers, setProviders] = useState<AIProvider[]>([])
+  const { data, isLoading, error } = useAIProviders()
   const [currentProvider, setCurrentProvider] = useState<string>('mock')
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    checkProviders()
-  }, [])
-
-  const checkProviders = async () => {
-    try {
-      const response = await fetch('/api/ai/providers')
-      const data = await response.json()
-      
-      const providerList: AIProvider[] = [
-        {
-          id: 'openai',
-          name: 'OpenAI GPT-4',
-          icon: Brain,
-          available: data.providers.includes('openai')
-        },
-        {
-          id: 'google',
-          name: 'Google Gemini',
-          icon: Sparkles,
-          available: data.providers.includes('google')
-        },
-        {
-          id: 'anthropic',
-          name: 'Anthropic Claude',
-          icon: Zap,
-          available: data.providers.includes('anthropic')
-        },
-        {
-          id: 'mock',
-          name: 'Mock (Free)',
-          icon: Brain,
-          available: true
-        }
-      ]
-      
-      setProviders(providerList)
+    if (data) {
       setCurrentProvider(data.current || 'mock')
-      setLoading(false)
-    } catch (error) {
-      console.error('Failed to check AI providers:', error)
-      setLoading(false)
     }
-  }
+  }, [data])
+
+  const providerList: AIProvider[] = [
+    {
+      id: 'openai',
+      name: 'OpenAI GPT-4',
+      icon: Brain,
+      available: data?.providers.includes('openai') || false
+    },
+    {
+      id: 'google',
+      name: 'Google Gemini',
+      icon: Sparkles,
+      available: data?.providers.includes('google') || false
+    },
+    {
+      id: 'anthropic',
+      name: 'Anthropic Claude',
+      icon: Zap,
+      available: data?.providers.includes('anthropic') || false
+    },
+    {
+      id: 'mock',
+      name: 'Mock (Free)',
+      icon: Brain,
+      available: true
+    }
+  ]
 
   const selectProvider = (providerId: string) => {
     setCurrentProvider(providerId)
@@ -66,11 +54,16 @@ export function AIProviderSelector() {
     localStorage.setItem('ai_provider', providerId)
   }
 
-  if (loading) {
+  if (isLoading) {
     return <div className="text-sm text-gray-500">Checking AI providers...</div>
   }
 
-  const availableProviders = providers.filter(p => p.available)
+  if (error) {
+    console.error('Failed to load AI providers:', error)
+    return null
+  }
+
+  const availableProviders = providerList.filter(p => p.available)
 
   if (availableProviders.length <= 1) {
     return null // Don't show selector if only mock is available
