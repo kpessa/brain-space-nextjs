@@ -46,21 +46,6 @@ export function AuthDiagnostic() {
       setLoading(false)
     })
 
-    // Also log Firebase auth settings
-      authDomain: auth.config.authDomain,
-      apiKey: auth.config.apiKey ? 'Present' : 'Missing',
-      currentUser: auth.currentUser,
-      languageCode: auth.languageCode,
-      settings: auth.settings
-    })
-    
-    // Check Firebase config from environment
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? 'Present' : 'Missing',
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
-    })
-
     return () => unsubscribe()
   }, [])
 

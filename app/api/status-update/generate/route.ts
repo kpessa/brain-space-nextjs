@@ -81,7 +81,7 @@ function getCriticalEventType(summary: string): 'go-live' | 'deployment' | 'rele
 // Get nodes from Firebase
 async function getUserNodes(userId: string, startDate: Date, endDate: Date): Promise<Node[]> {
   if (!adminDb) {
-    console.warn('Firebase Admin not initialized, using empty array')
+
     return []
   }
   

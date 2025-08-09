@@ -52,7 +52,7 @@ export default function BraindumpClient({ userId }: { userId: string }) {
   const [convertLoading, setConvertLoading] = useState(false)
   
   const { entries, createEntry, updateEntry, currentEntry, setCurrentEntry, loadEntries } = useBrainDumpStore()
-  const { createNode } = useNodesStore()
+  const { createNode, updateNode, getNodeById } = useNodesStore()
   
   // Load entries on mount
   useEffect(() => {
@@ -155,6 +155,8 @@ export default function BraindumpClient({ userId }: { userId: string }) {
             urgency: thought.nodeData?.urgency || thought.urgency,
             importance: thought.nodeData?.importance || thought.importance,
             description: thought.nodeData?.description || thought.text,
+            isPersonal: thought.nodeData?.isPersonal,
+            children: thought.nodeData?.children || [], // Include children if present
           },
         }
         nodes.push(thoughtNode)
@@ -166,14 +168,50 @@ export default function BraindumpClient({ userId }: { userId: string }) {
           target: thoughtId,
         })
         
-        thoughtY += 100
+        // If this thought has children, create nodes for them too
+        if (thought.nodeData?.children && thought.nodeData.children.length > 0) {
+          let childY = thoughtY + 80
+          thought.nodeData.children.forEach((child: any, childIndex: number) => {
+            const childId = `thought-${catIndex}-${thoughtIndex}-child-${childIndex}`
+            const childNode: BrainDumpNode = {
+              id: childId,
+              type: 'thought',
+              position: { x: 200 + catIndex * 300 + 50, y: childY },
+              data: {
+                label: child.text || child.nodeData?.title,
+                type: child.nodeData?.type || 'task',
+                nodeType: child.nodeData?.type || 'task',
+                keywords: [],
+                tags: child.nodeData?.tags || [],
+                urgency: child.nodeData?.urgency,
+                importance: child.nodeData?.importance,
+                description: child.nodeData?.description || child.text,
+                isPersonal: child.nodeData?.isPersonal,
+                parent: thoughtId, // Mark parent relationship
+              },
+            }
+            nodes.push(childNode)
+            
+            // Connect child to parent
+            edges.push({
+              id: `edge-${thoughtId}-${childId}`,
+              source: thoughtId,
+              target: childId,
+            })
+            
+            childY += 60
+          })
+          thoughtY = childY + 20 // Adjust parent Y position for next thought
+        } else {
+          thoughtY += 100
+        }
       })
     })
     
     return { nodes, edges }
   }
   
-  // Convert brain dump thoughts to actual nodes
+  // Convert brain dump thoughts to actual nodes with hierarchy support
   const convertToNodes = async () => {
     if (!currentEntry) return
     
@@ -181,26 +219,73 @@ export default function BraindumpClient({ userId }: { userId: string }) {
     try {
       const thoughtNodes = currentEntry.nodes.filter(node => node.type === 'thought')
       let successCount = 0
+      const parentNodeMap = new Map<string, string>() // Map thoughtNode.id to created node.id
       
+      // First pass: create parent nodes
       for (const thoughtNode of thoughtNodes) {
         const nodeData = thoughtNode.data
         
-        // Convert to node in the nodes system
-        await createNode({
-          userId: userId,
-          title: nodeData.label,
-          description: nodeData.description || nodeData.label,
-          type: (nodeData.nodeType as NodeType) || 'thought',
-          tags: nodeData.tags || nodeData.keywords || [],
-          urgency: nodeData.urgency,
-          importance: nodeData.importance,
-        })
-        successCount++
+        // Check if this has children (is a parent)
+        if (nodeData.children && nodeData.children.length > 0) {
+          // Create parent node
+          const parentNodeId = await createNode({
+            userId: userId,
+            title: nodeData.label,
+            description: nodeData.description || nodeData.label,
+            type: (nodeData.nodeType as NodeType) || 'project',
+            tags: nodeData.tags || nodeData.keywords || [],
+            urgency: nodeData.urgency,
+            importance: nodeData.importance,
+            isPersonal: nodeData.isPersonal,
+          })
+          
+          if (parentNodeId) {
+            parentNodeMap.set(thoughtNode.id, parentNodeId)
+            successCount++
+            
+            // Create child nodes
+            for (const child of nodeData.children) {
+              const childNodeId = await createNode({
+                userId: userId,
+                title: child.nodeData.title,
+                description: child.nodeData.description || child.text,
+                type: (child.nodeData.type as NodeType) || 'task',
+                tags: child.nodeData.tags || [],
+                urgency: child.nodeData.urgency,
+                importance: child.nodeData.importance,
+                parent: parentNodeId, // Set parent relationship
+                isPersonal: child.nodeData.isPersonal,
+              })
+              
+              if (childNodeId) {
+                successCount++
+                // Update parent's children array
+                const parentNode = getNodeById(parentNodeId)
+                await updateNode(parentNodeId, {
+                  children: [...(parentNode?.children || []), childNodeId]
+                })
+              }
+            }
+          }
+        } else if (!nodeData.parent) {
+          // Create standalone node (not a child)
+          await createNode({
+            userId: userId,
+            title: nodeData.label,
+            description: nodeData.description || nodeData.label,
+            type: (nodeData.nodeType as NodeType) || 'thought',
+            tags: nodeData.tags || nodeData.keywords || [],
+            urgency: nodeData.urgency,
+            importance: nodeData.importance,
+            isPersonal: nodeData.isPersonal,
+          })
+          successCount++
+        }
       }
       
-      alert(`Successfully converted ${successCount} thoughts to nodes!`)
+      alert(`Successfully converted ${successCount} thoughts to nodes with hierarchy!`)
     } catch (error) {
-      // Failed to convert thoughts to nodes
+      console.error('Error converting nodes:', error)
       alert('Failed to convert some thoughts to nodes')
     } finally {
       setConvertLoading(false)

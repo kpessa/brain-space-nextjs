@@ -97,7 +97,10 @@ export default function TimeboxRecommendationsDialog({
             importance: node.importance,
             dueDate: node.dueDate,
             tags: node.tags,
-            isPersonal: node.isPersonal
+            isPersonal: node.isPersonal,
+            parent: node.parent,
+            children: node.children,
+            completed: node.completed
           })),
           timeSlots: timeSlots.map(slot => ({
             id: slot.id,
@@ -108,7 +111,14 @@ export default function TimeboxRecommendationsDialog({
             isBlocked: slot.isBlocked,
             currentTasks: slot.tasks.length
           })),
-          currentMode
+          currentMode,
+          allNodes: nodes.map(node => ({
+            id: node.id,
+            title: node.title || 'Untitled',
+            parent: node.parent,
+            children: node.children,
+            completed: node.completed
+          }))
         }),
       })
       
@@ -117,8 +127,7 @@ export default function TimeboxRecommendationsDialog({
       if (!response.ok) {
         throw new Error(data.error || 'Failed to generate recommendations')
       }
-      
-      console.log('Recommendations received:', data.recommendations)
+
       setRecommendations(data.recommendations || [])
       setInsights(data.insights || [])
       setSummary(data.summary || null)

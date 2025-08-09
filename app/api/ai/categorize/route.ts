@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth } from '@/lib/auth-helpers'
+import { CategorizeRequestSchema, CategorizeResponseSchema } from '@/lib/validations/ai'
+import { validateBody, formatZodError } from '@/lib/validations/middleware'
+import { ZodError } from 'zod'
 
 interface ThoughtAnalysis {
   text: string
@@ -11,6 +14,8 @@ interface ThoughtAnalysis {
     urgency?: number
     importance?: number
     dueDate?: { date: string }
+    isPersonal?: boolean
+    children?: ThoughtAnalysis[] // Support for hierarchical structures
   }
 }
 
@@ -35,10 +40,16 @@ async function callOpenAI(text: string) {
       messages: [
         {
           role: 'system',
-          content: `You are an AI assistant that categorizes thoughts and tasks from a brain dump.
+          content: `You are an AI assistant that categorizes thoughts and tasks from a brain dump, with special attention to hierarchical relationships.
           
           Current date/time: ${currentDate}
           Use this as reference when interpreting relative dates like "today", "tomorrow", "next week", etc.
+          
+          IMPORTANT: Detect parent-child task relationships. Look for:
+          - Main tasks with subtasks listed beneath them
+          - Tasks that mention "including", "such as", "like", "for example"
+          - Numbered or bulleted lists under a main topic
+          - Tasks that are clearly components of a larger goal
           
           Analyze the provided text and return a JSON response with:
           - categories: Array of category objects with name, thoughts, confidence, and reasoning
@@ -57,7 +68,11 @@ async function callOpenAI(text: string) {
           - tags: Array of relevant tags
           - urgency: 1-10 scale
           - importance: 1-10 scale
-          - dueDate: Object with date property (ISO string) if a deadline is mentioned or implied (e.g., "today" = current date)`,
+          - dueDate: Object with date property (ISO string) if a deadline is mentioned or implied
+          - isPersonal: Boolean indicating if this is a personal vs work task
+          - children: Array of child thoughts (same structure) if this is a parent task
+          
+          Example: "Prepare for work trip" might have children like "pack clothes", "arrange childcare", "prepare electronics"`,
         },
         {
           role: 'user',
@@ -94,6 +109,11 @@ async function callGoogleAI(text: string) {
             text: `Current date/time: ${currentDate}
             Use this as reference when interpreting relative dates like "today", "tomorrow", "next week", etc.
             
+            IMPORTANT: Detect parent-child task relationships in the text. Look for:
+            - Main tasks with subtasks or details listed
+            - Tasks that mention "including", "such as", "need to also"
+            - Items that are clearly parts of a larger goal
+            
             Analyze this brain dump and categorize the thoughts. Return a JSON object with:
             - categories: Array of category objects, each containing:
               - name: Category name
@@ -103,13 +123,15 @@ async function callGoogleAI(text: string) {
             - suggestions: Array of helpful suggestions for the user
             
             For each thought, include a nodeData object with:
-            - type: (thought, task, question, idea, note)
+            - type: (goal, project, task, option, idea, question, problem, insight, thought, concern)
             - title: Concise title (max 100 chars)
             - description: Enhanced description
             - tags: Relevant tags array
             - urgency: 1-10 scale
             - importance: 1-10 scale
-            - dueDate: {date: "ISO string"} if a deadline is mentioned or implied (e.g., "today" = current date)
+            - dueDate: {date: "ISO string"} if a deadline is mentioned or implied
+            - isPersonal: true/false for personal vs work tasks
+            - children: Array of child thoughts (same structure) if this is a parent task
             
             Brain dump text:
             ${text}
@@ -136,61 +158,86 @@ async function callGoogleAI(text: string) {
 }
 
 async function mockCategorize(text: string) {
-  // Simple mock categorization for testing
+  // Enhanced mock categorization with hierarchy detection
   const lines = text.split('\n').filter(line => line.trim())
+  
+  // Look for parent-child patterns
+  const processedThoughts: ThoughtAnalysis[] = []
+  let currentParent: ThoughtAnalysis | null = null
+  
+  lines.forEach((line, index) => {
+    const trimmedLine = line.trim()
+    
+    // Check if this looks like a parent task (ends with colon, or contains "including", "such as")
+    const isParent = trimmedLine.endsWith(':') || 
+                    /including|such as|need to also|consists of/i.test(trimmedLine)
+    
+    // Check if this looks like a child task (starts with dash, bullet, number, or extra indentation)
+    const isChild = /^[-•*]\s|^\d+\.\s|^\s{2,}/.test(line)
+    
+    if (isParent) {
+      currentParent = {
+        text: trimmedLine.replace(/:$/, ''),
+        nodeData: {
+          type: 'project',
+          title: trimmedLine.replace(/:$/, '').substring(0, 50),
+          description: trimmedLine.replace(/:$/, ''),
+          tags: ['project'],
+          urgency: 6,
+          importance: 7,
+          children: []
+        }
+      }
+      processedThoughts.push(currentParent)
+    } else if (isChild && currentParent && currentParent.nodeData.children) {
+      const childText = trimmedLine.replace(/^[-•*]\s|^\d+\.\s/, '')
+      currentParent.nodeData.children.push({
+        text: childText,
+        nodeData: {
+          type: 'task',
+          title: childText.substring(0, 50),
+          description: childText,
+          tags: ['subtask'],
+          urgency: 5,
+          importance: 5
+        }
+      })
+    } else {
+      // Regular task without hierarchy
+      currentParent = null
+      processedThoughts.push({
+        text: trimmedLine,
+        nodeData: {
+          type: 'task',
+          title: trimmedLine.substring(0, 50),
+          description: trimmedLine,
+          tags: ['todo'],
+          urgency: 5,
+          importance: 5
+        }
+      })
+    }
+  })
   
   const categories: CategoryResult[] = [
     {
       name: 'Tasks',
-      thoughts: lines
-        .filter(line => /buy|call|schedule|finish|need to|have to/i.test(line))
-        .map(line => ({
-          text: line,
-          nodeData: {
-            type: 'task',
-            title: line.substring(0, 50),
-            description: line,
-            tags: ['todo'],
-            urgency: 5,
-            importance: 5,
-          },
-        })),
+      thoughts: processedThoughts
+        .filter(t => /buy|call|schedule|finish|need to|have to|prepare|get ready/i.test(t.text)),
       confidence: 0.8,
       reasoning: 'Action-oriented items that need to be completed',
     },
     {
       name: 'Ideas',
-      thoughts: lines
-        .filter(line => /maybe|should|could|what if/i.test(line))
-        .map(line => ({
-          text: line,
-          nodeData: {
-            type: 'idea',
-            title: line.substring(0, 50),
-            description: line,
-            tags: ['idea'],
-            urgency: 3,
-            importance: 6,
-          },
-        })),
+      thoughts: processedThoughts
+        .filter(t => /maybe|should|could|what if/i.test(t.text)),
       confidence: 0.7,
       reasoning: 'Thoughts and ideas for consideration',
     },
     {
       name: 'Questions',
-      thoughts: lines
-        .filter(line => /\?|how|what|when|where|why/i.test(line))
-        .map(line => ({
-          text: line,
-          nodeData: {
-            type: 'question',
-            title: line.substring(0, 50),
-            description: line,
-            tags: ['question'],
-            urgency: 4,
-            importance: 5,
-          },
-        })),
+      thoughts: processedThoughts
+        .filter(t => /\?|how|what|when|where|why/i.test(t.text)),
       confidence: 0.75,
       reasoning: 'Questions that need answers or investigation',
     },
@@ -219,15 +266,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { text, provider = 'mock' } = await request.json()
-
-    // Validate input
-    if (!text || typeof text !== 'string') {
-      return NextResponse.json(
-        { error: 'Invalid input: text is required' },
-        { status: 400 }
-      )
+    // Validate request body with Zod schema
+    const { data: validatedData, error: validationError } = await validateBody(
+      request,
+      CategorizeRequestSchema
+    )
+    
+    if (validationError) {
+      return validationError
     }
+
+    const { text, provider = 'mock' } = validatedData!
 
     let result
     

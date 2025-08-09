@@ -7,14 +7,14 @@ let GoogleGenerativeAI: any
 try {
   OpenAI = require('openai')
 } catch (e) {
-  console.log('OpenAI package not installed')
+
 }
 
 try {
   const googleAI = require('@google/generative-ai')
   GoogleGenerativeAI = googleAI.GoogleGenerativeAI
 } catch (e) {
-  console.log('Google AI package not installed')
+
 }
 
 // Types
@@ -41,6 +41,9 @@ interface TimeboxRecommendationsRequest {
     dueDate?: string
     tags?: string[]
     isPersonal?: boolean
+    parent?: string // Parent node ID for dependency tracking
+    children?: string[] // Child node IDs for hierarchy
+    completed?: boolean
   }>
   timeSlots: Array<{
     id: string
@@ -57,6 +60,13 @@ interface TimeboxRecommendationsRequest {
     afternoonFocus?: string[]
     eveningFocus?: string[]
   }
+  allNodes?: Array<{ // Include all nodes for dependency analysis
+    id: string
+    title: string
+    parent?: string
+    children?: string[]
+    completed?: boolean
+  }>
 }
 
 // Mock AI Provider
@@ -218,43 +228,61 @@ class GoogleAIProvider {
       return true
     })
     
-    const prompt = `As an expert productivity coach, generate timebox recommendations for the following scenario:
+    // Build dependency map if allNodes provided
+    const dependencyMap = new Map<string, Set<string>>()
+    const parentMap = new Map<string, string>()
+    if (request.allNodes) {
+      request.allNodes.forEach(node => {
+        if (node.children && node.children.length > 0) {
+          dependencyMap.set(node.id, new Set(node.children))
+          node.children.forEach(childId => parentMap.set(childId, node.id))
+        }
+      })
+    }
+    
+    const prompt = `As an expert productivity coach with knowledge of task dependencies and hierarchies, generate timebox recommendations for the following scenario:
 
 Current Time: ${request.currentTime || 'Not specified'}
 Date: ${request.date}
 Mode: ${request.currentMode || 'personal'}
 ${request.userContext ? `\nUser Context: "${request.userContext}"` : ''}
 
-Unscheduled Tasks (with IDs):
-${request.unscheduledNodes.map(node => 
-  `- ID: ${node.id} | Title: "${node.title}" | Type: ${node.type} | ${node.isPersonal ? 'Personal' : 'Work'} | Urgency: ${node.urgency || 5} | Importance: ${node.importance || 5}${node.dueDate ? ` | Due: ${node.dueDate}` : ''}`
-).join('\n')}
+Unscheduled Tasks (with IDs and dependencies):
+${request.unscheduledNodes.map(node => {
+  const hasParent = node.parent ? ` | Parent: ${node.parent}` : ''
+  const hasChildren = node.children && node.children.length > 0 ? ` | Has ${node.children.length} subtasks` : ''
+  return `- ID: ${node.id} | Title: "${node.title}" | Type: ${node.type} | ${node.isPersonal ? 'Personal' : 'Work'} | Urgency: ${node.urgency || 5} | Importance: ${node.importance || 5}${node.dueDate ? ` | Due: ${node.dueDate}` : ''}${hasParent}${hasChildren}`
+}).join('\n')}
 
 Available Time Slots TODAY (with IDs):
 ${availableSlots.map(slot => 
   `- ID: ${slot.id} | Time: ${slot.displayTime} | Period: ${slot.period}`
 ).join('\n')}
 
-${request.currentMode === 'work' ? 
-  'IMPORTANT: User is in WORK MODE. Prioritize work tasks (non-personal) but include high-priority personal tasks if they fit well.' : 
+IMPORTANT SCHEDULING RULES:
+1. If a task has subtasks (children), consider scheduling it across multiple slots or days
+2. Parent tasks should generally be scheduled before or alongside their subtasks
+3. Large projects with many subtasks might need to span multiple days
+4. ${request.currentMode === 'work' ? 
+  'User is in WORK MODE. Prioritize work tasks but include urgent personal tasks.' : 
   request.currentMode === 'personal' ? 
-  'IMPORTANT: User is in PERSONAL MODE. Prioritize personal tasks but include urgent work tasks if necessary.' : 
-  'Balance both work and personal tasks based on priority and urgency.'}
+  'User is in PERSONAL MODE. Prioritize personal tasks but include urgent work tasks.' : 
+  'Balance both work and personal tasks based on priority.'}
 
 Generate a JSON response with EXACTLY this structure:
 {
-  "summary": "A 2-3 paragraph markdown summary explaining your overall scheduling strategy, which tasks you prioritized for today vs later, and key reasoning behind the schedule",
+  "summary": "A 2-3 paragraph markdown summary explaining:\n1. Your overall scheduling strategy\n2. How you handled parent tasks with subtasks\n3. Which tasks you prioritized for today vs later\n4. Any task dependencies or sequences you identified\n5. Key reasoning behind the schedule",
   "recommendations": [
     {
       "slotId": "exact slot ID from above list or null if scheduling for another day",
       "taskId": "exact task ID from above list", 
       "taskTitle": "exact task title from above list",
-      "reasoning": "brief explanation why this task fits this time slot or should be scheduled later",
+      "reasoning": "brief explanation including any dependency considerations (e.g., 'This is a parent task that should be started before its 3 subtasks')",
       "priority": "high" or "medium" or "low",
       "suggestedDate": "YYYY-MM-DD if recommending for another day, null for today"
     }
   ],
-  "insights": ["insight 1", "insight 2", "insight 3"]
+  "insights": ["insight about task dependencies or sequences", "insight about workload distribution", "strategic scheduling tip"]
 }
 
 IMPORTANT: 
@@ -268,9 +296,7 @@ IMPORTANT:
 
     const result = await model.generateContent(prompt)
     const text = result.response.text()
-    
-    console.log('Gemini raw response:', text)
-    
+
     // Extract JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
@@ -285,7 +311,7 @@ IMPORTANT:
         // Validate each recommendation has required fields
         parsed.recommendations.forEach((rec: any, index: number) => {
           if (!rec.slotId || !rec.taskId) {
-            console.warn(`Recommendation ${index} missing slotId or taskId:`, rec)
+
           }
         })
         

@@ -68,10 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    console.log('[AuthContext] useEffect initialized', {
-      timestamp: new Date().toISOString(),
-      pathname: typeof window !== 'undefined' ? window.location.pathname : 'SSR',
-    })
+    // AuthContext initialized
 
     // Skip redirect check if we're on the auth handler page
     // The handler page will manage its own auth flow
@@ -83,12 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       getRedirectResult(auth)
         .then(async (result) => {
           if (result && result.user) {
-            console.log('[AuthContext] Redirect result user found', {
-              userEmail: result.user.email,
-              timestamp: new Date().toISOString(),
-            })
-            
-            // Don't handle the redirect result here - let onAuthStateChanged handle it
+            // Redirect result user found - let onAuthStateChanged handle it
             // This prevents duplicate cookie setting and profile creation
           }
         })
@@ -116,12 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Listen for auth changes
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        console.log('[AuthContext] Auth state changed', {
-          hasUser: !!firebaseUser,
-          userEmail: firebaseUser?.email,
-          hasSetCookie,
-          timestamp: new Date().toISOString(),
-        })
+        // Auth state changed
 
         if (firebaseUser) {
           setUser(firebaseUser)
@@ -181,8 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Initialize Google Calendar service when user is authenticated
   const initializeGoogleCalendar = async () => {
     try {
-      console.log('[AuthContext] Initializing Google Calendar service...')
-      
+
       // Wait for Google Calendar service to be ready
       let attempts = 0
       const maxAttempts = 10
@@ -198,12 +184,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setGoogleCalendarReady(true)
         
         if (hasValidToken) {
-          console.log('[AuthContext] Google Calendar already authorized with existing token')
+
         } else {
-          console.log('[AuthContext] Google Calendar ready but no valid token found')
+
         }
       } else {
-        console.warn('[AuthContext] Google Calendar service failed to initialize after 5 seconds')
+
         setGoogleCalendarReady(false)
       }
     } catch (error) {
@@ -241,10 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signInWithGoogle = async () => {
-    console.log('[AuthContext] Initiating Google sign-in', {
-      timestamp: new Date().toISOString(),
-      isProduction: process.env.NODE_ENV === 'production',
-    })
+    // Initiating Google sign-in
     
     try {
       const provider = new GoogleAuthProvider()
@@ -268,15 +251,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Try popup first in development
         const result = await signInWithPopup(auth, provider)
         
-        console.log('[AuthContext] Google sign-in popup successful', {
-          userEmail: result.user.email,
-          timestamp: new Date().toISOString(),
-        })
+        // Google sign-in popup successful
         
         // Extract and store Google Calendar access token if available
         const credential = GoogleAuthProvider.credentialFromResult(result)
         if (credential?.accessToken) {
-          console.log('[AuthContext] Google Calendar token received during sign-in')
+
           // Store the token for calendar access
           await storeGoogleCalendarToken(credential.accessToken)
         }
@@ -333,7 +313,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
         { merge: true }
       )
-      console.log('[AuthContext] Google Calendar token stored successfully')
+
     } catch (error) {
       console.error('[AuthContext] Failed to store Google Calendar token:', error)
     }
@@ -349,7 +329,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const success = await googleCalendarService.authorize(false)
       if (success) {
-        console.log('[AuthContext] Google Calendar connected successfully')
+
         return true
       }
       
@@ -364,7 +344,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const disconnectGoogleCalendar = async (): Promise<void> => {
     try {
       await googleCalendarService.signOut()
-      console.log('[AuthContext] Google Calendar disconnected successfully')
+
     } catch (error) {
       console.error('[AuthContext] Failed to disconnect Google Calendar:', error)
       throw error

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { setAuthCookie, clearAuthCookie, verifyAuth } from '@/lib/auth-helpers'
 import { adminAuth } from '@/lib/firebase-admin'
+import { withCSRFProtection } from '@/lib/csrf'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,8 +9,8 @@ export const dynamic = 'force-dynamic'
  * POST /api/auth/session - Set auth cookie from client-side token
  */
 export async function POST(request: NextRequest) {
-
-  try {
+  return withCSRFProtection(request, async (request) => {
+    try {
     const { token } = await request.json()
 
     if (!token) {
@@ -19,15 +20,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[Session API] Received token:', {
-      tokenLength: token.length,
-      tokenStart: token.substring(0, 20) + '...',
-    })
+    // Token received for session creation
 
     // Check if Firebase Admin is available
     if (!adminAuth) {
-      console.error('[Session API] Firebase Admin not initialized')
-      
+
       // In development without admin SDK, we might want to allow setting the cookie
       // but in production this should fail
       if (process.env.NODE_ENV === 'production') {
@@ -41,7 +38,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Development fallback - set cookie without full verification
-      console.warn('[Session API] Development mode - setting cookie without full verification')
+
       setAuthCookie(token)
       
       return NextResponse.json({
@@ -69,10 +66,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[Session API] User verified:', {      uid: user.uid,
-      email: user.email,
-    })
-
     // Set secure HTTP-only cookie
     await setAuthCookie(token)
 
@@ -94,13 +87,15 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
+  })
 }
 
 /**
  * DELETE /api/auth/session - Clear auth cookie
  */
-export async function DELETE() {
-  try {
+export async function DELETE(request: NextRequest) {
+  return withCSRFProtection(request, async () => {
+    try {
     await clearAuthCookie()
     return NextResponse.json({ success: true })
   } catch (error) {
@@ -110,22 +105,19 @@ export async function DELETE() {
       { status: 500 }
     )
   }
+  })
 }
 
 /**
  * GET /api/auth/session - Check current session
  */
 export async function GET() {
-  console.log('[Session API] GET request:', {
-    timestamp: new Date().toISOString(),
-    hasAdminAuth: !!adminAuth,
-  })
+  // Check current session status
 
   try {
     // Check if Firebase Admin is available
     if (!adminAuth) {
-      console.error('[Session API] Firebase Admin not initialized for GET request')
-      
+
       if (process.env.NODE_ENV === 'production') {
         return NextResponse.json(
           { 
@@ -158,11 +150,6 @@ export async function GET() {
         { status: 401 }
       )
     }
-
-    console.log('[Session API] Session verified:', {
-      uid: user.uid,
-      email: user.email,
-    })
 
     return NextResponse.json({
       authenticated: true,

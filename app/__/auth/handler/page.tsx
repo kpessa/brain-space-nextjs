@@ -12,36 +12,27 @@ export default function FirebaseAuthHandler() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    let handled = false
+    let mounted = true
+    let unsubscribe: (() => void) | undefined
+    let timeoutId: NodeJS.Timeout | undefined
 
     const handleAuthCompletion = async () => {
-        timestamp: new Date().toISOString(),
-      })
-
       try {
         // First, check for redirect result
         const result = await getRedirectResult(auth)
-          hasResult: !!result,
-          hasUser: !!result?.user,
-          timestamp: new Date().toISOString(),
-        })
 
-        // Set up auth state listener
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-          if (handled) return
-          
-            hasUser: !!user,
-            userEmail: user?.email,
-            timestamp: new Date().toISOString(),
-          })
+        // Set up auth state listener with proper cleanup
+        unsubscribe = onAuthStateChanged(auth, async (user) => {
+          if (!mounted) return
 
           if (user) {
-            handled = true
             setStatus('Setting up your session...')
             
             try {
               // Get fresh ID token
               const idToken = await user.getIdToken(true)
+              
+              if (!mounted) return // Check if still mounted after async operation
               
               // Set auth cookie via API
               const response = await fetch('/api/auth/session', {
@@ -50,10 +41,7 @@ export default function FirebaseAuthHandler() {
                 body: JSON.stringify({ token: idToken }),
               })
               
-                ok: response.ok,
-                status: response.status,
-                timestamp: new Date().toISOString(),
-              })
+              if (!mounted) return // Check again after fetch
               
               if (response.ok) {
                 setStatus('Redirecting...')
@@ -68,33 +56,39 @@ export default function FirebaseAuthHandler() {
                 throw new Error(data.error || 'Failed to set session')
               }
             } catch (error) {
+              if (!mounted) return
               console.error('[Auth Handler] Error setting cookie:', error)
               setError('Failed to complete sign in. Please try again.')
-              handled = false
             }
           } else {
             // No user after waiting, redirect to login
-            if (!handled) {
-              setTimeout(() => {
-                if (!handled) {
-                  router.push('/login')
-                }
-              }, 3000)
-            }
+            timeoutId = setTimeout(() => {
+              if (mounted && !auth.currentUser) {
+                router.push('/login')
+              }
+            }, 3000)
           }
         })
 
-        // Cleanup
-        return () => {
-          unsubscribe()
-        }
       } catch (error) {
+        if (!mounted) return
         console.error('[Auth Handler] Error:', error)
         setError('An error occurred during sign in. Please try again.')
       }
     }
 
     handleAuthCompletion()
+
+    // Cleanup function
+    return () => {
+      mounted = false
+      if (unsubscribe) {
+        unsubscribe()
+      }
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
   }, [router, searchParams])
 
   return (

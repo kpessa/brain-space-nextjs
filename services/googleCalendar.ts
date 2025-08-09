@@ -69,36 +69,32 @@ export class GoogleCalendarService {
   private async loadGoogleApis() {
     // Check if environment variables are present
     if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || !process.env.NEXT_PUBLIC_GOOGLE_API_KEY) {
-      console.error('Missing Google Calendar environment variables:', {
-        clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? 'present' : 'MISSING',
-        apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY ? 'present' : 'MISSING',
-      })
+
       return
     }
 
     // Load GAPI with Promise-based approach for better reliability
     if (!window.gapi) {
-      console.log('[GoogleCalendar] Loading GAPI script...')
+
       try {
         await this.loadScript('https://apis.google.com/js/api.js')
-        console.log('[GoogleCalendar] GAPI script loaded successfully')
+
         this.gapiLoaded()
       } catch (error) {
         console.error('Failed to load GAPI script:', error)
         this.gapiInited = false
       }
     } else {
-      console.log('[GoogleCalendar] GAPI already available, initializing...')
+
       this.gapiLoaded()
     }
 
     // Load GIS with Promise-based approach
     if (!window.google?.accounts) {
-      console.log('[GoogleCalendar] Loading GIS script...')
+
       try {
         await this.loadScript('https://accounts.google.com/gsi/client')
-        console.log('[GoogleCalendar] GIS script loaded successfully')
-        
+
         // Give the script a moment to initialize
         await new Promise(resolve => setTimeout(resolve, 500))
         this.gisLoaded()
@@ -107,7 +103,7 @@ export class GoogleCalendarService {
         this.gisInited = false
       }
     } else {
-      console.log('[GoogleCalendar] GIS already available, initializing...')
+
       this.gisLoaded()
     }
   }
@@ -135,21 +131,15 @@ export class GoogleCalendarService {
       console.error('GAPI not loaded')
       return
     }
-    
-    console.log('[GoogleCalendar] Loading GAPI client...')
+
     window.gapi.load('client', async () => {
       try {
-        console.log('[GoogleCalendar] Initializing GAPI client with:', {
-          apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY ? 'present' : 'missing',
-          discoveryDoc: process.env.NEXT_PUBLIC_GOOGLE_CALENDAR_DISCOVERY_DOC
-        })
 
         await window.gapi.client.init({
           apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
           discoveryDocs: [process.env.NEXT_PUBLIC_GOOGLE_CALENDAR_DISCOVERY_DOC],
         })
-        
-        console.log('[GoogleCalendar] GAPI client initialized successfully')
+
         this.gapiInited = true
         this.maybeEnableButtons()
       } catch (error) {
@@ -171,11 +161,6 @@ export class GoogleCalendarService {
         return
       }
 
-      console.log('[GoogleCalendar] Initializing GIS with:', {
-        clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? 'present' : 'missing',
-        scopes: process.env.NEXT_PUBLIC_GOOGLE_CALENDAR_SCOPES,
-      })
-      
       this.tokenClient = window.google.accounts.oauth2.initTokenClient({
         client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
         scope: process.env.NEXT_PUBLIC_GOOGLE_CALENDAR_SCOPES,
@@ -228,7 +213,7 @@ export class GoogleCalendarService {
   async authorize(immediate = false): Promise<boolean> {
     
     if (!this.gapiInited || !this.gisInited) {
-      console.error('Google APIs not loaded - GAPI:', this.gapiInited, 'GIS:', this.gisInited)
+
       return false
     }
 
@@ -243,7 +228,7 @@ export class GoogleCalendarService {
         return true
       } catch (error: any) {
         // Token is invalid or expired, clear it
-        console.log('Existing token is invalid, clearing...')
+
         window.gapi.client.setToken('')
         
         // If immediate mode, don't try to re-authenticate
@@ -418,15 +403,10 @@ export class GoogleCalendarService {
 
   // Manual initialization method for debugging
   async initializeManually() {
-    console.log('[GoogleCalendar] Manual initialization - checking APIs:', {
-      gapi: !!window.gapi,
-      google: !!window.google,
-      googleAccounts: !!window.google?.accounts,
-    })
-    
+
     // Retry loading if needed
     if (!this.gapiInited || !this.gisInited) {
-      console.log('[GoogleCalendar] Attempting to reload Google APIs...')
+
       await this.loadGoogleApis()
       
       // Wait longer for scripts to load
@@ -434,11 +414,11 @@ export class GoogleCalendarService {
       
       // Try to initialize again if scripts are now loaded
       if (window.gapi && !this.gapiInited) {
-        console.log('[GoogleCalendar] Retrying GAPI initialization...')
+
         this.gapiLoaded()
       }
       if (window.google?.accounts && !this.gisInited) {
-        console.log('[GoogleCalendar] Retrying GIS initialization...')
+
         this.gisLoaded()
       }
       

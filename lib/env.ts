@@ -70,7 +70,7 @@ class EnvValidator {
     const configuredProviders = aiProviders.filter(key => process.env[key])
     
     if (configuredProviders.length === 0) {
-      console.warn('Warning: No AI providers configured. AI features will not work.')
+
     }
 
     // Server-side Firebase Admin validation
@@ -79,7 +79,7 @@ class EnvValidator {
       const configuredAdminKeys = adminKeys.filter(key => process.env[key])
       
       if (configuredAdminKeys.length > 0 && configuredAdminKeys.length < adminKeys.length) {
-        console.warn('Warning: Partial Firebase Admin configuration detected. Some server features may not work.')
+
       }
     }
 
@@ -104,7 +104,7 @@ class EnvValidator {
       ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
       GOOGLE_AI_API_KEY: process.env.GOOGLE_AI_API_KEY,
       
-      NODE_ENV: (process.env.NODE_ENV as any) || 'development',
+      NODE_ENV: (process.env.NODE_ENV as 'development' | 'production' | 'test') || 'development',
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     }
 

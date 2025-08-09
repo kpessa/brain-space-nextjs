@@ -9,8 +9,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   
   useEffect(() => {
     // Debug logging
-    console.log('ThemeProvider: Applying theme', { darkMode, effectiveTheme })
-    
+
     // Remove any existing theme classes
     document.documentElement.classList.remove('dark', 'light', 'theme-professional', 'theme-colorful')
     
@@ -21,8 +20,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.classList.add(`theme-${effectiveTheme}`)
     
     // Log final classes
-    console.log('ThemeProvider: HTML classes', document.documentElement.className)
-    
+
     // Update meta theme-color for mobile browsers
     const metaThemeColor = document.querySelector('meta[name="theme-color"]')
     if (metaThemeColor) {

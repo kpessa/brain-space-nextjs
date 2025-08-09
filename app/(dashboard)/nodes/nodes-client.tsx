@@ -17,6 +17,7 @@ import { NodeUpdateModal } from '@/components/nodes/NodeUpdateModal'
 import { NodeDetailModal } from '@/components/nodes/NodeDetailModal'
 import { UpdateExportModal } from '@/components/nodes/UpdateExportModal'
 import { BulkTagModal } from '@/components/nodes/BulkTagModal'
+import { BulkNodeCreationDialog } from '@/components/nodes/BulkNodeCreationDialog'
 import { useUserPreferencesStore, shouldShowNode } from '@/store/userPreferencesStore'
 import { ModeToggle } from '@/components/ModeToggle'
 import { RecurrenceDialog } from '@/components/RecurrenceDialog'
@@ -353,14 +354,10 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
     pattern: RecurrencePattern | undefined,
     taskType: 'recurring' | 'habit'
   ) => {
-    console.log('=== handleSaveRecurrence called ===')
-    console.log('nodeId:', nodeId)
-    console.log('pattern:', pattern)
-    console.log('taskType:', taskType)
-    
+
     if (!pattern) {
       // Remove recurrence
-      console.log('Removing recurrence')
+
       await updateNode(nodeId, {
         taskType: 'one-time',
         recurrence: undefined,
@@ -383,16 +380,12 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
       if (pattern.endDate) {
         recurrence.endDate = pattern.endDate
       }
-      
-      console.log('Transformed recurrence object:', recurrence)
-      
+
       const updateData = {
         taskType,
         recurrence,
       }
-      
-      console.log('Updating node with:', updateData)
-      
+
       await updateNode(nodeId, updateData as any)
       
       // Wait a moment and then check if the update persisted
@@ -409,12 +402,7 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
           
           if (docSnap.exists()) {
             const data = docSnap.data()
-            console.log('Direct Firestore check after 1 second:', {
-              id: nodeId,
-              taskType: data.taskType,
-              recurrence: data.recurrence,
-              allKeys: Object.keys(data)
-            })
+            // Data retrieved from Firestore
           }
         }
       }, 1000)
@@ -772,6 +760,7 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
 
 export default function NodesClient({ userId }: { userId: string }) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isBulkCreateOpen, setIsBulkCreateOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedType, setSelectedType] = useState<NodeType | 'all'>('all')
   const [selectedTag, setSelectedTag] = useState<string>('all')
@@ -1058,7 +1047,16 @@ export default function NodesClient({ userId }: { userId: string }) {
                   />
                 )}
                 
-                {/* Add Node */}
+                {/* Add Node Buttons */}
+                <Button
+                  onClick={() => setIsBulkCreateOpen(true)}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  title="Create multiple nodes with hierarchy"
+                >
+                  <GitBranch className="w-5 h-5" />
+                  Bulk Create
+                </Button>
                 <Button
                   onClick={() => setIsCreateModalOpen(true)}
                   variant="primary"
@@ -1389,6 +1387,12 @@ export default function NodesClient({ userId }: { userId: string }) {
         <NodeCreateModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
+          userId={userId}
+        />
+        
+        <BulkNodeCreationDialog
+          isOpen={isBulkCreateOpen}
+          onClose={() => setIsBulkCreateOpen(false)}
           userId={userId}
         />
         

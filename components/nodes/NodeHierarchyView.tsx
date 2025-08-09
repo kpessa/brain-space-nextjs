@@ -248,18 +248,11 @@ export function NodeHierarchyView({
   // Build tree structure - find root nodes (nodes without parents)
   const rootNodes = useMemo(() => {
     if (showAllAsRoots) {
-      console.log('Showing all nodes as roots:', nodes.length)
+
       return nodes
     }
     
-    // Debug logging
-    console.log('Total nodes received:', nodes.length)
-    console.log('Nodes with parents:', nodes.filter(n => n.parent).map(n => ({
-      id: n.id,
-      title: n.title,
-      parent: n.parent,
-      parentExists: !!nodes.find(p => p.id === n.parent)
-    })))
+    // Check nodes with parents
     
     const roots = nodes.filter(node => {
       // Node is a root if:
@@ -272,7 +265,7 @@ export function NodeHierarchyView({
       const parentExists = nodes.some(n => n.id === node.parent)
       return !parentExists
     })
-    console.log('Root nodes found:', roots.length, roots.map(n => n.title))
+    // Root nodes identified
     
     return roots
   }, [nodes, showAllAsRoots])

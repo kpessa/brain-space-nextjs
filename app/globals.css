@@ -23,6 +23,25 @@
     -webkit-overflow-scrolling: touch;
   }
   
+  /* Focus indicators for keyboard navigation */
+  *:focus-visible {
+    outline: 2px solid rgb(var(--ring));
+    outline-offset: 2px;
+  }
+  
+  /* Screen reader only content */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  
   /* Remove the iOS fixed positioning that was breaking scrolling */
   /* Instead, use modern touch-action for scroll control */
   @supports (-webkit-touch-callout: none) {

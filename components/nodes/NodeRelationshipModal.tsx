@@ -77,15 +77,13 @@ export function NodeRelationshipModal({
         }
       }
 
-      
       let nodeId: string | null = null
       if (relationshipType === 'child') {
         nodeId = await createChildNode(sourceNode.id, nodeData)
       } else {
         nodeId = await createParentNode(sourceNode.id, nodeData)
       }
-      
-      
+
       if (nodeId) {
         setText('')
         onClose()

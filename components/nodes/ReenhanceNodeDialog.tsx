@@ -94,12 +94,7 @@ export function ReenhanceNodeDialog({
     if (!enhancedData) return
     
     try {
-      console.log('Updating node with enhanced data:', {
-        nodeId: node.id,
-        tags: enhancedData.tags,
-        originalTags: node.tags
-      })
-      
+
       await updateNode(node.id, {
         type: enhancedData.type,
         title: enhancedData.title,

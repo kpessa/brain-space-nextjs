@@ -39,7 +39,10 @@
       "Bash(env)",
       "Bash(pnpm lint:*)",
       "Bash(vercel:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(echo $NODE_ENV)",
+      "Bash(unset NODE_ENV)",
+      "Bash(git restore:*)"
     ],
     "deny": []
   }

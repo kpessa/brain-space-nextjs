@@ -35,13 +35,12 @@ export default function RecurringClient({ userId }: { userId: string }) {
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
 
   useEffect(() => {
-    console.log('Recurring page mounting, loading nodes for userId:', userId)
+
     loadNodes(userId)
   }, [userId, loadNodes])
 
   // Get all recurring tasks
-  console.log('=== Recurring Page Debug ===')
-  console.log('All nodes:', nodes.length)
+
   console.log('Sample nodes:', nodes.slice(0, 3).map(n => ({ 
     id: n.id, 
     title: n.title, 
@@ -52,8 +51,7 @@ export default function RecurringClient({ userId }: { userId: string }) {
   const recurringNodes = nodes.filter(
     node => node.taskType === 'recurring' || node.taskType === 'habit'
   )
-  
-  console.log('Filtered recurring nodes:', recurringNodes.length)
+
   console.log('Recurring nodes:', recurringNodes.map(n => ({ 
     id: n.id, 
     title: n.title, 

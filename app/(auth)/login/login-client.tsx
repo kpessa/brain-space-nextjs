@@ -20,10 +20,27 @@ export default function LoginClient() {
           setIsSigningIn(true)
           
           const idToken = await result.user.getIdToken()
+          
+          // Get CSRF token first
+          const csrfResponse = await fetch('/api/auth/csrf', {
+            method: 'GET',
+            credentials: 'include'
+          })
+          
+          if (!csrfResponse.ok) {
+            throw new Error('Failed to get CSRF token')
+          }
+          
+          const { token: csrfToken } = await csrfResponse.json()
+          
           const response = await fetch('/api/auth/session', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-csrf-token': csrfToken
+            },
             body: JSON.stringify({ token: idToken }),
+            credentials: 'include'
           })
           
           if (response.ok) {
@@ -32,7 +49,7 @@ export default function LoginClient() {
             window.location.href = redirect
           } else {
             const data = await response.json()
-            console.error('[Login] Session API error from redirect:', data)
+
             setError(data.error || 'Failed to set session')
             setIsSigningIn(false)
           }
@@ -50,34 +67,47 @@ export default function LoginClient() {
   const handleSignIn = async () => {
     setIsSigningIn(true)
     setError(null)
-    
-    
+
     try {
       const provider = new GoogleAuthProvider()
       
       try {
         // Always try popup first (like the working manual auth button)
         const result = await signInWithPopup(auth, provider)
-        
-        
+
         // Get the ID token
         const idToken = await result.user.getIdToken()
         
-        // Set auth cookie via API
-        const response = await fetch('/api/auth/session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: idToken }),
+        // Get CSRF token first
+        const csrfResponse = await fetch('/api/auth/csrf', {
+          method: 'GET',
+          credentials: 'include'
         })
         
+        if (!csrfResponse.ok) {
+          throw new Error('Failed to get CSRF token')
+        }
         
+        const { token: csrfToken } = await csrfResponse.json()
+        
+        // Set auth cookie via API with CSRF token
+        const response = await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-csrf-token': csrfToken
+          },
+          body: JSON.stringify({ token: idToken }),
+          credentials: 'include'
+        })
+
         if (response.ok) {
           // Redirect to intended page or journal
           const redirect = searchParams.get('redirect') || '/journal'
           window.location.href = redirect
         } else {
           const data = await response.json()
-          console.error('[Login] Session API error:', data)
+
           throw new Error(data.error || 'Failed to set session')
         }
       } catch (popupError: any) {

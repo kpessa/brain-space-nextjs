@@ -75,16 +75,7 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       snapshot.forEach(doc => {
         const data = doc.data()
         
-        // Debug log for first few nodes
-        if (nodes.length < 3) {
-          console.log('Loading node from Firestore:', {
-            id: doc.id,
-            title: data.title,
-            taskType: data.taskType,
-            recurrence: data.recurrence,
-            rawData: data
-          })
-        }
+        // Skip debug logging
         
         const nodeData = {
           ...data,
@@ -187,17 +178,6 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       set({ error: 'Node not found' })
       return
     }
-    
-    console.log('updateNode called with:', {
-      nodeId,
-      updates,
-      tags: updates.tags,
-      currentNodeTags: node.tags,
-      taskType: updates.taskType,
-      recurrence: updates.recurrence,
-      currentTaskType: node.taskType,
-      currentRecurrence: node.recurrence
-    })
 
     try {
       // Dynamically import Firebase
@@ -209,12 +189,10 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
         ...updates,
         updatedAt: serverTimestamp(),
       }
-      
-      console.log('Sending to Firestore:', firestoreUpdate)
-      
+
       try {
         await updateDoc(doc(db, 'users', node.userId, 'nodes', nodeId), firestoreUpdate)
-        console.log('Firestore update completed successfully')
+
       } catch (updateError) {
         console.error('Error updating Firestore:', updateError)
         throw updateError
@@ -225,14 +203,7 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
         const { getDoc } = await import('firebase/firestore')
         const updatedDoc = await getDoc(doc(db, 'users', node.userId, 'nodes', nodeId))
         const verifyData = updatedDoc.data()
-        console.log('Verification - data in Firestore after update:', {
-          id: updatedDoc.id,
-          exists: updatedDoc.exists(),
-          taskType: verifyData?.taskType,
-          recurrence: verifyData?.recurrence,
-          hasRecurrence: !!verifyData?.recurrence,
-          allFields: Object.keys(verifyData || {})
-        })
+        // Verification completed
       } catch (verifyError) {
         console.error('Error verifying update:', verifyError)
       }
@@ -245,12 +216,6 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       )
       
       const updatedNode = nodes.find(n => n.id === nodeId)
-      console.log('Updated node in local state:', {
-        id: updatedNode?.id,
-        title: updatedNode?.title,
-        taskType: updatedNode?.taskType,
-        recurrence: updatedNode?.recurrence
-      })
 
       set({ nodes })
     } catch (error) {
@@ -512,14 +477,9 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
     const node2 = get().getNodeById(nodeId2)
     
     if (!node1 || !node2) {
-      console.error('unlinkNodes: One or both nodes not found', { nodeId1, nodeId2 })
+
       throw new Error('One or both nodes not found')
     }
-
-    console.log('unlinkNodes: Starting unlink operation', {
-      node1: { id: node1.id, title: node1.title, children: node1.children },
-      node2: { id: node2.id, title: node2.title, parent: node2.parent }
-    })
 
     try {
       // Dynamically import Firebase
@@ -532,8 +492,7 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
 
       // Case 1: node1 is parent of node2 (most common case)
       if (node2.parent === nodeId1) {
-        console.log('Unlinking: node2 has node1 as parent')
-        
+
         // Remove parent reference from child
         batch.update(doc(db, 'users', node2.userId, 'nodes', nodeId2), {
           parent: null,
@@ -550,7 +509,7 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
           })
           actionsPerformed.push(`Removed "${node2.title}" from "${node1.title}"'s children`)
         } else {
-          console.warn('Data inconsistency: Child has parent reference but parent doesn\'t have child in array')
+
           // Still update parent to ensure consistency
           batch.update(doc(db, 'users', node1.userId, 'nodes', nodeId1), {
             children: node1.children || [],
@@ -561,8 +520,7 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       
       // Case 2: node2 is parent of node1 (when called in reverse)
       else if (node1.parent === nodeId2) {
-        console.log('Unlinking: node1 has node2 as parent')
-        
+
         // Remove parent reference from child
         batch.update(doc(db, 'users', node1.userId, 'nodes', nodeId1), {
           parent: null,
@@ -583,8 +541,7 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       
       // Case 3: Check for any parent-child relationship and fix it
       else {
-        console.log('Checking for any parent-child relationships to fix')
-        
+
         // Check if node1 has node2 in children (inconsistent state)
         if (node1.children?.includes(nodeId2)) {
           const updatedChildren = node1.children.filter(id => id !== nodeId2)
@@ -607,14 +564,13 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       }
       
       if (actionsPerformed.length === 0) {
-        console.log('No parent-child relationship found between these nodes')
+
         throw new Error('No parent-child relationship found between these nodes')
       }
       
       // Commit the batch
       await batch.commit()
-      console.log('Unlink operation completed:', actionsPerformed)
-      
+
       // Update local state optimistically
       const nodes = get().nodes.map(n => {
         if (n.id === nodeId1) {

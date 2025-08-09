@@ -24,19 +24,19 @@ export default function GoogleCalendarStatus() {
   const handleConnect = async () => {
     const success = await connect()
     if (success) {
-      console.log('Successfully connected to Google Calendar')
+
     }
   }
 
   const handleDisconnect = async () => {
     await disconnect()
-    console.log('Disconnected from Google Calendar')
+
   }
 
   const handleRefresh = async () => {
     const success = await refresh()
     if (success) {
-      console.log('Successfully refreshed Google Calendar authentication')
+
     }
   }
 

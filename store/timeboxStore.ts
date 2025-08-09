@@ -103,6 +103,7 @@ const formatTimeDisplay = (hour: number, minute: number): string => {
 
 // Helper function to generate time slots
 const generateTimeSlots = (intervalMinutes: 30 | 60 | 120 = 120): TimeSlot[] => {
+
   const slots: TimeSlot[] = []
   const startHour = 6 // 6am
   const endHour = 22 // 10pm
@@ -128,8 +129,10 @@ const generateTimeSlots = (intervalMinutes: 30 | 60 | 120 = 120): TimeSlot[] => 
     const endTime = `${nextHour.toString().padStart(2, '0')}:${nextMinute.toString().padStart(2, '0')}`
     const displayTime = `${formatTimeDisplay(currentHour, currentMinute)}-${formatTimeDisplay(nextHour, nextMinute)}`
     
+    const slotId = `slot-${startTime.replace(':', '')}`
+    
     slots.push({
-      id: `slot-${startTime.replace(':', '')}`,
+      id: slotId,
       startTime,
       endTime,
       displayTime,
@@ -141,6 +144,17 @@ const generateTimeSlots = (intervalMinutes: 30 | 60 | 120 = 120): TimeSlot[] => 
     index++
   }
 
+  console.log('Generated slots:', slots.map(s => ({ id: s.id, display: s.displayTime })))
+  
+  // Check for duplicate IDs
+  const ids = slots.map(s => s.id)
+  const uniqueIds = new Set(ids)
+  if (ids.length !== uniqueIds.size) {
+
+    const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index)
+    console.error('Duplicates:', duplicates)
+  }
+  
   return slots
 }
 
@@ -165,17 +179,44 @@ export const useTimeboxStore = create<TimeboxState>((set, get) => ({
   },
 
   addTaskToSlot: async (task: TimeboxTask, slotId: string) => {
+    console.group('🔍 STORE DEBUG: addTaskToSlot called')
+
     const { timeSlots } = get()
-    const updatedSlots = timeSlots.map(slot => {
+
+    console.log('Available slot IDs:', timeSlots.map(s => s.id))
+    
+    let targetSlotFound = false
+    let updatedSlots = timeSlots.map(slot => {
       if (slot.id === slotId) {
-        return {
+        targetSlotFound = true
+
+        const updatedSlot = {
           ...slot,
           tasks: [...slot.tasks, { ...task, timeboxDate: get().selectedDate }],
         }
+
+        return updatedSlot
       }
       return slot
     })
+    
+    if (!targetSlotFound) {
+
+      console.log('Available:', timeSlots.map(s => ({ id: s.id, display: s.displayTime })))
+    } else {
+
+    }
+    
     set({ timeSlots: updatedSlots })
+    
+    // Verify the update worked
+    const newState = get()
+    const verifySlot = newState.timeSlots.find(s => s.id === slotId)
+    if (verifySlot) {
+
+    }
+    
+    console.groupEnd()
     
     // Save to Firebase
     if (task.userId) {
@@ -261,7 +302,25 @@ export const useTimeboxStore = create<TimeboxState>((set, get) => ({
 
   initializeTimeSlots: (intervalMinutes?: 30 | 60 | 120) => {
     const interval = intervalMinutes || 120
-    set({ timeSlots: generateTimeSlots(interval) })
+    const currentSlots = get().timeSlots
+    const newSlots = generateTimeSlots(interval)
+    
+    // Preserve tasks from existing slots
+    const slotsWithTasks = newSlots.map(newSlot => {
+      const existingSlot = currentSlots.find(s => s.id === newSlot.id)
+      if (existingSlot && existingSlot.tasks.length > 0) {
+        return {
+          ...newSlot,
+          tasks: existingSlot.tasks,
+          isBlocked: existingSlot.isBlocked,
+          blockReason: existingSlot.blockReason,
+          blockLabel: existingSlot.blockLabel
+        }
+      }
+      return newSlot
+    })
+    
+    set({ timeSlots: slotsWithTasks })
   },
   
   blockTimeSlot: async (slotId: string, reason: TimeSlot['blockReason'], label?: string) => {

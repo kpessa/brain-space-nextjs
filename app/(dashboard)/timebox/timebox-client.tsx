@@ -3,8 +3,19 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Clock, Calendar, Zap, Target, ChevronLeft, ChevronRight, CheckCircle, X, Settings, Lock, Coffee, Users, Stethoscope, Car, User, Mic, Sparkles, Settings2, CalendarSync, MapPin, ChevronDown, ChevronUp, Filter, Search, Eye } from 'lucide-react'
-import { useTimeboxStore, type TimeboxTask } from '@/store/timeboxStore'
+import { Eye, ChevronDown, ChevronUp, Users, Stethoscope, Settings, Coffee, Car, User, Lock, Mic, Sparkles, Settings2, CalendarSync, Filter, Search, Clock, Calendar, Zap, Target, ChevronLeft, ChevronRight, CheckCircle, X, MapPin } from 'lucide-react'
+import { type TimeboxTask } from '@/store/timeboxStore'
+import { 
+  useTimeSlots,
+  useSelectedDate,
+  useCalendarSyncEnabled,
+  useTimeInterval,
+  useShowPastSlots,
+  useHoveredSlotId,
+  useTimeboxActions,
+  useTimeSlotsWithCalendarEvents,
+  useTimeboxStats
+} from '@/hooks/useTimeboxSelectors'
 import { useNodesStore } from '@/store/nodeStore'
 import { useUserPreferencesStore, shouldShowNode } from '@/store/userPreferencesStore'
 import { useCalendarStore } from '@/store/calendarStore'
@@ -17,6 +28,12 @@ import ScheduleSettingsDialog from '@/components/ScheduleSettingsDialog'
 import { NodeDetailModal } from '@/components/nodes/NodeDetailModal'
 import { NodeRelationshipModal } from '@/components/nodes/NodeRelationshipModal'
 import { type Node, type NodeType, getNodeTypeIcon } from '@/types/node'
+
+// Import new components
+import { TimeboxHeader } from '@/components/timebox/TimeboxHeader'
+import { TimeboxStats } from '@/components/timebox/TimeboxStats'
+import { TimeSlot } from '@/components/timebox/TimeSlot'
+import { NodePool } from '@/components/timebox/NodePool'
 
 // Helper to get priority color
 function getPriorityColor(importance?: number, urgency?: number) {
@@ -50,13 +67,21 @@ const blockReasonIcons = {
 }
 
 export default function TimeboxClient({ userId }: { userId: string }) {
-  const { 
-    selectedDate, 
-    timeSlots, 
-    draggedTask,
-    hoveredSlotId,
-    setSelectedDate, 
-    setDraggedTask,
+  // DEBUG: Log when component renders
+
+  // Use optimized selectors
+  const selectedDate = useSelectedDate()
+  const timeSlots = useTimeSlots()
+  const hoveredSlotId = useHoveredSlotId()
+  const calendarSyncEnabled = useCalendarSyncEnabled()
+  const timeInterval = useTimeInterval()
+  const showPastSlotsState = useShowPastSlots()
+  const displaySlots = useTimeSlotsWithCalendarEvents()
+  const stats = useTimeboxStats()
+  
+  // Actions
+  const {
+    setSelectedDate,
     setHoveredSlotId,
     addTaskToSlot,
     removeTaskFromSlot,
@@ -65,14 +90,21 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     loadTimeboxData,
     initializeTimeSlots,
     blockTimeSlot,
-    unblockTimeSlot
-  } = useTimeboxStore()
-  const { nodes, loadNodes } = useNodesStore()
+    unblockTimeSlot,
+    setCalendarSyncEnabled,
+    setTimeInterval,
+    setShowPastSlots: setShowPastSlotsAction,
+    loadCalendarEvents
+  } = useTimeboxActions()
+  
+  // Local state for drag and drop
+  const [draggedTask, setDraggedTask] = useState<TimeboxTask | null>(null)
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set())
+  const { nodes, loadNodes, getNodeById, getNodeChildren } = useNodesStore()
   const { 
     getEffectiveTimeboxInterval, 
     setTimeboxInterval, 
     currentMode, 
-    calendarSyncEnabled,
     updateSettings,
     hidePersonalInWorkMode,
     hideWorkInPersonalMode
@@ -82,7 +114,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   const [showIntervalSettings, setShowIntervalSettings] = useState(false)
   const [currentTimeSlotId, setCurrentTimeSlotId] = useState<string | null>(null)
   const [calendarEvents, setCalendarEvents] = useState<TimeboxTask[]>([])
-  const [showPastSlots, setShowPastSlots] = useState(false)
+  const [showPastSlots, setShowPastSlots] = useState(showPastSlotsState)
   const [collapsedSlots, setCollapsedSlots] = useState<Set<string>>(new Set())
   
   // Node filtering state
@@ -125,6 +157,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   
   // Load data on mount and date change
   useEffect(() => {
+
     if (selectedDate) {
       loadNodes(userId)
       loadTimeboxData(userId, selectedDate)
@@ -134,7 +167,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   // Load calendar events when sync is enabled
   useEffect(() => {
     if (calendarSyncEnabled && isConnected) {
-      loadCalendarEvents()
+      loadCalendarEventsLocal()
     } else {
       setCalendarEvents([])
     }
@@ -164,19 +197,22 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     }
   }, [timeSlots, selectedDate])
   
-  // Helper to check if a time slot is in the past
+  // Helper to check if a time slot is COMPLETELY in the past (not including current slot)
   const isSlotInPast = useCallback((slot: typeof timeSlots[0]) => {
     const now = new Date()
     const today = format(now, 'yyyy-MM-dd')
     
-    // If not today, don't auto-collapse
+    // If not today, don't mark as past
     if (selectedDate !== today) return false
     
+    // Get the END time of the slot
     const [endHour, endMinute] = slot.endTime.split(':').map(Number)
     const slotEndTime = new Date()
     slotEndTime.setHours(endHour, endMinute, 0, 0)
     
-    return slotEndTime < now
+    // A slot is "past" only if the current time is AFTER the slot's END time
+    // This means the slot has completely finished
+    return now >= slotEndTime
   }, [selectedDate])
   
   // Toggle slot collapse state
@@ -191,11 +227,10 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   }
   
   // Load calendar events
-  const loadCalendarEvents = async () => {
+  const loadCalendarEventsLocal = async () => {
     try {
       // Validate selectedDate before using it
       if (!selectedDate) {
-        console.warn('[TimeboxClient] No selectedDate available, skipping calendar load')
         return
       }
 
@@ -203,7 +238,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
       
       // Check if the date is valid
       if (isNaN(dateObj.getTime())) {
-        console.error('[TimeboxClient] Invalid selectedDate:', selectedDate)
+
         return
       }
 
@@ -307,46 +342,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     })
     return Array.from(types).sort()
   }, [nodes, timeSlots])
-  
-  // Merge calendar events into time slots
-  const timeSlotsWithCalendarEvents = useMemo(() => {
-    return timeSlots.map(slot => {
-      const calendarTasksInSlot = calendarEvents.filter(event => {
-        const [eventHour, eventMinute] = event.timeboxStartTime!.split(':').map(Number)
-        const [slotStartHour, slotStartMinute] = slot.startTime.split(':').map(Number)
-        const [slotEndHour, slotEndMinute] = slot.endTime.split(':').map(Number)
-        
-        const eventMinutes = eventHour * 60 + eventMinute
-        const slotStartMinutes = slotStartHour * 60 + slotStartMinute
-        const slotEndMinutes = slotEndHour * 60 + slotEndMinute
-        
-        return eventMinutes >= slotStartMinutes && eventMinutes < slotEndMinutes
-      })
-      
-      // Deduplicate: if a task has both nodeId and calendarEventId, prefer the node version
-      const existingNodeIds = slot.tasks.filter(t => t.nodeId).map(t => t.nodeId)
-      const existingCalendarIds = slot.tasks.filter(t => t.calendarEventId).map(t => t.calendarEventId)
-      
-      const filteredCalendarTasks = calendarTasksInSlot.filter(calTask => {
-        // Check if this calendar event is already linked to a node that's scheduled in this slot
-        const linkedNode = nodes.find(n => n.calendarEventId === calTask.calendarEventId)
-        if (linkedNode && existingNodeIds.includes(linkedNode.id)) {
-          return false // Skip, already have the node version in this slot
-        }
-        // Check if we already have this calendar event in this slot
-        if (existingCalendarIds.includes(calTask.calendarEventId)) {
-          return false
-        }
-        return true
-      })
-      
-      return {
-        ...slot,
-        tasks: [...slot.tasks, ...filteredCalendarTasks]
-      }
-    })
-  }, [timeSlots, calendarEvents, nodes])
-  
+
   // Date navigation
   const goToPreviousDay = () => {
     const newDate = format(subDays(new Date(selectedDate), 1), 'yyyy-MM-dd')
@@ -363,7 +359,10 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   }
   
   // Drag and drop handlers
-  const handleDragStart = (task: TimeboxTask) => {
+  const handleDragStart = (e: React.DragEvent, task: TimeboxTask) => {
+    // Store task data in both dataTransfer and state for reliability
+    e.dataTransfer.setData('application/json', JSON.stringify(task))
+    e.dataTransfer.effectAllowed = 'move'
     setDraggedTask(task)
   }
   
@@ -377,6 +376,25 @@ export default function TimeboxClient({ userId }: { userId: string }) {
       setSelectedNodeId(task.nodeId)
       setShowNodeDetail(true)
     }
+  }
+  
+  const toggleTaskExpanded = (taskId: string) => {
+    setExpandedTasks(prev => {
+      const next = new Set(prev)
+      if (next.has(taskId)) {
+        next.delete(taskId)
+      } else {
+        next.add(taskId)
+      }
+      return next
+    })
+  }
+  
+  const getTaskChildren = (nodeId?: string) => {
+    if (!nodeId) return []
+    const node = getNodeById(nodeId)
+    if (!node?.children || node.children.length === 0) return []
+    return getNodeChildren(nodeId)
   }
   
   // Handlers for relationship creation
@@ -398,50 +416,109 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   
   const handleDragOver = (e: React.DragEvent, slotId: string) => {
     e.preventDefault()
-    setHoveredSlotId(slotId)
+    e.stopPropagation() // Prevent event bubbling
+    
+    // Extract the actual slot ID for hovering effect
+    const actualSlotId = slotId.replace(/^(past-|current-)/, '')
+    setHoveredSlotId(actualSlotId)
   }
   
   const handleDrop = async (e: React.DragEvent, slotId: string) => {
     e.preventDefault()
-    if (!draggedTask) return
+    e.stopPropagation() // Prevent event bubbling
+    
+    // Extract the actual slot ID (remove 'past-' or 'current-' prefix if present)
+    const actualSlotId = slotId.replace(/^(past-|current-)/, '')
+    
+    // Try to get task from dataTransfer first, fall back to state
+    let taskToAdd: TimeboxTask | null = null
+    
+    try {
+      const dataTransferData = e.dataTransfer.getData('application/json')
+      if (dataTransferData) {
+        taskToAdd = JSON.parse(dataTransferData)
+
+      }
+    } catch (error) {
+      // Failed to parse dataTransfer, will use state fallback
+    }
+    
+    // Fall back to state if dataTransfer failed
+    if (!taskToAdd) {
+      taskToAdd = draggedTask
+
+    }
+    
+    if (!taskToAdd) {
+
+      console.groupEnd()
+      return
+    }
     
     // Check if slot is blocked
-    const targetSlot = timeSlots.find(slot => slot.id === slotId)
-    if (targetSlot?.isBlocked) {
+    const targetSlot = timeSlots.find(slot => slot.id === actualSlotId)
+
+    if (!targetSlot) {
+
+      timeSlots.forEach((slot, index) => {
+        console.log(`  [${index}] ${slot.id} (${slot.displayTime})`)
+      })
+      console.groupEnd()
       handleDragEnd()
       return
     }
     
-    // Check if task is being moved from another slot
-    const sourceSlot = timeSlots.find(slot => 
-      slot.tasks.some(t => t.id === draggedTask.id)
-    )
-    
-    if (sourceSlot) {
-      await moveTaskBetweenSlots(draggedTask.id, sourceSlot.id, slotId)
-    } else {
-      // Add new task to slot
-      await addTaskToSlot({
-        ...draggedTask,
-        userId: userId,
-        timeboxDate: selectedDate,
-        isPersonal: draggedTask.isPersonal,
-      }, slotId)
+    if (targetSlot?.isBlocked) {
+
+      console.groupEnd()
+      handleDragEnd()
+      return
     }
     
-    handleDragEnd()
+    try {
+      // Check if task is being moved from another slot
+      const sourceSlot = timeSlots.find(slot => 
+        slot.tasks.some(t => t.id === taskToAdd!.id)
+      )
+      
+      console.log('Source slot:', sourceSlot ? { id: sourceSlot.id, displayTime: sourceSlot.displayTime } : 'None (new task)')
+      
+      if (sourceSlot) {
+
+        await moveTaskBetweenSlots(taskToAdd.id, sourceSlot.id, actualSlotId)
+      } else {
+        // Add new task to slot with unique ID
+        const taskWithId = {
+          ...taskToAdd,
+          id: taskToAdd.id || `task-${taskToAdd.nodeId}-${Date.now()}`,
+          userId: userId,
+          timeboxDate: selectedDate,
+          isPersonal: taskToAdd.isPersonal,
+        }
+
+        await addTaskToSlot(taskWithId, actualSlotId)
+      }
+
+    } catch (error) {
+      console.error('❌ Failed to drop task:', error)
+      // Could add toast notification here
+    } finally {
+      console.groupEnd()
+      handleDragEnd()
+    }
   }
   
-  // Calculate stats (use merged time slots)
-  const displaySlots = calendarSyncEnabled ? timeSlotsWithCalendarEvents : timeSlots
-  const totalScheduledTasks = displaySlots.reduce((sum, slot) => sum + slot.tasks.length, 0)
-  const completedTasks = displaySlots.reduce((sum, slot) => 
-    sum + slot.tasks.filter(t => t.status === 'completed').length, 0
-  )
-  const totalHours = displaySlots.filter(slot => slot.tasks.length > 0).length * (effectiveInterval / 60)
+  // Use stats from selector
+  const { totalScheduledTasks, completedTasks, occupiedSlots } = stats
+  const totalHours = occupiedSlots * (effectiveInterval / 60)
   
-  // Separate past and current/future slots
+  // Separate past and current/future slots - FIXED to properly identify current slot
   const { pastSlots, currentAndFutureSlots } = useMemo(() => {
+
+    if (displaySlots?.length) {
+      console.log('DisplaySlots IDs:', displaySlots.map(s => s.id))
+    }
+    
     const today = format(new Date(), 'yyyy-MM-dd')
     const isToday = selectedDate === today
     
@@ -453,22 +530,37 @@ export default function TimeboxClient({ userId }: { userId: string }) {
       }
     }
     
+    // Calculate current time in minutes for accurate comparison
+    const now = new Date()
+    const currentHour = now.getHours()
+    const currentMinute = now.getMinutes()
+    const currentTimeMinutes = currentHour * 60 + currentMinute
+    
     const past: typeof displaySlots = []
     const currentFuture: typeof displaySlots = []
     
     displaySlots.forEach(slot => {
-      if (isSlotInPast(slot)) {
+      const [endHour, endMinute] = slot.endTime.split(':').map(Number)
+      const slotEndMinutes = endHour * 60 + endMinute
+      
+      // A slot is past ONLY if current time is >= its end time
+      // This keeps the current slot (where we are now) in the current/future section
+      if (currentTimeMinutes >= slotEndMinutes) {
         past.push(slot)
       } else {
         currentFuture.push(slot)
       }
     })
     
+    console.log(`Current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')}`)
+    console.log('Past slots:', past.length, past.map(s => s.id))
+    console.log('Current/future slots:', currentFuture.length, currentFuture.map(s => s.id))
+    
     return {
       pastSlots: past,
       currentAndFutureSlots: currentFuture
     }
-  }, [displaySlots, selectedDate, isSlotInPast])
+  }, [displaySlots, selectedDate])
   
   // Show loading state until client-side hydration and selectedDate is initialized
   if (!isClient || !selectedDate) {
@@ -756,8 +848,8 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                       getPriorityColor(node.importance, node.urgency)
                     )}
                     draggable
-                    onDragStart={() => handleDragStart({
-                      id: node.id,
+                    onDragStart={(e) => handleDragStart(e, {
+                      id: `task-${node.id}-${Date.now()}`,
                       label: node.title || 'Untitled',
                       nodeId: node.id,
                       importance: node.importance,
@@ -842,9 +934,9 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <CardTitle className="text-lg text-gray-700">Past Time Slots</CardTitle>
+                        <CardTitle className="text-lg text-gray-500">Past Time Slots (Completed)</CardTitle>
                         <CardDescription>
-                          {pastSlots.length} slot{pastSlots.length !== 1 ? 's' : ''} from earlier today
+                          {pastSlots.length} slot{pastSlots.length !== 1 ? 's' : ''} from earlier today (before current time)
                         </CardDescription>
                       </div>
                       <div className="flex items-center gap-2">
@@ -859,16 +951,14 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                       </div>
                     </div>
                   </CardHeader>
-                  <div className={cn(
-                    "transition-all duration-300 ease-in-out",
-                    showPastSlots ? "max-h-[calc(70vh-200px)] opacity-100" : "max-h-0 opacity-0"
-                  )}>
+                  {showPastSlots && (
+                  <div className="transition-all duration-300 ease-in-out max-h-[calc(70vh-200px)] opacity-100">
                     <CardContent className="pt-0 overflow-y-auto" style={{ maxHeight: 'calc(70vh - 200px)' }}>
                       <div className="space-y-2">
                         {pastSlots.map((slot) => (
                           <Card 
                             key={slot.id} 
-                            id={slot.id}
+                            id={`past-${slot.id}`}
                             className={cn(
                               "transition-all duration-300 hover:shadow-lg opacity-75",
                               hoveredSlotId === slot.id && "ring-2 ring-brain-400",
@@ -898,36 +988,55 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                                   {/* Tasks in this block */}
                                   {slot.tasks.length > 0 && (
                                     <div className="space-y-1.5 mb-3">
-                                      {slot.tasks.map((task) => (
-                                        <div
-                                          key={task.id}
-                                          className={cn(
-                                            "flex items-center gap-2 p-1.5 rounded border",
-                                            task.isCalendarEvent ? "cursor-default" : "cursor-move",
-                                            task.isCalendarEvent ? "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-300" : getPriorityColor(task.importance, task.urgency),
-                                            task.status === 'completed' && "opacity-60"
-                                          )}
-                                          draggable={!task.isCalendarEvent}
-                                          onDragStart={() => !task.isCalendarEvent && handleDragStart(task)}
-                                          onDragEnd={handleDragEnd}
-                                        >
-                                          {task.isCalendarEvent ? (
-                                            <Calendar className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-                                          ) : (
-                                            <button
-                                              onClick={() => updateTaskInSlot(task.id, {
-                                                status: task.status === 'completed' ? 'pending' : 'completed',
-                                                completedAt: task.status === 'completed' ? undefined : new Date().toISOString()
-                                              })}
-                                              className="flex-shrink-0"
-                                            >
-                                              {task.status === 'completed' ? (
-                                                <CheckCircle className="w-4 h-4 text-green-600" />
-                                              ) : (
-                                                <div className="w-4 h-4 border-2 border-gray-400 rounded-full" />
+                                      {slot.tasks.map((task) => {
+                                        const taskChildren = getTaskChildren(task.nodeId)
+                                        const hasChildren = taskChildren.length > 0
+                                        const isExpanded = expandedTasks.has(task.id)
+                                        
+                                        return (
+                                          <div key={task.id}>
+                                            <div
+                                              className={cn(
+                                                "flex items-center gap-2 p-1.5 rounded border",
+                                                task.isCalendarEvent ? "cursor-default" : "cursor-move",
+                                                task.isCalendarEvent ? "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-300" : getPriorityColor(task.importance, task.urgency),
+                                                task.status === 'completed' && "opacity-60"
                                               )}
-                                            </button>
-                                          )}
+                                              draggable={!task.isCalendarEvent}
+                                              onDragStart={(e) => !task.isCalendarEvent && handleDragStart(e, task)}
+                                              onDragEnd={handleDragEnd}
+                                            >
+                                              {/* Expand/Collapse button for tasks with children */}
+                                              {!task.isCalendarEvent && hasChildren && (
+                                                <button
+                                                  onClick={() => toggleTaskExpanded(task.id)}
+                                                  className="flex-shrink-0"
+                                                >
+                                                  {isExpanded ? (
+                                                    <ChevronDown className="w-4 h-4 text-gray-600" />
+                                                  ) : (
+                                                    <ChevronRight className="w-4 h-4 text-gray-600" />
+                                                  )}
+                                                </button>
+                                              )}
+                                              
+                                              {task.isCalendarEvent ? (
+                                                <Calendar className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                                              ) : (
+                                                <button
+                                                  onClick={() => updateTaskInSlot(task.id, {
+                                                    status: task.status === 'completed' ? 'pending' : 'completed',
+                                                    completedAt: task.status === 'completed' ? undefined : new Date().toISOString()
+                                                  })}
+                                                  className="flex-shrink-0"
+                                                >
+                                                  {task.status === 'completed' ? (
+                                                    <CheckCircle className="w-4 h-4 text-green-600" />
+                                                  ) : (
+                                                    <div className="w-4 h-4 border-2 border-gray-400 rounded-full" />
+                                                  )}
+                                                </button>
+                                              )}
                                           <div 
                                             className={cn(
                                               "flex-1 min-w-0",
@@ -967,13 +1076,38 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                                           {!task.isCalendarEvent && (
                                             <button
                                               onClick={() => removeTaskFromSlot(task.id, slot.id)}
-                                              className="opacity-0 hover:opacity-100 transition-opacity"
+                                              className="opacity-30 hover:opacity-100 transition-opacity"
+                                              title="Remove from timebox"
                                             >
                                               <X className="w-4 h-4 text-gray-500 hover:text-red-500" />
                                             </button>
                                           )}
-                                        </div>
-                                      ))}
+                                            </div>
+                                            {/* Show children if expanded */}
+                                            {isExpanded && hasChildren && (
+                                              <div className="ml-6 mt-1 space-y-1">
+                                                {taskChildren.map((child) => (
+                                                  <div
+                                                    key={child.id}
+                                                    className="flex items-center gap-2 p-1 text-xs bg-gray-50 rounded border border-gray-200"
+                                                  >
+                                                    <ChevronRight className="w-3 h-3 text-gray-400" />
+                                                    <span className={cn(
+                                                      "flex-1",
+                                                      child.completed && "line-through text-gray-500"
+                                                    )}>
+                                                      {child.title || 'Untitled'}
+                                                    </span>
+                                                    <span className="text-gray-400">
+                                                      {getNodeTypeIcon(child.type)}
+                                                    </span>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            )}
+                                          </div>
+                                        )
+                                      })}
                                     </div>
                                   )}
                                   
@@ -1008,9 +1142,14 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                                           ? "border-brain-400 bg-brain-50" 
                                           : "border-gray-300 text-gray-500"
                                       )}
-                                      onDragOver={(e) => handleDragOver(e, slot.id)}
-                                      onDrop={(e) => handleDrop(e, slot.id)}
-                                      onDragLeave={() => setHoveredSlotId(null)}
+                                      onDragOver={(e) => handleDragOver(e, `past-${slot.id}`)}
+                                      onDrop={(e) => handleDrop(e, `past-${slot.id}`)}
+                                      onDragLeave={(e) => {
+                                        // Only clear hover if we're actually leaving this element
+                                        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                                          setHoveredSlotId(null)
+                                        }
+                                      }}
                                     >
                                       <Zap className="w-5 h-5 mx-auto mb-1 opacity-50" />
                                       <div className="text-xs">Drop nodes here</div>
@@ -1024,18 +1163,21 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                       </div>
                     </CardContent>
                   </div>
+                  )}
                 </Card>
               )}
               
               {/* Current and Future Time Slots */}
-              {currentAndFutureSlots.map((slot) => (
+              {currentAndFutureSlots.map((slot, index) => {
+                const isCurrentSlot = currentTimeSlotId === slot.id && selectedDate === format(new Date(), 'yyyy-MM-dd')
+                return (
                 <Card 
                   key={slot.id} 
-                  id={slot.id}
+                  id={`current-${slot.id}`}
                   className={cn(
                     "transition-all duration-300 hover:shadow-lg",
                     hoveredSlotId === slot.id && "ring-2 ring-brain-400",
-                    currentTimeSlotId === slot.id && selectedDate === format(new Date(), 'yyyy-MM-dd') && "ring-2 ring-orange-400 bg-orange-50"
+                    isCurrentSlot && "ring-2 ring-green-500 bg-green-50 border-green-300"
                   )}
                 >
                   <CardContent className="p-3">
@@ -1050,7 +1192,14 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                       
                       {/* Time label */}
                       <div className="flex-shrink-0 w-24">
-                        <div className="text-base font-bold text-gray-900">{slot.displayTime}</div>
+                        <div className="text-base font-bold text-gray-900 flex items-center gap-1">
+                          {slot.displayTime}
+                          {isCurrentSlot && (
+                            <span className="text-xs bg-green-500 text-white px-1.5 py-0.5 rounded-full animate-pulse">
+                              NOW
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-gray-500">
                           {slot.isBlocked ? 'Blocked' : `${slot.tasks.length} task${slot.tasks.length !== 1 ? 's' : ''}`}
                         </div>
@@ -1061,36 +1210,55 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                         {/* Tasks in this block */}
                             {slot.tasks.length > 0 && (
                           <div className="space-y-1.5 mb-3">
-                            {slot.tasks.map((task) => (
-                              <div
-                                key={task.id}
-                                className={cn(
-                                  "flex items-center gap-2 p-1.5 rounded border",
-                                  task.isCalendarEvent ? "cursor-default" : "cursor-move",
-                                  task.isCalendarEvent ? "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-300" : getPriorityColor(task.importance, task.urgency),
-                                  task.status === 'completed' && "opacity-60"
-                                )}
-                                draggable={!task.isCalendarEvent}
-                                onDragStart={() => !task.isCalendarEvent && handleDragStart(task)}
-                                onDragEnd={handleDragEnd}
-                              >
-                                {task.isCalendarEvent ? (
-                                  <Calendar className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-                                ) : (
-                                  <button
-                                    onClick={() => updateTaskInSlot(task.id, {
-                                      status: task.status === 'completed' ? 'pending' : 'completed',
-                                      completedAt: task.status === 'completed' ? undefined : new Date().toISOString()
-                                    })}
-                                    className="flex-shrink-0"
-                                  >
-                                    {task.status === 'completed' ? (
-                                      <CheckCircle className="w-4 h-4 text-green-600" />
-                                    ) : (
-                                      <div className="w-4 h-4 border-2 border-gray-400 rounded-full" />
+                            {slot.tasks.map((task) => {
+                              const taskChildren = getTaskChildren(task.nodeId)
+                              const hasChildren = taskChildren.length > 0
+                              const isExpanded = expandedTasks.has(task.id)
+                              
+                              return (
+                                <div key={task.id}>
+                                  <div
+                                    className={cn(
+                                      "flex items-center gap-2 p-1.5 rounded border",
+                                      task.isCalendarEvent ? "cursor-default" : "cursor-move",
+                                      task.isCalendarEvent ? "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-300" : getPriorityColor(task.importance, task.urgency),
+                                      task.status === 'completed' && "opacity-60"
                                     )}
-                                  </button>
-                                )}
+                                    draggable={!task.isCalendarEvent}
+                                    onDragStart={(e) => !task.isCalendarEvent && handleDragStart(e, task)}
+                                    onDragEnd={handleDragEnd}
+                                  >
+                                    {/* Expand/Collapse button for tasks with children */}
+                                    {!task.isCalendarEvent && hasChildren && (
+                                      <button
+                                        onClick={() => toggleTaskExpanded(task.id)}
+                                        className="flex-shrink-0"
+                                      >
+                                        {isExpanded ? (
+                                          <ChevronDown className="w-4 h-4 text-gray-600" />
+                                        ) : (
+                                          <ChevronRight className="w-4 h-4 text-gray-600" />
+                                        )}
+                                      </button>
+                                    )}
+                                    
+                                    {task.isCalendarEvent ? (
+                                      <Calendar className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                                    ) : (
+                                      <button
+                                        onClick={() => updateTaskInSlot(task.id, {
+                                          status: task.status === 'completed' ? 'pending' : 'completed',
+                                          completedAt: task.status === 'completed' ? undefined : new Date().toISOString()
+                                        })}
+                                        className="flex-shrink-0"
+                                      >
+                                        {task.status === 'completed' ? (
+                                          <CheckCircle className="w-4 h-4 text-green-600" />
+                                        ) : (
+                                          <div className="w-4 h-4 border-2 border-gray-400 rounded-full" />
+                                        )}
+                                      </button>
+                                    )}
                                 <div 
                                   className={cn(
                                     "flex-1 min-w-0",
@@ -1130,13 +1298,38 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                                 {!task.isCalendarEvent && (
                                   <button
                                     onClick={() => removeTaskFromSlot(task.id, slot.id)}
-                                    className="opacity-0 hover:opacity-100 transition-opacity"
+                                    className="opacity-30 hover:opacity-100 transition-opacity"
+                                    title="Remove from timebox"
                                   >
                                     <X className="w-4 h-4 text-gray-500 hover:text-red-500" />
                                   </button>
                                 )}
-                              </div>
-                            ))}
+                                  </div>
+                                  {/* Show children if expanded */}
+                                  {isExpanded && hasChildren && (
+                                    <div className="ml-6 mt-1 space-y-1">
+                                      {taskChildren.map((child) => (
+                                        <div
+                                          key={child.id}
+                                          className="flex items-center gap-2 p-1 text-xs bg-gray-50 rounded border border-gray-200"
+                                        >
+                                          <ChevronRight className="w-3 h-3 text-gray-400" />
+                                          <span className={cn(
+                                            "flex-1",
+                                            child.completed && "line-through text-gray-500"
+                                          )}>
+                                            {child.title || 'Untitled'}
+                                          </span>
+                                          <span className="text-gray-400">
+                                            {getNodeTypeIcon(child.type)}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
                           </div>
                         )}
                         
@@ -1171,9 +1364,14 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                                 ? "border-brain-400 bg-brain-50" 
                                 : "border-gray-300 text-gray-500"
                             )}
-                            onDragOver={(e) => handleDragOver(e, slot.id)}
-                            onDrop={(e) => handleDrop(e, slot.id)}
-                            onDragLeave={() => setHoveredSlotId(null)}
+                            onDragOver={(e) => handleDragOver(e, `current-${slot.id}`)}
+                            onDrop={(e) => handleDrop(e, `current-${slot.id}`)}
+                            onDragLeave={(e) => {
+                              // Only clear hover if we're actually leaving this element
+                              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                                setHoveredSlotId(null)
+                              }
+                            }}
                           >
                             <Zap className="w-5 h-5 mx-auto mb-1 opacity-50" />
                             <div className="text-xs">Drop nodes here</div>
@@ -1183,7 +1381,8 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                )
+              })}
             </div>
           </div>
         </div>

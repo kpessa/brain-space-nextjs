@@ -1,31 +1,56 @@
 'use client'
 
-import { Component, ReactNode } from 'react'
+import { Component, ReactNode, ErrorInfo, useEffect } from 'react'
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
 
 interface Props {
   children: ReactNode
   fallback?: ReactNode
-  onError?: (error: Error, errorInfo: any) => void
+  onError?: (error: Error, errorInfo: ErrorInfo) => void
+  resetKeys?: Array<string | number>
+  resetOnPropsChange?: boolean
 }
 
 interface State {
   hasError: boolean
   error?: Error
+  errorInfo?: ErrorInfo
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = { hasError: false }
+    this.resetErrorBoundary = this.resetErrorBoundary.bind(this)
   }
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error }
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo)
+    this.setState({ errorInfo })
     this.props.onError?.(error, errorInfo)
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    const { resetKeys, resetOnPropsChange } = this.props
+    const { hasError } = this.state
+    
+    if (hasError && prevProps.resetKeys !== resetKeys) {
+      if (resetKeys?.some((key, idx) => key !== prevProps.resetKeys?.[idx])) {
+        this.resetErrorBoundary()
+      }
+    }
+    
+    if (hasError && resetOnPropsChange && prevProps.children !== this.props.children) {
+      this.resetErrorBoundary()
+    }
+  }
+
+  resetErrorBoundary = () => {
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined })
   }
 
   render() {

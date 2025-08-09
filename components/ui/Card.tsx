@@ -1,11 +1,11 @@
-import { HTMLAttributes, forwardRef } from 'react'
+import { HTMLAttributes, forwardRef, memo } from 'react'
 import { cn } from '@/lib/utils'
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   backdrop?: boolean
 }
 
-const Card = forwardRef<HTMLDivElement, CardProps>(
+const Card = memo(forwardRef<HTMLDivElement, CardProps>(
   ({ className, backdrop = false, ...props }, ref) => (
     <div
       ref={ref}
@@ -17,9 +17,9 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       {...props}
     />
   )
-)
+))
 
-const CardHeader = forwardRef<HTMLDivElement, CardProps>(
+const CardHeader = memo(forwardRef<HTMLDivElement, CardProps>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
@@ -27,9 +27,9 @@ const CardHeader = forwardRef<HTMLDivElement, CardProps>(
       {...props}
     />
   )
-)
+))
 
-const CardTitle = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLHeadingElement>>(
+const CardTitle = memo(forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
@@ -37,9 +37,9 @@ const CardTitle = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLHeadingEle
       {...props}
     />
   )
-)
+))
 
-const CardDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLParagraphElement>>(
+const CardDescription = memo(forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLParagraphElement>>(
   ({ className, ...props }, ref) => (
     <p
       ref={ref}
@@ -47,15 +47,15 @@ const CardDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLPara
       {...props}
     />
   )
-)
+))
 
-const CardContent = forwardRef<HTMLDivElement, CardProps>(
+const CardContent = memo(forwardRef<HTMLDivElement, CardProps>(
   ({ className, ...props }, ref) => (
     <div ref={ref} className={cn('p-6 pt-0', className)} {...props} />
   )
-)
+))
 
-const CardFooter = forwardRef<HTMLDivElement, CardProps>(
+const CardFooter = memo(forwardRef<HTMLDivElement, CardProps>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
@@ -63,7 +63,7 @@ const CardFooter = forwardRef<HTMLDivElement, CardProps>(
       {...props}
     />
   )
-)
+))
 
 Card.displayName = 'Card'
 CardHeader.displayName = 'CardHeader'

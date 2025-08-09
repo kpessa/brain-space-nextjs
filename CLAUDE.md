@@ -41,6 +41,113 @@ pnpm run start           # Start production server
 pnpm run lint            # Run Next.js ESLint configuration
 ```
 
+## Available Subagents for Task Execution
+
+Claude Code can leverage specialized subagents for complex tasks. Use these agents proactively when the task matches their expertise:
+
+### Core Development Agents
+
+**react-developer**
+- Specializes in React and Next.js development, hooks, state management, SSR/SSG
+- Tools: Read, Edit, MultiEdit, Grep, Glob, Bash, WebFetch
+- Use for: Component development, React hooks implementation, Next.js routing, performance optimization
+
+**svelte-developer**
+- Expert in Svelte and SvelteKit, reactive programming, stores, component architecture
+- Tools: Read, Edit, MultiEdit, Grep, Glob, Bash, WebFetch
+- Use for: Svelte component development, SvelteKit routing, Svelte-specific optimizations
+
+**firebase-specialist**
+- Firebase services expert (Auth, Firestore, Functions, Storage, etc.)
+- Tools: Read, Edit, MultiEdit, Grep, Glob, WebFetch, Bash
+- Use for: Firebase configuration, authentication setup, Firestore queries, Cloud Functions
+
+**api-integration**
+- Handles REST/GraphQL APIs, webhooks, authentication flows, third-party services
+- Tools: Read, Edit, MultiEdit, Grep, WebFetch, Bash
+- Use for: API endpoint creation, external service integration, authentication implementation
+
+### Quality & Testing
+
+**testing-qa**
+- Comprehensive testing specialist for unit, integration, and E2E tests
+- Tools: Read, Edit, MultiEdit, Grep, Glob, Bash
+- Use for: Writing test suites, ensuring code coverage, setting up testing frameworks
+
+**code-reviewer**
+- Analyzes code for quality, security, maintainability, and best practices
+- Tools: Read, Grep, Glob, Bash
+- Use for: Code reviews after implementing features, security audits, best practice checks
+
+**refactor-specialist**
+- Improves code structure and reduces technical debt without changing functionality
+- Tools: Read, Edit, MultiEdit, Grep, Glob, Bash
+- Use for: Code refactoring, improving maintainability, reducing complexity
+
+### Design & UX
+
+**design-theming-specialist**
+- Modern UI design, color systems, typography, animations, dark/light modes
+- Tools: Read, Edit, MultiEdit, Grep, Glob, WebFetch
+- Use for: Theme implementation, design system creation, CSS/styling improvements
+
+**ui-ux-accessibility**
+- Ensures optimal UX and WCAG compliance for inclusive design
+- Tools: Read, Edit, Grep, Glob, WebFetch, Bash
+- Use for: Accessibility audits, ARIA implementation, keyboard navigation, screen reader support
+
+**ios-optimizer**
+- iOS/Safari specialist for iPhone/iPad experience and PWA capabilities
+- Tools: Read, Edit, Grep, Glob, WebFetch, Bash
+- Use for: PWA manifest configuration, iOS-specific optimizations, touch interactions
+
+### Architecture & Performance
+
+**performance-optimizer**
+- Identifies bottlenecks, improves load times, optimizes bundle sizes
+- Tools: Read, Edit, MultiEdit, Grep, Glob, Bash, WebFetch
+- Use for: Performance audits, bundle optimization, caching strategies, lazy loading
+
+**state-persistence-sync**
+- Local state persistence, offline-first architecture, database synchronization
+- Tools: Read, Edit, MultiEdit, Grep, Glob, Bash
+- Use for: IndexedDB implementation, offline functionality, state synchronization
+
+**data-flow-architect**
+- Maps and optimizes data flow throughout applications
+- Tools: Read, Grep, Glob, Edit, MultiEdit
+- Use for: State management architecture, data flow visualization, component connections
+
+### DevOps & Debugging
+
+**deployment-cicd**
+- Git workflows, automated testing, GitHub Actions, Vercel deployment
+- Tools: Bash, Read, Edit, MultiEdit, WebFetch, Glob
+- Use for: CI/CD setup, deployment configuration, environment management
+
+**debug-troubleshooter**
+- Systematically finds root causes and fixes complex bugs
+- Tools: Read, Edit, MultiEdit, Grep, Glob, Bash, WebFetch
+- Use for: Bug investigation, error tracing, debugging complex issues
+
+### General Purpose
+
+**general-purpose**
+- Researches complex questions and executes multi-step tasks
+- Tools: All available tools
+- Use for: Complex searches, multi-file operations, research tasks
+
+### Usage Guidelines
+
+1. **Proactive Usage**: Use specialized agents when tasks align with their expertise
+2. **Parallel Execution**: Launch multiple agents concurrently when possible
+3. **Task Delegation**: For complex features, delegate subtasks to appropriate specialists
+4. **Example for Brain Space Project**:
+   - Use `firebase-specialist` for Firestore integration
+   - Use `react-developer` for component development
+   - Use `performance-optimizer` for PWA optimization
+   - Use `testing-qa` for test coverage implementation
+
 ## AI Provider Configuration
 
 The app supports multiple AI providers through environment variables:
