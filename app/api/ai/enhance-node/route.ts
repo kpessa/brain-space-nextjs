@@ -4,6 +4,7 @@ import type { NodeType } from '@/types/node'
 
 // This runs on the server, so we can safely use API keys
 async function callOpenAI(text: string, mode?: string, existingTags?: string[]) {
+  const currentDate = new Date().toISOString()
   const modeContext = mode ? `Current mode: ${mode}. ` : ''
   const tagContext = existingTags && existingTags.length > 0 
     ? `\nPrefer these existing tags when relevant: ${existingTags.join(', ')}` 
@@ -21,6 +22,10 @@ async function callOpenAI(text: string, mode?: string, existingTags?: string[]) 
         {
           role: 'system',
           content: `You are an AI assistant that enhances and categorizes a single thought or task.
+          
+          Current date/time: ${currentDate}
+          Use this as reference when interpreting relative dates like "today", "tomorrow", "next week", etc.
+          
           ${modeContext}${tagContext}
           
           Analyze the provided text and return a JSON response with:
@@ -30,7 +35,7 @@ async function callOpenAI(text: string, mode?: string, existingTags?: string[]) 
           - tags: Array of relevant tags/categories
           - urgency: 1-10 scale (10 being most urgent)
           - importance: 1-10 scale (10 being most important)
-          - dueDate: Object with date property (ISO string) if a deadline is mentioned
+          - dueDate: Object with date property (ISO string) if a deadline is mentioned or implied (e.g., "today" = current date)
           - isPersonal: boolean (true if personal/family/health related, false if work/professional)
           
           For work mode, prefer tags like: work, project, client, team, meeting, task, deadline
@@ -56,6 +61,8 @@ async function callOpenAI(text: string, mode?: string, existingTags?: string[]) 
 }
 
 async function callAnthropic(text: string, mode?: string, existingTags?: string[]) {
+  const currentDate = new Date().toISOString()
+  
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -69,7 +76,10 @@ async function callAnthropic(text: string, mode?: string, existingTags?: string[
       messages: [
         {
           role: 'user',
-          content: `Analyze this single thought or task and enhance it. 
+          content: `Current date/time: ${currentDate}
+          Use this as reference when interpreting relative dates like "today", "tomorrow", "next week", etc.
+          
+          Analyze this single thought or task and enhance it. 
           ${mode ? `Current mode: ${mode}. ` : ''}
           ${existingTags && existingTags.length > 0 ? `Prefer these existing tags when relevant: ${existingTags.join(', ')}` : ''}
           
@@ -80,7 +90,7 @@ async function callAnthropic(text: string, mode?: string, existingTags?: string[
           - tags: Array of relevant tags/categories
           - urgency: 1-10 scale (10 being most urgent)
           - importance: 1-10 scale (10 being most important)
-          - dueDate: Object with date property (ISO string) if a deadline is mentioned
+          - dueDate: Object with date property (ISO string) if a deadline is mentioned or implied (e.g., "today" = current date)
           - isPersonal: boolean (true if personal/family/health related, false if work/professional)
           
           For work mode, prefer tags like: work, project, client, team, meeting, task, deadline
@@ -109,6 +119,8 @@ async function callAnthropic(text: string, mode?: string, existingTags?: string[
 }
 
 async function callGoogleAI(text: string, mode?: string, existingTags?: string[]) {
+  const currentDate = new Date().toISOString()
+  
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`,
     {
@@ -119,7 +131,10 @@ async function callGoogleAI(text: string, mode?: string, existingTags?: string[]
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `Analyze this single thought or task and enhance it. 
+            text: `Current date/time: ${currentDate}
+            Use this as reference when interpreting relative dates like "today", "tomorrow", "next week", etc.
+            
+            Analyze this single thought or task and enhance it. 
             ${mode ? `Current mode: ${mode}. ` : ''}
             ${existingTags && existingTags.length > 0 ? `Prefer these existing tags when relevant: ${existingTags.join(', ')}` : ''}
             
@@ -130,7 +145,7 @@ async function callGoogleAI(text: string, mode?: string, existingTags?: string[]
             - tags: Array of relevant tags/categories
             - urgency: 1-10 scale (10 being most urgent)
             - importance: 1-10 scale (10 being most important)
-            - dueDate: Object with date property (ISO string) if a deadline is mentioned
+            - dueDate: Object with date property (ISO string) if a deadline is mentioned or implied (e.g., "today" = current date)
             - isPersonal: boolean (true if personal/family/health related, false if work/professional)
             
             For work mode, prefer tags like: work, project, client, team, meeting, task, deadline

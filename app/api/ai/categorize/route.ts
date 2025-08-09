@@ -22,6 +22,8 @@ interface CategoryResult {
 }
 
 async function callOpenAI(text: string) {
+  const currentDate = new Date().toISOString()
+  
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -34,6 +36,10 @@ async function callOpenAI(text: string) {
         {
           role: 'system',
           content: `You are an AI assistant that categorizes thoughts and tasks from a brain dump.
+          
+          Current date/time: ${currentDate}
+          Use this as reference when interpreting relative dates like "today", "tomorrow", "next week", etc.
+          
           Analyze the provided text and return a JSON response with:
           - categories: Array of category objects with name, thoughts, confidence, and reasoning
           - suggestedCategories: Array of category names that might be useful for organizing these thoughts
@@ -51,7 +57,7 @@ async function callOpenAI(text: string) {
           - tags: Array of relevant tags
           - urgency: 1-10 scale
           - importance: 1-10 scale
-          - dueDate: Object with date property if applicable`,
+          - dueDate: Object with date property (ISO string) if a deadline is mentioned or implied (e.g., "today" = current date)`,
         },
         {
           role: 'user',
@@ -73,6 +79,8 @@ async function callOpenAI(text: string) {
 }
 
 async function callGoogleAI(text: string) {
+  const currentDate = new Date().toISOString()
+  
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`,
     {
@@ -83,7 +91,10 @@ async function callGoogleAI(text: string) {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `Analyze this brain dump and categorize the thoughts. Return a JSON object with:
+            text: `Current date/time: ${currentDate}
+            Use this as reference when interpreting relative dates like "today", "tomorrow", "next week", etc.
+            
+            Analyze this brain dump and categorize the thoughts. Return a JSON object with:
             - categories: Array of category objects, each containing:
               - name: Category name
               - thoughts: Array of thoughts in this category
@@ -98,7 +109,7 @@ async function callGoogleAI(text: string) {
             - tags: Relevant tags array
             - urgency: 1-10 scale
             - importance: 1-10 scale
-            - dueDate: {date: "ISO string"} if mentioned
+            - dueDate: {date: "ISO string"} if a deadline is mentioned or implied (e.g., "today" = current date)
             
             Brain dump text:
             ${text}
