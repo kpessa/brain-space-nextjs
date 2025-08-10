@@ -91,6 +91,11 @@ Claude Code can leverage specialized subagents for complex tasks. Use these agen
 - Tools: Read, Edit, MultiEdit, Grep, Glob, WebFetch
 - Use for: Theme implementation, design system creation, CSS/styling improvements
 
+**styling-specialist**
+- CSS architecture expert (Tailwind, SCSS, CSS-in-JS, component libraries)
+- Tools: Read, Edit, MultiEdit, Grep, Glob, WebFetch
+- Use for: Tailwind optimization, component library integration, CSS architecture, styling refactoring, reducing technical debt through pre-built components, maintaining small CSS footprint while enabling custom designs
+
 **ui-ux-accessibility**
 - Ensures optimal UX and WCAG compliance for inclusive design
 - Tools: Read, Edit, Grep, Glob, WebFetch, Bash
