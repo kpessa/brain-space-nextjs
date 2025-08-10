@@ -4,7 +4,7 @@ import { verifyAuth } from '@/lib/auth-helpers'
 
 export default async function Home() {
   // Check authentication server-side
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const token = cookieStore.get('firebase-auth-token')?.value
   
   if (token) {

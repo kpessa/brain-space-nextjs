@@ -57,6 +57,7 @@ import { format } from 'date-fns'
 import StandupSummaryDialog from '@/components/StandupSummaryDialog'
 import { CalendarEventModal } from '@/components/CalendarEventModal'
 import { BulkScheduleImportModal } from '@/components/BulkScheduleImportModal'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 interface NodeCreateModalProps {
   isOpen: boolean
@@ -388,8 +389,8 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
 
       await updateNode(nodeId, updateData as any)
       
-      // Wait a moment and then check if the update persisted
-      setTimeout(async () => {
+      // Verify update persisted using proper async pattern instead of setTimeout
+      try {
         const { db } = await import('@/lib/firebase')
         const { doc, getDoc } = await import('firebase/firestore')
         
@@ -402,10 +403,12 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
           
           if (docSnap.exists()) {
             const data = docSnap.data()
-            // Data retrieved from Firestore
+            console.log('Recurrence update verified in Firestore:', data.recurrence)
           }
         }
-      }, 1000)
+      } catch (error) {
+        console.error('Error verifying recurrence update:', error)
+      }
     }
     setShowRecurrenceDialog(false)
   }
@@ -422,8 +425,15 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
   }
 
   return (
-    <Card className={`hover:shadow-md transition-shadow cursor-pointer overflow-hidden ${isSelected ? 'ring-2 ring-brain-500' : ''} ${node.isPinned ? 'bg-yellow-50 border-yellow-300' : ''}`}>
+    <Card className={`hover:shadow-md transition-shadow cursor-pointer overflow-hidden ${isSelected ? 'ring-2 ring-brain-500' : ''} ${node.isPinned ? 'bg-yellow-50 border-yellow-300' : ''} ${(node as any).isOptimistic ? 'opacity-70 animate-pulse' : ''}`}>
       <CardContent className="p-3" onClick={() => !selectMode && onNodeClick?.(node)}>
+        {/* Optimistic update indicator */}
+        {(node as any).isOptimistic && (
+          <div className="flex items-center gap-1 text-xs text-blue-600 mb-2">
+            <div className="w-3 h-3 border border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <span>Creating...</span>
+          </div>
+        )}
         <div className="flex items-start gap-2 mb-2">
           {/* Checkbox/Complete button */}
           {selectMode ? (
@@ -697,9 +707,9 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
                 <div>Priority: Urgency {node.urgency}/10, Importance {node.importance}/10</div>
               )}
               {node.dueDate?.type === 'exact' && (
-                <div>Due: {new Date(node.dueDate.date).toLocaleDateString()}</div>
+                <div>Due: {format(new Date(node.dueDate.date), 'MMM d, yyyy')}</div>
               )}
-              <div>Updated: {node.updatedAt ? new Date(node.updatedAt).toLocaleDateString() : 'Unknown'}</div>
+              <div>Updated: {node.updatedAt ? format(new Date(node.updatedAt), 'MMM d, yyyy') : 'Unknown'}</div>
             </div>
           </div>
         )}
@@ -965,6 +975,22 @@ export default function NodesClient({ userId }: { userId: string }) {
   }
 
   return (
+    <ErrorBoundary
+      fallback={
+        <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-screen flex items-center justify-center">
+          <div className="bg-white rounded-lg p-8 max-w-md text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Node Management Error</h2>
+            <p className="text-gray-600 mb-4">Something went wrong while managing your nodes. Please refresh the page to continue.</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-brain-600 text-white rounded-lg hover:bg-brain-700"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      }
+    >
       <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-screen">
         <div className="max-w-7xl mx-auto overflow-x-hidden">
           <header className="mb-8">
@@ -1458,5 +1484,6 @@ export default function NodesClient({ userId }: { userId: string }) {
         />
         </div>
       </div>
+    </ErrorBoundary>
   )
 }

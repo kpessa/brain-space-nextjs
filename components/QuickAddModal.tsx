@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { useNodesStore } from '@/store/nodeStore'
 import { createAIService } from '@/services/ai'
 import type { Node, NodeType, Recurrence } from '@/types/node'
+import { format } from 'date-fns'
 import { 
   Zap, 
   Brain,
@@ -596,7 +597,7 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
                   
                   {preview.dueDate && (
                     <div className="mt-2 text-xs text-gray-500">
-                      Due: {new Date(preview.dueDate.date).toLocaleDateString()}
+                      Due: {format(new Date(preview.dueDate.date), 'MMM d, yyyy')}
                     </div>
                   )}
                   

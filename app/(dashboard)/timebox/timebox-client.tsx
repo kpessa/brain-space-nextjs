@@ -28,6 +28,7 @@ import ScheduleSettingsDialog from '@/components/ScheduleSettingsDialog'
 import { NodeDetailModal } from '@/components/nodes/NodeDetailModal'
 import { NodeRelationshipModal } from '@/components/nodes/NodeRelationshipModal'
 import { type Node, type NodeType, getNodeTypeIcon } from '@/types/node'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 // Import new components
 import { TimeboxHeader } from '@/components/timebox/TimeboxHeader'
@@ -68,6 +69,7 @@ const blockReasonIcons = {
 
 export default function TimeboxClient({ userId }: { userId: string }) {
   // DEBUG: Log when component renders
+  console.log('🔍 TIMEBOX DEBUG: TimeboxClient component rendered with userId:', userId)
 
   // Use optimized selectors
   const selectedDate = useSelectedDate()
@@ -147,7 +149,20 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   // Prevent hydration mismatch by ensuring client-side rendering
   const [isClient, setIsClient] = useState(false)
   useEffect(() => {
+    console.log('🔍 TIMEBOX DEBUG: Component mounting - setting isClient to true')
     setIsClient(true)
+    
+    // Add page unload event to track refreshes
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      console.log('🔄 TIMEBOX DEBUG: Page refresh/navigation detected - data should persist')
+    }
+    
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    
+    return () => {
+      console.log('🔍 TIMEBOX DEBUG: Component unmounting')
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
   }, [])
   
   // Initialize time slots with correct interval
@@ -157,12 +172,19 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   
   // Load data on mount and date change
   useEffect(() => {
-
+    console.group('🔍 TIMEBOX DEBUG: useEffect - loading data')
+    console.log('Effect triggered with:', { userId, selectedDate, effectiveInterval })
+    
     if (selectedDate) {
+      console.log('🔮 Loading nodes for userId:', userId)
       loadNodes(userId)
-      loadTimeboxData(userId, selectedDate)
+      console.log('🗋 Loading timebox data for:', { userId, selectedDate, effectiveInterval })
+      loadTimeboxData(userId, selectedDate, effectiveInterval)
+    } else {
+      console.log('⚠️ selectedDate is not available yet')
     }
-  }, [userId, selectedDate, loadNodes, loadTimeboxData])
+    console.groupEnd()
+  }, [userId, selectedDate, effectiveInterval, loadNodes, loadTimeboxData])
   
   // Load calendar events when sync is enabled
   useEffect(() => {
@@ -427,39 +449,47 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     e.preventDefault()
     e.stopPropagation() // Prevent event bubbling
     
+    console.group('🔍 TIMEBOX DEBUG: handleDrop called')
+    console.log('Original slot ID:', slotId)
+    
     // Extract the actual slot ID (remove 'past-' or 'current-' prefix if present)
     const actualSlotId = slotId.replace(/^(past-|current-)/, '')
+    console.log('Actual slot ID:', actualSlotId)
     
     // Try to get task from dataTransfer first, fall back to state
     let taskToAdd: TimeboxTask | null = null
     
     try {
       const dataTransferData = e.dataTransfer.getData('application/json')
+      console.log('DataTransfer data length:', dataTransferData?.length || 0)
       if (dataTransferData) {
         taskToAdd = JSON.parse(dataTransferData)
-
+        console.log('✅ Got task from dataTransfer:', { id: taskToAdd?.id, label: taskToAdd?.label })
       }
     } catch (error) {
+      console.log('⚠️ Failed to parse dataTransfer data:', error)
       // Failed to parse dataTransfer, will use state fallback
     }
     
     // Fall back to state if dataTransfer failed
     if (!taskToAdd) {
       taskToAdd = draggedTask
-
+      console.log('🔄 Using draggedTask from state:', { id: taskToAdd?.id, label: taskToAdd?.label })
     }
     
     if (!taskToAdd) {
-
+      console.error('❌ No task found in either dataTransfer or state!')
       console.groupEnd()
       return
     }
     
     // Check if slot is blocked
     const targetSlot = timeSlots.find(slot => slot.id === actualSlotId)
+    console.log('Target slot found:', targetSlot ? { id: targetSlot.id, displayTime: targetSlot.displayTime, isBlocked: targetSlot.isBlocked } : 'NOT FOUND')
 
     if (!targetSlot) {
-
+      console.error('❌ Target slot not found!')
+      console.log('Available slots:')
       timeSlots.forEach((slot, index) => {
         console.log(`  [${index}] ${slot.id} (${slot.displayTime})`)
       })
@@ -469,7 +499,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     }
     
     if (targetSlot?.isBlocked) {
-
+      console.warn('⚠️ Target slot is blocked, cannot drop')
       console.groupEnd()
       handleDragEnd()
       return
@@ -484,7 +514,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
       console.log('Source slot:', sourceSlot ? { id: sourceSlot.id, displayTime: sourceSlot.displayTime } : 'None (new task)')
       
       if (sourceSlot) {
-
+        console.log('🔄 Moving task between slots')
         await moveTaskBetweenSlots(taskToAdd.id, sourceSlot.id, actualSlotId)
       } else {
         // Add new task to slot with unique ID
@@ -495,10 +525,12 @@ export default function TimeboxClient({ userId }: { userId: string }) {
           timeboxDate: selectedDate,
           isPersonal: taskToAdd.isPersonal,
         }
-
+        
+        console.log('➕ Adding new task to slot:', { taskId: taskWithId.id, slotId: actualSlotId })
         await addTaskToSlot(taskWithId, actualSlotId)
       }
-
+      
+      console.log('✅ Drop operation completed successfully')
     } catch (error) {
       console.error('❌ Failed to drop task:', error)
       // Could add toast notification here
@@ -562,8 +594,32 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     }
   }, [displaySlots, selectedDate])
   
+  // Debug function to log current store state
+  const debugCurrentState = () => {
+    console.group('🔍 TIMEBOX DEBUG: Current Store State')
+    console.log('selectedDate:', selectedDate)
+    console.log('timeSlots count:', timeSlots?.length || 0)
+    console.log('slots with tasks:', timeSlots?.filter(s => s.tasks.length > 0).length || 0)
+    timeSlots?.forEach(slot => {
+      if (slot.tasks.length > 0) {
+        console.log(`Slot ${slot.id} (${slot.displayTime}):`, slot.tasks.map(t => ({ id: t.id, label: t.label })))
+      }
+    })
+    console.groupEnd()
+  }
+  
+  // Add debug button (only in development)
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      // @ts-ignore - Adding debug function to window for testing
+      window.debugTimeboxState = debugCurrentState
+      console.log('🔧 Debug function added to window.debugTimeboxState()')
+    }
+  }, [timeSlots, selectedDate])
+
   // Show loading state until client-side hydration and selectedDate is initialized
   if (!isClient || !selectedDate) {
+    console.log('🔍 TIMEBOX DEBUG: Showing loading state - isClient:', isClient, 'selectedDate:', selectedDate)
     return (
       <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(100vh-4rem)] flex items-center justify-center">
         <div className="text-white">Loading...</div>
@@ -572,7 +628,23 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
+    <ErrorBoundary
+      fallback={
+        <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 h-[calc(100vh-4rem)] flex items-center justify-center">
+          <div className="bg-white rounded-lg p-8 max-w-md text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Timebox Error</h2>
+            <p className="text-gray-600 mb-4">Something went wrong with your schedule management. Please refresh the page to continue.</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-brain-600 text-white rounded-lg hover:bg-brain-700"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      }
+    >
+      <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
       <div className="max-w-7xl mx-auto flex-1 flex flex-col overflow-hidden">
           <header className="mb-4 flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
@@ -1000,7 +1072,8 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                                                 "flex items-center gap-2 p-1.5 rounded border",
                                                 task.isCalendarEvent ? "cursor-default" : "cursor-move",
                                                 task.isCalendarEvent ? "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-300" : getPriorityColor(task.importance, task.urgency),
-                                                task.status === 'completed' && "opacity-60"
+                                                task.status === 'completed' && "opacity-60",
+                                                (task as any).isOptimistic && "opacity-70 animate-pulse border-blue-400"
                                               )}
                                               draggable={!task.isCalendarEvent}
                                               onDragStart={(e) => !task.isCalendarEvent && handleDragStart(e, task)}
@@ -1222,7 +1295,8 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                                       "flex items-center gap-2 p-1.5 rounded border",
                                       task.isCalendarEvent ? "cursor-default" : "cursor-move",
                                       task.isCalendarEvent ? "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-300" : getPriorityColor(task.importance, task.urgency),
-                                      task.status === 'completed' && "opacity-60"
+                                      task.status === 'completed' && "opacity-60",
+                                      (task as any).isOptimistic && "opacity-70 animate-pulse border-blue-400"
                                     )}
                                     draggable={!task.isCalendarEvent}
                                     onDragStart={(e) => !task.isCalendarEvent && handleDragStart(e, task)}
@@ -1467,6 +1541,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
           }}
         />
       )}
-    </div>
+      </div>
+    </ErrorBoundary>
   )
 }

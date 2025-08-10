@@ -47,12 +47,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Helper function to set auth cookie
   const setAuthCookie = async (user: User) => {
     try {
+      // First get CSRF token
+      const csrfResponse = await fetch('/api/auth/csrf', {
+        method: 'GET',
+        credentials: 'include',
+      })
+      
+      let csrfToken = ''
+      if (csrfResponse.ok) {
+        const csrfData = await csrfResponse.json()
+        csrfToken = csrfData.token
+      }
+      
       const idToken = await user.getIdToken()
-      await fetch('/api/auth/session', {
+      const response = await fetch('/api/auth/session', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken,
+        },
+        credentials: 'include',
         body: JSON.stringify({ token: idToken }),
       })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        console.error('Failed to set auth cookie:', error)
+      }
     } catch (error) {
       console.error('Failed to set auth cookie:', error)
     }
@@ -61,7 +82,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Helper function to clear auth cookie
   const clearAuthCookie = async () => {
     try {
-      await fetch('/api/auth/session', { method: 'DELETE' })
+      // First get CSRF token
+      const csrfResponse = await fetch('/api/auth/csrf', {
+        method: 'GET',
+        credentials: 'include',
+      })
+      
+      let csrfToken = ''
+      if (csrfResponse.ok) {
+        const csrfData = await csrfResponse.json()
+        csrfToken = csrfData.token
+      }
+      
+      await fetch('/api/auth/session', { 
+        method: 'DELETE',
+        headers: {
+          'x-csrf-token': csrfToken,
+        },
+        credentials: 'include',
+      })
     } catch (error) {
       console.error('Failed to clear auth cookie:', error)
     }

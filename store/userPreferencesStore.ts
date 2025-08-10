@@ -56,25 +56,61 @@ interface UserPreferences {
 
 // Initialize mode based on schedule
 const getInitialMode = (): UserMode => {
-  if (typeof window === 'undefined') return 'work'
-  
-  // Check if schedule store is available
-  const scheduleStore = useScheduleStore.getState()
-  if (scheduleStore.preferences.autoSwitchMode) {
-    return scheduleStore.getSuggestedMode()
-  }
-  
+  // Always return 'work' as default for consistency
+  // The actual mode will be loaded from localStorage after hydration
   return 'work'
 }
 
-export const useUserPreferencesStore = create<UserPreferences>()(
-  persist(
-    (set, get) => ({
-      // Initial state
-      currentMode: getInitialMode(),
+// SSR-safe store wrapper
+const createSSRSafeStore = () => {
+  // During SSR, return safe defaults
+  if (typeof window === 'undefined') {
+    return create<UserPreferences>()((set, get) => ({
+      // Safe SSR defaults
+      currentMode: 'work',
       themeMode: 'colorful',
       darkMode: false,
       autoThemeInWorkMode: true,
+      frequentTags: [],
+      customWorkTags: [],
+      customPersonalTags: [],
+      autoCategorizationEnabled: true,
+      defaultToCurrentMode: true,
+      hidePersonalInWorkMode: true,
+      hideWorkInPersonalMode: true,
+      timeboxIntervalMinutes: 120,
+      workModeTimeboxInterval: 30,
+      personalModeTimeboxInterval: 120,
+      autoSwitchTimeboxInterval: true,
+      calendarSyncEnabled: false,
+      
+      // No-op actions during SSR
+      setMode: () => {},
+      toggleMode: () => {},
+      setThemeMode: () => {},
+      toggleDarkMode: () => {},
+      addFrequentTag: () => {},
+      addCustomWorkTag: () => {},
+      addCustomPersonalTag: () => {},
+      updateSettings: () => {},
+      getTagsForMode: () => [],
+      isWorkTag: () => false,
+      isPersonalTag: () => false,
+      getEffectiveTheme: () => 'colorful',
+      setTimeboxInterval: () => {},
+      getEffectiveTimeboxInterval: () => 120,
+    }))
+  }
+  
+  // Client-side store with persistence
+  return create<UserPreferences>()(
+    persist(
+      (set, get) => ({
+        // Initial state
+        currentMode: getInitialMode(),
+        themeMode: 'colorful',
+        darkMode: false,
+        autoThemeInWorkMode: true,
       frequentTags: [],
       customWorkTags: [],
       customPersonalTags: [],
@@ -204,8 +240,10 @@ export const useUserPreferencesStore = create<UserPreferences>()(
       name: 'user-preferences',
       version: 1,
     }
-  )
-)
+  ))
+}
+
+export const useUserPreferencesStore = createSSRSafeStore()
 
 // Helper function to determine if a node should be shown based on mode and tags
 export function shouldShowNode(

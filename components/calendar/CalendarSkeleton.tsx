@@ -44,8 +44,8 @@ export function CalendarSkeleton() {
                 <div key={i} className="min-h-24 p-1">
                   <Skeleton className="h-6 w-6 mb-2" />
                   <div className="space-y-1">
-                    {Math.random() > 0.7 && <Skeleton className="h-4 w-full" />}
-                    {Math.random() > 0.8 && <Skeleton className="h-4 w-3/4" />}
+                    {i % 3 === 0 && <Skeleton className="h-4 w-full" />}
+                    {i % 5 === 0 && <Skeleton className="h-4 w-3/4" />}
                   </div>
                 </div>
               ))}

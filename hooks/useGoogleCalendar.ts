@@ -17,7 +17,7 @@ export function useGoogleCalendar() {
   
   const [state, setState] = useState<GoogleCalendarState>({
     isConnected: false,
-    isLoading: true,
+    isLoading: typeof window === 'undefined' ? false : true, // Don't show loading on SSR
     isReady: false,
     hasError: false,
   })
@@ -25,6 +25,8 @@ export function useGoogleCalendar() {
   // Check connection status when user changes or component mounts
   useEffect(() => {
     const checkConnectionStatus = async () => {
+      // Skip connection check during SSR
+      if (typeof window === 'undefined') return
       if (!user) {
         setState({
           isConnected: false,

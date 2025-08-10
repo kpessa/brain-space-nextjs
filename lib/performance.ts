@@ -53,7 +53,7 @@ class PerformanceMonitor {
       // Observe Cumulative Layout Shift
       try {
         let clsValue = 0
-        let clsEntries: any[] = []
+        const clsEntries: any[] = []
 
         const clsObserver = new PerformanceObserver((entryList) => {
           for (const entry of entryList.getEntries()) {

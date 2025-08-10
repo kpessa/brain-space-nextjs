@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useEffect, useState } from 'react'
 
 interface Calendar {
   id: string
@@ -23,7 +24,7 @@ interface CalendarStore {
   get selectedCalendars(): string[]
 }
 
-export const useCalendarStore = create<CalendarStore>()(
+const calendarStoreBase = create<CalendarStore>()(
   persist(
     (set, get) => ({
       selectedCalendarIds: new Set<string>(),
@@ -69,29 +70,77 @@ export const useCalendarStore = create<CalendarStore>()(
       // Custom storage to handle Set serialization
       storage: {
         getItem: name => {
-          const str = localStorage.getItem(name)
-          if (!str) return null
-          const data = JSON.parse(str)
-          return {
-            ...data,
-            state: {
-              ...data.state,
-              selectedCalendarIds: new Set(data.state.selectedCalendarIds || []),
-            },
+          if (typeof window === 'undefined') return null // SSR guard
+          try {
+            const str = localStorage.getItem(name)
+            if (!str) return null
+            const data = JSON.parse(str)
+            return {
+              ...data,
+              state: {
+                ...data.state,
+                selectedCalendarIds: new Set(data.state.selectedCalendarIds || []),
+              },
+            }
+          } catch {
+            return null
           }
         },
         setItem: (name, value) => {
-          const data = {
-            ...value,
-            state: {
-              ...value.state,
-              selectedCalendarIds: Array.from(value.state.selectedCalendarIds),
-            },
+          if (typeof window === 'undefined') return // SSR guard
+          try {
+            const data = {
+              ...value,
+              state: {
+                ...value.state,
+                selectedCalendarIds: Array.from(value.state.selectedCalendarIds),
+              },
+            }
+            localStorage.setItem(name, JSON.stringify(data))
+          } catch {
+            // Silently fail if localStorage is not available
           }
-          localStorage.setItem(name, JSON.stringify(data))
         },
-        removeItem: name => localStorage.removeItem(name),
+        removeItem: name => {
+          if (typeof window === 'undefined') return // SSR guard
+          try {
+            localStorage.removeItem(name)
+          } catch {
+            // Silently fail if localStorage is not available
+          }
+        },
       },
     }
   )
 )
+
+// SSR-safe hook to use calendar store
+export function useCalendarStore() {
+  const [isHydrated, setIsHydrated] = useState(false)
+  const storeData = calendarStoreBase()
+  
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
+  
+  // Return safe defaults during SSR to prevent hydration mismatches
+  if (!isHydrated) {
+    return {
+      selectedCalendarIds: new Set<string>(),
+      isAuthenticated: false,
+      calendars: [],
+      setSelectedCalendarIds: () => {},
+      addSelectedCalendarId: () => {},
+      removeSelectedCalendarId: () => {},
+      toggleCalendarSelection: () => {},
+      setIsAuthenticated: () => {},
+      setCalendars: () => {},
+      get selectedCalendars() { return [] },
+    }
+  }
+  
+  return storeData
+}
+
+// Direct access to the store (for cases where SSR safety is handled elsewhere)
+export const useCalendarStoreBase = calendarStoreBase

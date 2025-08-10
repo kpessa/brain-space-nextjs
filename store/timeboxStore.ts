@@ -1,11 +1,6 @@
 import { create } from 'zustand'
-
-// Helper to get Firebase dynamically
-async function getFirebase() {
-  const { db } = await import('@/lib/firebase')
-  const firestore = await import('firebase/firestore')
-  return { db, ...firestore }
-}
+import { format } from 'date-fns'
+import { TimeboxService } from '@/services/timeboxService'
 
 // Task attempt tracking
 export interface TaskAttempt {
@@ -60,13 +55,7 @@ export interface TimeSlot {
   blockLabel?: string
 }
 
-interface TimeboxData {
-  userId: string
-  date: string
-  slots: Record<string, TimeboxTask[]>
-  createdAt?: any
-  updatedAt?: any
-}
+// TimeboxData interface moved to timeboxService.ts
 
 interface TimeboxState {
   selectedDate: string // YYYY-MM-DD format
@@ -89,8 +78,11 @@ interface TimeboxState {
   unblockTimeSlot: (slotId: string) => Promise<void>
   
   // Firebase actions
-  loadTimeboxData: (userId: string, date: string) => Promise<void>
-  saveTimeboxData: (userId: string) => Promise<void>
+  loadTimeboxData: (userId: string, date: string, intervalMinutes?: 30 | 60 | 120) => Promise<void>
+  saveTimeboxData: (userId: string, intervalMinutes?: 30 | 60 | 120) => Promise<void>
+  
+  // Debug helpers
+  _debugLogState: () => void
 }
 
 // Helper function to format time display
@@ -159,7 +151,7 @@ const generateTimeSlots = (intervalMinutes: 30 | 60 | 120 = 120): TimeSlot[] => 
 }
 
 export const useTimeboxStore = create<TimeboxState>((set, get) => ({
-  selectedDate: new Date().toISOString().split('T')[0], // Initialize with today's date
+  selectedDate: format(new Date(), 'yyyy-MM-dd'), // Initialize with today's date
   timeSlots: generateTimeSlots(),
   draggedTask: null,
   hoveredSlotId: null,
@@ -179,49 +171,104 @@ export const useTimeboxStore = create<TimeboxState>((set, get) => ({
   },
 
   addTaskToSlot: async (task: TimeboxTask, slotId: string) => {
-    console.group('🔍 STORE DEBUG: addTaskToSlot called')
+    console.group('🔍 TIMEBOX DEBUG: addTaskToSlot called')
+    console.log('Task to add:', {
+      id: task.id,
+      label: task.label,
+      nodeId: task.nodeId,
+      userId: task.userId,
+      isPersonal: task.isPersonal,
+      timeboxDate: task.timeboxDate
+    })
+    console.log('Target slot ID:', slotId)
 
     const { timeSlots } = get()
-
-    console.log('Available slot IDs:', timeSlots.map(s => s.id))
     
+    // 1. OPTIMISTIC UPDATE: Update UI immediately
     let targetSlotFound = false
     let updatedSlots = timeSlots.map(slot => {
       if (slot.id === slotId) {
         targetSlotFound = true
-
+        const taskWithDate = { 
+          ...task, 
+          timeboxDate: get().selectedDate,
+          isOptimistic: true // Flag for UI feedback
+        }
         const updatedSlot = {
           ...slot,
-          tasks: [...slot.tasks, { ...task, timeboxDate: get().selectedDate }],
+          tasks: [...slot.tasks, taskWithDate],
         }
-
         return updatedSlot
       }
       return slot
     })
     
     if (!targetSlotFound) {
-
-      console.log('Available:', timeSlots.map(s => ({ id: s.id, display: s.displayTime })))
-    } else {
-
+      console.error('❌ Target slot not found!')
+      console.groupEnd()
+      return
     }
     
+    // Update Zustand store optimistically
     set({ timeSlots: updatedSlots })
+    console.log('✅ Optimistic update applied to UI')
     
-    // Verify the update worked
-    const newState = get()
-    const verifySlot = newState.timeSlots.find(s => s.id === slotId)
-    if (verifySlot) {
-
+    try {
+      // 2. PERSISTENCE: Save to Firebase
+      if (task.userId) {
+        console.log('🔥 Saving to Firebase with userId:', task.userId)
+        await get().saveTimeboxData(task.userId)
+        
+        // 3. SUCCESS: Remove optimistic flag
+        const successSlots = get().timeSlots.map(slot => {
+          if (slot.id === slotId) {
+            return {
+              ...slot,
+              tasks: slot.tasks.map(t => 
+                t.id === task.id 
+                  ? { ...t, isOptimistic: undefined }
+                  : t
+              )
+            }
+          }
+          return slot
+        })
+        set({ timeSlots: successSlots })
+        console.log('✅ Task successfully saved to Firebase')
+      } else {
+        console.warn('⚠️ No userId found on task - removing optimistic flag anyway')
+        // Remove optimistic flag even without save
+        const cleanSlots = get().timeSlots.map(slot => {
+          if (slot.id === slotId) {
+            return {
+              ...slot,
+              tasks: slot.tasks.map(t => 
+                t.id === task.id 
+                  ? { ...t, isOptimistic: undefined }
+                  : t
+              )
+            }
+          }
+          return slot
+        })
+        set({ timeSlots: cleanSlots })
+      }
+    } catch (error) {
+      // 4. ROLLBACK: Remove task on failure
+      console.error('❌ Error saving task, rolling back:', error)
+      const rollbackSlots = get().timeSlots.map(slot => {
+        if (slot.id === slotId) {
+          return {
+            ...slot,
+            tasks: slot.tasks.filter(t => t.id !== task.id)
+          }
+        }
+        return slot
+      })
+      set({ timeSlots: rollbackSlots, error: `Failed to add task: ${(error as Error).message}` })
     }
     
     console.groupEnd()
-    
-    // Save to Firebase
-    if (task.userId) {
-      await get().saveTimeboxData(task.userId)
-    }
   },
 
   removeTaskFromSlot: async (taskId: string, slotId: string) => {
@@ -359,37 +406,46 @@ export const useTimeboxStore = create<TimeboxState>((set, get) => ({
     set({ timeSlots: updatedSlots })
   },
 
-  loadTimeboxData: async (userId: string, date: string) => {
-    if (!userId) return
+  loadTimeboxData: async (userId: string, date: string, intervalMinutes?: 30 | 60 | 120) => {
+    if (!userId) {
+      console.warn('🔍 TIMEBOX DEBUG: loadTimeboxData called without userId')
+      return
+    }
 
     set({ isLoading: true, error: null })
     try {
-      const { db, collection, query, where, getDocs } = await getFirebase()
-      const timeboxDoc = await getDocs(
-        query(
-          collection(db, 'users', userId, 'timeboxes'),
-          where('date', '==', date)
-        )
-      )
-
-      if (!timeboxDoc.empty) {
-        const data = timeboxDoc.docs[0].data() as TimeboxData
-        const slots = generateTimeSlots()
+      const result = await TimeboxService.loadTimeboxData(userId, date)
+      
+      if (result) {
+        // Use the interval from the saved data if available, otherwise use the provided interval or default
+        const interval = result.intervalMinutes || intervalMinutes || 120
+        console.log('🕒 Using interval:', interval, 'minutes')
+        
+        const slots = generateTimeSlots(interval)
+        console.log('🏗️ Generated', slots.length, 'empty slots')
         
         // Populate slots with tasks from Firebase
-        Object.entries(data.slots || {}).forEach(([slotId, tasks]) => {
+        let totalTasksLoaded = 0
+        Object.entries(result.slots).forEach(([slotId, tasks]) => {
           const slot = slots.find(s => s.id === slotId)
           if (slot) {
             slot.tasks = tasks
+            totalTasksLoaded += tasks.length
+            console.log('📅 Loaded', tasks.length, 'tasks into slot', slotId)
+          } else {
+            console.warn('⚠️ Could not find slot with ID:', slotId)
           }
         })
         
+        console.log('📊 Total tasks loaded from Firebase:', totalTasksLoaded)
         set({ timeSlots: slots, isLoading: false })
       } else {
-        // No data for this date, use empty slots
-        set({ timeSlots: generateTimeSlots(), isLoading: false })
+        console.log('📭 No existing data found for this date - creating empty slots')
+        const emptySlots = generateTimeSlots(intervalMinutes || 120)
+        set({ timeSlots: emptySlots, isLoading: false })
       }
     } catch (error) {
+      console.error('❌ Error loading timebox data:', error)
       set({
         error: (error as Error).message,
         isLoading: false,
@@ -397,55 +453,45 @@ export const useTimeboxStore = create<TimeboxState>((set, get) => ({
     }
   },
 
-  saveTimeboxData: async (userId: string) => {
-    if (!userId) return
+  saveTimeboxData: async (userId: string, intervalMinutes?: 30 | 60 | 120) => {
+    if (!userId) {
+      console.warn('🔍 TIMEBOX DEBUG: saveTimeboxData called without userId')
+      return
+    }
 
     const { selectedDate, timeSlots } = get()
     
     try {
-      // Convert timeSlots to a simple object for storage
-      const slotsData: Record<string, TimeboxTask[]> = {}
-      timeSlots.forEach(slot => {
-        if (slot.tasks.length > 0) {
-          slotsData[slot.id] = slot.tasks
-        }
-      })
-
-      const { db, doc, collection, query, where, getDocs, setDoc, updateDoc, serverTimestamp } = await getFirebase()
-      
-      const timeboxData: TimeboxData = {
-        userId,
-        date: selectedDate,
-        slots: slotsData,
-        updatedAt: serverTimestamp(),
-      }
-
-      // Use date as document ID for easy retrieval
-      const docId = `${userId}-${selectedDate}`
-      const docRef = doc(db, 'users', userId, 'timeboxes', docId)
-      
-      const existingDoc = await getDocs(
-        query(
-          collection(db, 'users', userId, 'timeboxes'),
-          where('date', '==', selectedDate)
-        )
-      )
-
-      if (existingDoc.empty) {
-        await setDoc(docRef, {
-          ...timeboxData,
-          createdAt: serverTimestamp()
-        })
-      } else {
-        await updateDoc(docRef, {
-          userId,
-          date: selectedDate,
-          slots: slotsData,
-          updatedAt: serverTimestamp(),
-        })
-      }
+      await TimeboxService.saveTimeboxData(userId, selectedDate, timeSlots, intervalMinutes)
     } catch (error) {
+      console.error('❌ Error saving timebox data:', error)
       set({ error: (error as Error).message })
     }
   },
+
+  // Debug helper to log store state changes
+  _debugLogState: () => {
+    const state = get()
+    console.group('📋 TIMEBOX DEBUG: Current Store State')
+    console.log('selectedDate:', state.selectedDate)
+    console.log('timeSlots count:', state.timeSlots.length)
+    console.log('isLoading:', state.isLoading)
+    console.log('error:', state.error)
+    
+    const slotsWithTasks = state.timeSlots.filter(s => s.tasks.length > 0)
+    console.log('slots with tasks:', slotsWithTasks.length)
+    
+    slotsWithTasks.forEach(slot => {
+      console.log(`Slot ${slot.id} (${slot.displayTime}):`, 
+        slot.tasks.map(t => ({
+          id: t.id, 
+          label: t.label, 
+          userId: t.userId,
+          nodeId: t.nodeId,
+          timeboxDate: t.timeboxDate
+        })))
+    })
+    
+    console.groupEnd()
+  }
 }))

@@ -3,9 +3,18 @@
 import { useUserPreferencesStore, UserMode } from '@/store/userPreferencesStore'
 import { Button } from '@/components/ui/Button'
 import { Briefcase, Home, Globe } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 export function ModeToggle() {
   const { currentMode, setMode } = useUserPreferencesStore()
+  const [isClient, setIsClient] = useState(false)
+  
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+  
+  // Use safe default during SSR
+  const displayMode = isClient ? currentMode : 'work'
   
   const getModeIcon = (mode: UserMode) => {
     switch (mode) {
@@ -30,7 +39,7 @@ export function ModeToggle() {
   }
   
   const getNextMode = (): UserMode => {
-    switch (currentMode) {
+    switch (displayMode) {
       case 'work':
         return 'personal'
       case 'personal':
@@ -46,10 +55,13 @@ export function ModeToggle() {
       <Button
         onClick={() => setMode(getNextMode())}
         size="sm"
-        className={`flex items-center gap-2 ${getModeColor(currentMode)}`}
+        className={`flex items-center gap-2 ${getModeColor(displayMode)}`}
+        suppressHydrationWarning
       >
-        {getModeIcon(currentMode)}
-        <span className="capitalize">{currentMode}</span>
+        <span suppressHydrationWarning>
+          {getModeIcon(displayMode)}
+        </span>
+        <span className="capitalize" suppressHydrationWarning>{displayMode}</span>
       </Button>
     </div>
   )
@@ -57,9 +69,17 @@ export function ModeToggle() {
 
 export function ModeBadge() {
   const { currentMode } = useUserPreferencesStore()
+  const [isClient, setIsClient] = useState(false)
+  
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+  
+  // Use safe default during SSR
+  const displayMode = isClient ? currentMode : 'work'
   
   const getBadgeColor = () => {
-    switch (currentMode) {
+    switch (displayMode) {
       case 'work':
         return 'bg-info/10 text-info'
       case 'personal':
@@ -70,7 +90,7 @@ export function ModeBadge() {
   }
   
   const getIcon = () => {
-    switch (currentMode) {
+    switch (displayMode) {
       case 'work':
         return <Briefcase className="w-3 h-3" />
       case 'personal':
@@ -81,9 +101,11 @@ export function ModeBadge() {
   }
   
   return (
-    <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getBadgeColor()}`}>
-      {getIcon()}
-      <span className="capitalize">{currentMode}</span>
+    <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getBadgeColor()}`} suppressHydrationWarning>
+      <span suppressHydrationWarning>
+        {getIcon()}
+      </span>
+      <span className="capitalize" suppressHydrationWarning>{displayMode}</span>
     </div>
   )
 }

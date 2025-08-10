@@ -15,6 +15,12 @@ const firebaseConfig = {
 
 // Log config for debugging (without sensitive data)
 if (typeof window !== 'undefined') {
+  console.log('🔥 FIREBASE DEBUG: Firebase config loaded:', {
+    projectId: firebaseConfig.projectId,
+    authDomain: firebaseConfig.authDomain,
+    hasApiKey: !!firebaseConfig.apiKey,
+    hasStorageBucket: !!firebaseConfig.storageBucket
+  })
 
   // Suppress expected errors that don't affect functionality
   const originalError = console.error
@@ -79,6 +85,7 @@ try {
       console.warn('Failed to connect to Storage emulator:', error)
     }
   } else if (typeof window !== 'undefined') {
+    console.log('🔥 FIREBASE DEBUG: Connected to production Firebase services')
   }
 } catch (error) {
   console.error('Failed to initialize Firebase:', error)

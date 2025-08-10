@@ -108,70 +108,88 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
     }
   },
 
-  // Create a new node
+  // Create a new node with optimistic updates
   createNode: async (nodeData: Partial<Node>) => {
     if (!nodeData.userId) {
       set({ error: 'User not authenticated' })
       return null
     }
 
+    const nodeId = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    
+    // Build the node object, excluding undefined fields
+    const newNode: any = {
+      id: nodeId,
+      userId: nodeData.userId,
+      title: nodeData.title || 'Untitled',
+      type: nodeData.type || 'thought',
+      tags: nodeData.tags || ['misc'],
+      completed: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isOptimistic: true, // Flag for UI feedback
+    }
+
+    // Only add optional fields if they're defined
+    if (nodeData.description !== undefined) newNode.description = nodeData.description
+    if (nodeData.urgency !== undefined) newNode.urgency = nodeData.urgency
+    if (nodeData.importance !== undefined) newNode.importance = nodeData.importance
+    if (nodeData.dueDate !== undefined) newNode.dueDate = nodeData.dueDate
+    if (nodeData.parent !== undefined) newNode.parent = nodeData.parent
+    if (nodeData.children !== undefined) newNode.children = nodeData.children
+    if (nodeData.isPersonal !== undefined) newNode.isPersonal = nodeData.isPersonal
+
+    // 1. OPTIMISTIC UPDATE: Add to UI immediately
+    const optimisticNodes = [...get().nodes, newNode]
+    set({ nodes: optimisticNodes })
+
     try {
-      const nodeId = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      
-      // Build the node object, excluding undefined fields
-      const newNode: any = {
-        id: nodeId,
-        userId: nodeData.userId,
-        title: nodeData.title || 'Untitled',
-        type: nodeData.type || 'thought',
-        tags: nodeData.tags || ['misc'],
-        completed: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-
-      // Only add optional fields if they're defined
-      if (nodeData.description !== undefined) newNode.description = nodeData.description
-      if (nodeData.urgency !== undefined) newNode.urgency = nodeData.urgency
-      if (nodeData.importance !== undefined) newNode.importance = nodeData.importance
-      if (nodeData.dueDate !== undefined) newNode.dueDate = nodeData.dueDate
-      if (nodeData.parent !== undefined) newNode.parent = nodeData.parent
-      if (nodeData.children !== undefined) newNode.children = nodeData.children
-
-      // Dynamically import Firebase to avoid SSR issues
+      // 2. PERSISTENCE: Save to Firestore
       const { db } = await import('@/lib/firebase')
       const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
       
       // Create a clean object for Firestore (no undefined values)
       const firestoreData = Object.entries(newNode).reduce((acc, [key, value]) => {
-        if (value !== undefined) {
+        if (value !== undefined && key !== 'isOptimistic') {
           acc[key] = value
         }
         return acc
       }, {} as any)
 
-      // Save to Firestore with server timestamps
       await setDoc(doc(db, 'users', nodeData.userId, 'nodes', nodeId), {
         ...firestoreData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       })
 
-      // Node saved to Firestore successfully
-
-      // Update local state
-      const nodes = [...get().nodes, newNode]
-      set({ nodes })
+      // 3. SUCCESS: Remove optimistic flag
+      const successNodes = get().nodes.map(n => 
+        n.id === nodeId 
+          ? { ...n, isOptimistic: undefined }
+          : n
+      )
+      set({ nodes: successNodes, error: null })
 
       return nodeId
     } catch (error) {
-      // Error in createNode
-      set({ error: (error as Error).message })
+      // 4. ROLLBACK: Remove failed node from UI
+      console.error('Error creating node, rolling back:', error)
+      const rollbackNodes = get().nodes.filter(n => n.id !== nodeId)
+      set({ 
+        nodes: rollbackNodes, 
+        error: `Failed to create node: ${(error as Error).message}`
+      })
+      
+      // Clear error after 5 seconds
+      setTimeout(() => {
+        set({ error: null })
+      }, 5000)
+      
       return null
     }
   },
 
-  // Update an existing node
+  // Update an existing node with optimistic updates
   updateNode: async (nodeId: string, updates: Partial<Node>) => {
     const node = get().nodes.find(n => n.id === nodeId)
     if (!node) {
@@ -179,49 +197,51 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       return
     }
 
+    // Store the original node for rollback
+    const originalNode = { ...node }
+
+    // 1. OPTIMISTIC UPDATE: Update UI immediately
+    const optimisticNodes = get().nodes.map(n => 
+      n.id === nodeId 
+        ? { ...n, ...updates, updatedAt: new Date().toISOString() } 
+        : n
+    )
+    set({ nodes: optimisticNodes })
+
     try {
-      // Dynamically import Firebase
+      // 2. PERSISTENCE: Save to Firestore
       const { db } = await import('@/lib/firebase')
       const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore')
       
-      // Update in Firestore
       const firestoreUpdate = {
         ...updates,
         updatedAt: serverTimestamp(),
       }
 
-      try {
-        await updateDoc(doc(db, 'users', node.userId, 'nodes', nodeId), firestoreUpdate)
+      await updateDoc(doc(db, 'users', node.userId, 'nodes', nodeId), firestoreUpdate)
 
-      } catch (updateError) {
-        console.error('Error updating Firestore:', updateError)
-        throw updateError
-      }
-      
-      // Verify the update by reading back from Firestore
-      try {
-        const { getDoc } = await import('firebase/firestore')
-        const updatedDoc = await getDoc(doc(db, 'users', node.userId, 'nodes', nodeId))
-        const verifyData = updatedDoc.data()
-        // Verification completed
-      } catch (verifyError) {
-        console.error('Error verifying update:', verifyError)
-      }
-
-      // Update local state optimistically
-      const nodes = get().nodes.map(n => 
+      // 3. SUCCESS: Update with server timestamp
+      const successNodes = get().nodes.map(n => 
         n.id === nodeId 
           ? { ...n, ...updates, updatedAt: new Date().toISOString() } 
           : n
       )
-      
-      const updatedNode = nodes.find(n => n.id === nodeId)
-
-      set({ nodes })
+      set({ nodes: successNodes, error: null })
     } catch (error) {
-      console.error('Error in updateNode:', error)
-      set({ error: (error as Error).message })
-      // Don't reload automatically - let the component handle it
+      // 4. ROLLBACK: Restore original state on failure
+      console.error('Error updating node, rolling back:', error)
+      const rollbackNodes = get().nodes.map(n => 
+        n.id === nodeId ? originalNode : n
+      )
+      set({ 
+        nodes: rollbackNodes, 
+        error: `Failed to update node: ${(error as Error).message}`
+      })
+      
+      // Clear error after 5 seconds
+      setTimeout(() => {
+        set({ error: null })
+      }, 5000)
     }
   },
 

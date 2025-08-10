@@ -3,9 +3,19 @@
 import { useUserPreferencesStore } from '@/store/userPreferencesStore'
 import { Sun, Moon, Monitor, Palette } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export function ThemeToggle() {
+  const store = useUserPreferencesStore()
+  const [showMenu, setShowMenu] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+  
+  // Handle hydration - use default values during SSR
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+  
+  // Extract values from store
   const { 
     darkMode, 
     themeMode, 
@@ -13,11 +23,13 @@ export function ThemeToggle() {
     autoThemeInWorkMode,
     toggleDarkMode, 
     setThemeMode, 
-    updateSettings 
-  } = useUserPreferencesStore()
-  const [showMenu, setShowMenu] = useState(false)
+    updateSettings,
+    getEffectiveTheme
+  } = store
   
-  const effectiveTheme = useUserPreferencesStore(state => state.getEffectiveTheme())
+  // During SSR, use safe defaults to prevent hydration mismatch
+  const effectiveTheme = isClient ? getEffectiveTheme() : 'colorful'
+  const clientDarkMode = isClient ? darkMode : false
   
   return (
     <div className="relative">
@@ -28,13 +40,15 @@ export function ThemeToggle() {
           variant="ghost"
           onClick={toggleDarkMode}
           className="w-9 h-9 p-0"
-          title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          title={clientDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          {darkMode ? (
-            <Moon className="h-5 w-5 text-yellow-500" />
-          ) : (
-            <Sun className="h-5 w-5 text-yellow-600" />
-          )}
+          <span suppressHydrationWarning>
+            {clientDarkMode ? (
+              <Moon className="h-5 w-5 text-yellow-500" />
+            ) : (
+              <Sun className="h-5 w-5 text-yellow-600" />
+            )}
+          </span>
         </Button>
         
         {/* Theme mode toggle */}
@@ -45,11 +59,13 @@ export function ThemeToggle() {
           className="w-9 h-9 p-0"
           title="Change theme"
         >
-          {effectiveTheme === 'professional' ? (
-            <Monitor className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-          ) : (
-            <Palette className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-          )}
+          <span suppressHydrationWarning>
+            {effectiveTheme === 'professional' ? (
+              <Monitor className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+            ) : (
+              <Palette className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            )}
+          </span>
         </Button>
       </div>
       
