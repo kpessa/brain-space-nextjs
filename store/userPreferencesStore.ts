@@ -13,6 +13,7 @@ export const TAG_CATEGORIES = {
 interface UserPreferences {
   // Current mode
   currentMode: UserMode
+  manualModeOverride: boolean // Track if user manually selected the mode
   
   // Theme preferences
   themeMode: ThemeMode
@@ -38,8 +39,9 @@ interface UserPreferences {
   calendarSyncEnabled: boolean // Enable calendar sync in timebox view
   
   // Actions
-  setMode: (mode: UserMode) => void
+  setMode: (mode: UserMode, isManual?: boolean) => void
   toggleMode: () => void
+  clearManualOverride: () => void
   setThemeMode: (theme: ThemeMode) => void
   toggleDarkMode: () => void
   addFrequentTag: (tag: string) => void
@@ -61,53 +63,14 @@ const getInitialMode = (): UserMode => {
   return 'work'
 }
 
-// SSR-safe store wrapper
-const createSSRSafeStore = () => {
-  // During SSR, return safe defaults
-  if (typeof window === 'undefined') {
-    return create<UserPreferences>()((set, get) => ({
-      // Safe SSR defaults
-      currentMode: 'work',
-      themeMode: 'colorful',
-      darkMode: false,
-      autoThemeInWorkMode: true,
-      frequentTags: [],
-      customWorkTags: [],
-      customPersonalTags: [],
-      autoCategorizationEnabled: true,
-      defaultToCurrentMode: true,
-      hidePersonalInWorkMode: true,
-      hideWorkInPersonalMode: true,
-      timeboxIntervalMinutes: 120,
-      workModeTimeboxInterval: 30,
-      personalModeTimeboxInterval: 120,
-      autoSwitchTimeboxInterval: true,
-      calendarSyncEnabled: false,
-      
-      // No-op actions during SSR
-      setMode: () => {},
-      toggleMode: () => {},
-      setThemeMode: () => {},
-      toggleDarkMode: () => {},
-      addFrequentTag: () => {},
-      addCustomWorkTag: () => {},
-      addCustomPersonalTag: () => {},
-      updateSettings: () => {},
-      getTagsForMode: () => [],
-      isWorkTag: () => false,
-      isPersonalTag: () => false,
-      getEffectiveTheme: () => 'colorful',
-      setTimeboxInterval: () => {},
-      getEffectiveTimeboxInterval: () => 120,
-    }))
-  }
-  
-  // Client-side store with persistence
-  return create<UserPreferences>()(
+// Create the store directly without SSR checks
+// The store will work properly on both server and client
+const useUserPreferencesStore = create<UserPreferences>()(
     persist(
       (set, get) => ({
         // Initial state
         currentMode: getInitialMode(),
+        manualModeOverride: false,
         themeMode: 'colorful',
         darkMode: false,
         autoThemeInWorkMode: true,
@@ -125,8 +88,13 @@ const createSSRSafeStore = () => {
       calendarSyncEnabled: false,
       
       // Set mode
-      setMode: (mode: UserMode) => {
-        set({ currentMode: mode })
+      setMode: (mode: UserMode, isManual = false) => {
+        set({ currentMode: mode, manualModeOverride: isManual })
+      },
+      
+      // Clear manual override
+      clearManualOverride: () => {
+        set({ manualModeOverride: false })
       },
       
       // Toggle between modes
@@ -241,9 +209,8 @@ const createSSRSafeStore = () => {
       version: 1,
     }
   ))
-}
 
-export const useUserPreferencesStore = createSSRSafeStore()
+export { useUserPreferencesStore }
 
 // Helper function to determine if a node should be shown based on mode and tags
 export function shouldShowNode(

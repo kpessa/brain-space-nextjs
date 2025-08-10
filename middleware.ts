@@ -37,9 +37,11 @@ export async function middleware(request: NextRequest) {
   
   // For protected pages, verify authentication
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value
+  console.log('[Middleware] Checking auth for:', pathname, 'Token:', token ? 'Present' : 'Missing')
   
   if (!token) {
     // No token, redirect to login
+    console.log('[Middleware] No token found, redirecting to login')
     return NextResponse.redirect(new URL(getAuthRedirectUrl(pathname), request.url))
   }
   

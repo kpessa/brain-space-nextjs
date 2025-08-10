@@ -6,15 +6,19 @@ import { Briefcase, Home, Globe } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 export function ModeToggle() {
-  const { currentMode, setMode } = useUserPreferencesStore()
-  const [isClient, setIsClient] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  
+  // Always call hooks unconditionally to follow React rules
+  const currentMode = useUserPreferencesStore(state => state.currentMode)
+  const setMode = useUserPreferencesStore(state => state.setMode)
   
   useEffect(() => {
-    setIsClient(true)
+    setMounted(true)
   }, [])
   
-  // Use safe default during SSR
-  const displayMode = isClient ? currentMode : 'work'
+  // Use safe default during SSR/initial render
+  const displayMode = mounted ? currentMode : 'work'
+  
   
   const getModeIcon = (mode: UserMode) => {
     switch (mode) {
@@ -49,14 +53,23 @@ export function ModeToggle() {
     }
   }
   
+  const handleModeToggle = () => {
+    if (!mounted) {
+      return
+    }
+    const nextMode = getNextMode()
+    setMode(nextMode, true) // Pass true to indicate manual selection
+  }
+  
   return (
     <div className="flex items-center gap-2">
       <span className="text-sm text-muted-foreground">Mode:</span>
       <Button
-        onClick={() => setMode(getNextMode())}
+        onClick={handleModeToggle}
         size="sm"
         className={`flex items-center gap-2 ${getModeColor(displayMode)}`}
         suppressHydrationWarning
+        disabled={!mounted}
       >
         <span suppressHydrationWarning>
           {getModeIcon(displayMode)}
@@ -68,15 +81,15 @@ export function ModeToggle() {
 }
 
 export function ModeBadge() {
-  const { currentMode } = useUserPreferencesStore()
-  const [isClient, setIsClient] = useState(false)
+  const currentMode = useUserPreferencesStore(state => state.currentMode)
+  const [mounted, setMounted] = useState(false)
   
   useEffect(() => {
-    setIsClient(true)
+    setMounted(true)
   }, [])
   
   // Use safe default during SSR
-  const displayMode = isClient ? currentMode : 'work'
+  const displayMode = mounted ? currentMode : 'work'
   
   const getBadgeColor = () => {
     switch (displayMode) {

@@ -102,8 +102,15 @@ export default function LoginClient() {
         })
 
         if (response.ok) {
+          const responseData = await response.json()
+          console.log('[Login] Session set successfully:', responseData)
+          
+          // Small delay to ensure cookie is set
+          await new Promise(resolve => setTimeout(resolve, 100))
+          
           // Redirect to intended page or journal
           const redirect = searchParams.get('redirect') || '/journal'
+          console.log('[Login] Redirecting to:', redirect)
           window.location.href = redirect
         } else {
           const data = await response.json()

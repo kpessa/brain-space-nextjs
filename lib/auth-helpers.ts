@@ -101,13 +101,25 @@ export async function verifyAuth(
 export async function setAuthCookie(token: string) {
   const cookieStore = await cookies()
   
-  cookieStore.set(AUTH_COOKIE_NAME, token, {
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'lax' as const,
     maxAge: AUTH_COOKIE_MAX_AGE,
     path: '/',
+  }
+  
+  console.log('[setAuthCookie] Setting cookie with options:', {
+    name: AUTH_COOKIE_NAME,
+    secure: cookieOptions.secure,
+    sameSite: cookieOptions.sameSite,
+    maxAge: cookieOptions.maxAge,
+    path: cookieOptions.path,
+    tokenLength: token.length
   })
+  
+  cookieStore.set(AUTH_COOKIE_NAME, token, cookieOptions)
+  console.log('[setAuthCookie] Cookie set operation completed')
 }
 
 /**

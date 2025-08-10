@@ -184,16 +184,21 @@ export class GoogleCalendarService {
     return firebaseAuth.currentUser?.uid || null
   }
 
-  // Store access token in Firebase
-  private async storeAccessToken(accessToken: string): Promise<void> {
+  // Store access token in Firebase with expiration time
+  private async storeAccessToken(accessToken: string, expiresIn?: number): Promise<void> {
     const userId = await this.getCurrentUserId()
     if (!userId) return
 
     const userRef = doc(db, 'users', userId, 'settings', 'googleCalendar')
+    const expiresAt = expiresIn 
+      ? new Date(Date.now() + (expiresIn * 1000)) 
+      : new Date(Date.now() + (3600 * 1000)) // Default to 1 hour
+
     await setDoc(
       userRef,
       {
         google_access_token: accessToken,
+        expiresAt,
         updatedAt: new Date(),
       },
       { merge: true }
@@ -207,7 +212,20 @@ export class GoogleCalendarService {
 
     const userRef = doc(db, 'users', userId, 'settings', 'googleCalendar')
     const docSnap = await getDoc(userRef)
-    return docSnap.data()?.google_access_token || null
+    const data = docSnap.data()
+    
+    if (!data?.google_access_token) return null
+    
+    // Check if token is expired
+    if (data.expiresAt) {
+      const expiresAt = data.expiresAt.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt)
+      if (expiresAt < new Date()) {
+        console.log('[GoogleCalendar] Stored token has expired')
+        return null
+      }
+    }
+    
+    return data.google_access_token
   }
 
   async authorize(immediate = false): Promise<boolean> {
@@ -225,11 +243,27 @@ export class GoogleCalendarService {
       try {
         // Test if token is still valid
         await window.gapi.client.calendar.calendarList.list({ maxResults: 1 })
+        console.log('[GoogleCalendar] Using valid stored token')
         return true
       } catch (error: any) {
         // Token is invalid or expired, clear it
 
         window.gapi.client.setToken('')
+        
+        // Clear the invalid token from storage
+        const userId = await this.getCurrentUserId()
+        if (userId) {
+          const userRef = doc(db, 'users', userId, 'settings', 'googleCalendar')
+          await setDoc(
+            userRef,
+            {
+              google_access_token: null,
+              expiresAt: null,
+              updatedAt: new Date(),
+            },
+            { merge: true }
+          )
+        }
         
         // If immediate mode, don't try to re-authenticate
         if (immediate) {
@@ -250,8 +284,8 @@ export class GoogleCalendarService {
           return
         }
 
-        // Store the new token
-        await this.storeAccessToken(resp.access_token)
+        // Store the new token with expiration time
+        await this.storeAccessToken(resp.access_token, resp.expires_in)
         
         // Set the token in gapi client
         window.gapi.client.setToken({ access_token: resp.access_token })
@@ -294,8 +328,29 @@ export class GoogleCalendarService {
 
       this.calendars = response.result.items || []
       return this.calendars
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error listing calendars:', error)
+      
+      // If we get a 401, it means our token is invalid
+      if (error.status === 401) {
+        console.log('[GoogleCalendar] Token invalid, clearing stored token')
+        // Clear the invalid token
+        const userId = await this.getCurrentUserId()
+        if (userId) {
+          const userRef = doc(db, 'users', userId, 'settings', 'googleCalendar')
+          await setDoc(
+            userRef,
+            {
+              google_access_token: null,
+              expiresAt: null,
+              updatedAt: new Date(),
+            },
+            { merge: true }
+          )
+        }
+        window.gapi.client.setToken('')
+      }
+      
       return []
     }
   }

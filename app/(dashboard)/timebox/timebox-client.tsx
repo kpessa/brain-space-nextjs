@@ -111,19 +111,17 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     hidePersonalInWorkMode,
     hideWorkInPersonalMode
   } = useUserPreferencesStore()
-  const [showAddTask, setShowAddTask] = useState(false)
-  const [newTaskText, setNewTaskText] = useState('')
   const [showIntervalSettings, setShowIntervalSettings] = useState(false)
   const [currentTimeSlotId, setCurrentTimeSlotId] = useState<string | null>(null)
   const [calendarEvents, setCalendarEvents] = useState<TimeboxTask[]>([])
   const [showPastSlots, setShowPastSlots] = useState(showPastSlotsState)
   const [collapsedSlots, setCollapsedSlots] = useState<Set<string>>(new Set())
+  const [calendarSyncError, setCalendarSyncError] = useState<string | null>(null)
   
   // Node filtering state
   const [nodeFilterMode, setNodeFilterMode] = useState<'filtered' | 'all'>('filtered')
   const [selectedNodeType, setSelectedNodeType] = useState<NodeType | 'all'>('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const dragNodeRef = useRef<HTMLDivElement>(null)
   const { selectedCalendarIds } = useCalendarStore()
   const { isConnected, getEvents } = useGoogleCalendar()
   
@@ -193,7 +191,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     } else {
       setCalendarEvents([])
     }
-  }, [calendarSyncEnabled, isConnected, selectedDate, selectedCalendarIds])
+  }, [calendarSyncEnabled, isConnected, loadCalendarEvents])
   
   // Find current time slot for highlighting
   useEffect(() => {
@@ -237,20 +235,12 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     return now >= slotEndTime
   }, [selectedDate])
   
-  // Toggle slot collapse state
-  const toggleSlotCollapse = (slotId: string) => {
-    const newCollapsed = new Set(collapsedSlots)
-    if (newCollapsed.has(slotId)) {
-      newCollapsed.delete(slotId)
-    } else {
-      newCollapsed.add(slotId)
-    }
-    setCollapsedSlots(newCollapsed)
-  }
   
   // Load calendar events
-  const loadCalendarEventsLocal = async () => {
+  const loadCalendarEventsLocal = useCallback(async () => {
     try {
+      setCalendarSyncError(null)
+      
       // Validate selectedDate before using it
       if (!selectedDate) {
         return
@@ -260,7 +250,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
       
       // Check if the date is valid
       if (isNaN(dateObj.getTime())) {
-
+        setCalendarSyncError('Invalid date selected')
         return
       }
 
@@ -268,6 +258,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
       const endTime = endOfDay(dateObj)
       
       const allEvents: TimeboxTask[] = []
+      let hasError = false
       
       // Get calendars to fetch from
       const calendarsToLoad = selectedCalendarIds.size > 0 
@@ -305,16 +296,22 @@ export default function TimeboxClient({ userId }: { userId: string }) {
           
           allEvents.push(...calendarTasks)
         } catch (error) {
-          console.error(`Error loading events from calendar ${calendarId}:`, error)
+          hasError = true
+          // Show user-friendly error message
+          if (error instanceof Error) {
+            setCalendarSyncError(`Failed to load calendar: ${error.message}`)
+          } else {
+            setCalendarSyncError('Failed to load calendar events')
+          }
         }
       }
       
       setCalendarEvents(allEvents)
     } catch (error) {
-      console.error('Error loading calendar events:', error)
       setCalendarEvents([])
+      setCalendarSyncError('Failed to sync with calendar')
     }
-  }
+  }, [selectedDate, selectedCalendarIds, getEvents, userId, calendarSyncEnabled])
   
   // Get unscheduled nodes with filtering
   const unscheduledNodes = useMemo(() => {
@@ -378,6 +375,39 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   
   const goToToday = () => {
     setSelectedDate(format(new Date(), 'yyyy-MM-dd'))
+  }
+  
+  // Copy incomplete tasks from today to tomorrow
+  const copyIncompleteTasks = async () => {
+    const today = format(new Date(), 'yyyy-MM-dd')
+    const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd')
+    
+    if (selectedDate !== tomorrow) return
+    
+    try {
+      // Load today's timebox data
+      await loadTimeboxData(userId, today)
+      
+      // Get incomplete tasks from today
+      const incompleteTasks = timeSlots.flatMap(slot => 
+        slot.tasks.filter(task => 
+          task.status !== 'completed' && 
+          !task.isCalendarEvent // Don't copy calendar events
+        )
+      )
+      
+      // Switch back to tomorrow
+      await loadTimeboxData(userId, tomorrow)
+      
+      // Add tasks to unscheduled pool for tomorrow
+      // They can then be scheduled as needed
+      // Tasks with nodeIds will be picked up through the node pool
+      
+      return incompleteTasks.length
+    } catch (error) {
+      setCalendarSyncError('Failed to copy tasks from today')
+      return 0
+    }
   }
   
   // Drag and drop handlers
@@ -644,20 +674,20 @@ export default function TimeboxClient({ userId }: { userId: string }) {
         </div>
       }
     >
-      <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
-      <div className="max-w-7xl mx-auto flex-1 flex flex-col overflow-hidden">
+      <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-4 sm:p-8 h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
+        <div className="max-w-7xl mx-auto flex-1 flex flex-col overflow-hidden w-full">
           <header className="mb-4 flex-shrink-0">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
               <div className="flex items-center gap-2">
-                <Clock className="w-8 h-8 text-white" />
+                <Clock className="w-6 sm:w-8 h-6 sm:h-8 text-white" />
                 <div>
-                  <h1 className="text-2xl font-bold text-white">Timebox Schedule</h1>
-                  <p className="text-white/80 text-sm">
+                  <h1 className="text-xl sm:text-2xl font-bold text-white">Timebox Schedule</h1>
+                  <p className="text-white/80 text-xs sm:text-sm">
                     {effectiveInterval === 30 ? '30-min' : effectiveInterval === 60 ? '1-hour' : '2-hour'} blocks
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                 <TimeboxRecommendationsDialog 
                   userId={userId}
                   date={selectedDate}
@@ -665,10 +695,10 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="bg-white/10 text-white hover:bg-white/20 border-white/20 gap-2"
+                      className="bg-white/10 text-white hover:bg-white/20 border-white/20 gap-1 px-2 sm:px-3"
                     >
                       <Sparkles className="w-4 h-4" />
-                      AI Plan
+                      <span className="hidden sm:inline">AI Plan</span>
                     </Button>
                   }
                 />
@@ -676,7 +706,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                   variant="outline"
                   size="sm"
                   onClick={() => setShowIntervalSettings(!showIntervalSettings)}
-                  className="bg-white/10 text-white hover:bg-white/20 border-white/20"
+                  className="bg-white/10 text-white hover:bg-white/20 border-white/20 p-2"
                   title="Time interval settings"
                 >
                   <Settings className="w-4 h-4" />
@@ -686,7 +716,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="bg-white/10 text-white hover:bg-white/20 border-white/20"
+                      className="bg-white/10 text-white hover:bg-white/20 border-white/20 p-2"
                       title="Schedule settings"
                     >
                       <Settings2 className="w-4 h-4" />
@@ -698,41 +728,71 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                     variant={calendarSyncEnabled ? "primary" : "outline"}
                     size="sm"
                     onClick={() => updateSettings({ calendarSyncEnabled: !calendarSyncEnabled })}
-                    className={calendarSyncEnabled ? "" : "bg-white/10 text-white hover:bg-white/20 border-white/20"}
+                    className={calendarSyncEnabled ? "p-2" : "bg-white/10 text-white hover:bg-white/20 border-white/20 p-2"}
                     title="Toggle calendar sync"
                   >
                     <CalendarSync className="w-4 h-4" />
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToPreviousDay}
-                  className="bg-white/10 text-white hover:bg-white/20 border-white/20"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToToday}
-                  className="bg-white/10 text-white hover:bg-white/20 border-white/20 px-4"
-                >
-                  Today
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToNextDay}
-                  className="bg-white/10 text-white hover:bg-white/20 border-white/20"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+                <div className="flex items-center gap-1 border-l border-white/20 pl-2 ml-1">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd')
+                      setSelectedDate(tomorrow)
+                    }}
+                    className="gap-1 px-2 sm:px-3"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    <span className="text-xs sm:text-sm">Plan Tomorrow</span>
+                  </Button>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToPreviousDay}
+                    className="bg-white/10 text-white hover:bg-white/20 border-white/20 p-2"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToToday}
+                    className="bg-white/10 text-white hover:bg-white/20 border-white/20 px-2 sm:px-4"
+                  >
+                    <span className="text-xs sm:text-sm">Today</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToNextDay}
+                    className="bg-white/10 text-white hover:bg-white/20 border-white/20 p-2"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
-            <div className="text-center">
-              <div className="text-white/90 text-base">
-                {format(new Date(selectedDate), 'EEE, MMM d, yyyy')}
+            <div className="text-center mt-2 sm:mt-0">
+              <div className="text-white/90 text-sm sm:text-base">
+                {(() => {
+                  const today = format(new Date(), 'yyyy-MM-dd')
+                  const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd')
+                  const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd')
+                  
+                  if (selectedDate === today) {
+                    return <>Today &bull; {format(new Date(selectedDate), 'EEE, MMM d, yyyy')}</>
+                  } else if (selectedDate === tomorrow) {
+                    return <>Tomorrow &bull; {format(new Date(selectedDate), 'EEE, MMM d, yyyy')}</>
+                  } else if (selectedDate === yesterday) {
+                    return <>Yesterday &bull; {format(new Date(selectedDate), 'EEE, MMM d, yyyy')}</>
+                  } else {
+                    return format(new Date(selectedDate), 'EEE, MMM d, yyyy')
+                  }
+                })()}
               </div>
               <span className={cn(
                 "inline-block px-2 py-0.5 rounded-full text-xs font-medium mt-1",
@@ -749,7 +809,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
             {/* Interval Settings */}
             {showIntervalSettings && (
               <div className="mt-2 p-3 bg-white/10 rounded-lg backdrop-blur-sm">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <div>
                     <h3 className="text-white font-medium text-sm">Duration</h3>
                   </div>
@@ -783,6 +843,59 @@ export default function TimeboxClient({ userId }: { userId: string }) {
               </div>
             )}
             
+            {/* Calendar Sync Error */}
+            {calendarSyncError && calendarSyncEnabled && (
+              <div className="mt-2 p-3 bg-red-500/20 border border-red-400/30 rounded-lg backdrop-blur-sm">
+                <div className="flex items-start gap-2">
+                  <X className="w-4 h-4 text-red-300 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm text-red-100">{calendarSyncError}</p>
+                    <button
+                      onClick={() => {
+                        setCalendarSyncError(null)
+                        loadCalendarEvents()
+                      }}
+                      className="text-xs text-red-200 hover:text-white underline mt-1"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setCalendarSyncError(null)}
+                    className="text-red-300 hover:text-red-100"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {/* Copy Tasks from Today (when viewing tomorrow) */}
+            {selectedDate === format(addDays(new Date(), 1), 'yyyy-MM-dd') && (
+              <div className="mt-2 p-3 bg-blue-500/20 border border-blue-400/30 rounded-lg backdrop-blur-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <ChevronRight className="w-4 h-4 text-blue-300" />
+                    <p className="text-sm text-blue-100">Planning tomorrow? Import incomplete tasks from today.</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      const count = await copyIncompleteTasks()
+                      if (count && count > 0) {
+                        // Reload nodes to show the copied tasks
+                        loadNodes(userId)
+                      }
+                    }}
+                    className="bg-white/10 text-white hover:bg-white/20 border-white/20 text-xs"
+                  >
+                    Copy from Today
+                  </Button>
+                </div>
+              </div>
+            )}
+            
             {/* Quick Block Templates (Work Mode) */}
             {currentMode === 'work' && (
               <div className="mt-2 p-2 bg-white/10 rounded-lg backdrop-blur-sm">
@@ -790,7 +903,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="bg-white/10 text-white hover:bg-white/20 border-white/20 text-xs h-7 px-2"
+                    className="bg-white/10 text-white hover:bg-white/20 border-white/20 text-xs h-8 px-2"
                     onClick={() => {
                       const slot = timeSlots.find(s => s.startTime === '09:00' || s.startTime === '09:30')
                       if (slot) blockTimeSlot(slot.id, 'meeting', 'Morning Standup')
@@ -802,7 +915,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="bg-white/10 text-white hover:bg-white/20 border-white/20 text-xs h-7 px-2"
+                    className="bg-white/10 text-white hover:bg-white/20 border-white/20 text-xs h-8 px-2"
                     onClick={() => {
                       const slot = timeSlots.find(s => s.startTime === '12:00' || s.startTime === '12:30')
                       if (slot) blockTimeSlot(slot.id, 'lunch', 'Lunch Break')
@@ -814,7 +927,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="bg-white/10 text-white hover:bg-white/20 border-white/20 text-xs h-7 px-2"
+                    className="bg-white/10 text-white hover:bg-white/20 border-white/20 text-xs h-8 px-2"
                     onClick={() => {
                       const slot = timeSlots.find(s => s.startTime === '14:00' || s.startTime === '14:30')
                       if (slot) blockTimeSlot(slot.id, 'patient-care', 'Patient Appointments')
@@ -826,7 +939,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="bg-white/10 text-white hover:bg-white/20 border-white/20 text-xs h-7 px-2"
+                    className="bg-white/10 text-white hover:bg-white/20 border-white/20 text-xs h-8 px-2"
                     onClick={() => {
                       const slot = timeSlots.find(s => s.startTime === '16:00' || s.startTime === '16:30')
                       if (slot) blockTimeSlot(slot.id, 'admin', 'Admin Work')
@@ -842,7 +955,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1 overflow-hidden">
           {/* Unscheduled Tasks */}
-          <Card className="lg:col-span-1 flex flex-col overflow-hidden">
+          <Card className="lg:col-span-1 flex flex-col overflow-hidden order-2 lg:order-1 h-[40vh] lg:h-auto">
             <CardHeader className="flex-shrink-0">
               <div className="flex items-center justify-between mb-3">
                 <div>
@@ -867,7 +980,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                     variant={nodeFilterMode === 'filtered' ? 'primary' : 'outline'}
                     size="sm"
                     onClick={() => setNodeFilterMode('filtered')}
-                    className="flex-1 text-xs py-1 px-2 h-7"
+                    className="flex-1 text-xs py-1 px-2 h-8"
                     title={`Show ${currentMode === 'all' ? 'all' : currentMode} nodes only`}
                   >
                     <Filter className="w-3 h-3" />
@@ -876,7 +989,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                     variant={nodeFilterMode === 'all' ? 'primary' : 'outline'}
                     size="sm"
                     onClick={() => setNodeFilterMode('all')}
-                    className="flex-1 text-xs py-1 px-2 h-7"
+                    className="flex-1 text-xs py-1 px-2 h-8"
                     title="Show all nodes"
                   >
                     <Eye className="w-3 h-3" />
@@ -888,7 +1001,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                   <select
                     value={selectedNodeType}
                     onChange={(e) => setSelectedNodeType(e.target.value as NodeType | 'all')}
-                    className="flex-1 px-1.5 py-1 text-xs border border-gray-300 rounded bg-white h-7"
+                    className="flex-1 px-1.5 py-1 text-xs border border-gray-300 rounded bg-white h-8"
                   >
                     <option value="all">All Types</option>
                     {availableNodeTypes.map(type => (
@@ -904,7 +1017,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                       placeholder="Search..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-6 pr-2 py-1 text-xs border border-gray-300 rounded bg-white h-7"
+                      className="w-full pl-6 pr-2 py-1 text-xs border border-gray-300 rounded bg-white h-8"
                     />
                   </div>
                 </div>
@@ -993,7 +1106,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
           </Card>
 
           {/* Time Blocks */}
-          <div className="lg:col-span-3 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 250px)' }}>
+          <div className="lg:col-span-3 overflow-y-auto order-1 lg:order-2" style={{ maxHeight: 'calc(100vh - 250px)' }}>
             <div 
               className="pr-2 space-y-2"
             >
@@ -1048,8 +1161,8 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                                 </div>
                                 
                                 {/* Time label */}
-                                <div className="flex-shrink-0 w-24">
-                                  <div className="text-base font-bold text-gray-900">{slot.displayTime}</div>
+                                <div className="flex-shrink-0 w-16 sm:w-24">
+                                  <div className="text-sm sm:text-base font-bold text-gray-900">{slot.displayTime}</div>
                                   <div className="text-xs text-gray-500">
                                     {slot.isBlocked ? 'Blocked' : `${slot.tasks.length} task${slot.tasks.length !== 1 ? 's' : ''}`}
                                   </div>
@@ -1264,8 +1377,8 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                       </div>
                       
                       {/* Time label */}
-                      <div className="flex-shrink-0 w-24">
-                        <div className="text-base font-bold text-gray-900 flex items-center gap-1">
+                      <div className="flex-shrink-0 w-16 sm:w-24">
+                        <div className="text-sm sm:text-base font-bold text-gray-900 flex items-center gap-1">
                           {slot.displayTime}
                           {isCurrentSlot && (
                             <span className="text-xs bg-green-500 text-white px-1.5 py-0.5 rounded-full animate-pulse">
@@ -1462,8 +1575,8 @@ export default function TimeboxClient({ userId }: { userId: string }) {
         </div>
 
         {/* Daily Summary */}
-        <Card className="mt-4 flex-shrink-0">
-          <CardContent className="p-4">
+        <Card className="mt-4 flex-shrink-0 order-3">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
@@ -1474,27 +1587,27 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                   trigger={
                     <Button variant="outline" size="sm" className="gap-1 text-xs h-7 px-2">
                       <Mic className="w-3 h-3" />
-                      Standup
+                      <span className="hidden sm:inline">Standup</span>
                     </Button>
                   }
                 />
               )}
             </div>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
               <div className="text-center">
-                <div className="text-xl font-bold text-brain-600">{totalHours}</div>
+                <div className="text-lg sm:text-xl font-bold text-brain-600">{totalHours}</div>
                 <div className="text-xs text-gray-600">Hours</div>
               </div>
               <div className="text-center">
-                <div className="text-xl font-bold text-blue-600">{totalScheduledTasks}</div>
+                <div className="text-lg sm:text-xl font-bold text-blue-600">{totalScheduledTasks}</div>
                 <div className="text-xs text-gray-600">Scheduled</div>
               </div>
               <div className="text-center">
-                <div className="text-xl font-bold text-green-600">{completedTasks}</div>
+                <div className="text-lg sm:text-xl font-bold text-green-600">{completedTasks}</div>
                 <div className="text-xs text-gray-600">Completed</div>
               </div>
               <div className="text-center">
-                <div className="text-xl font-bold text-purple-600">
+                <div className="text-lg sm:text-xl font-bold text-purple-600">
                   {totalScheduledTasks > 0 ? Math.round((completedTasks / totalScheduledTasks) * 100) : 0}%
                 </div>
                 <div className="text-xs text-gray-600">Rate</div>
