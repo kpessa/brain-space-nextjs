@@ -134,6 +134,7 @@ export function NodeDetailModal({
         tags: editedNode.tags,
         urgency: editedNode.urgency,
         importance: editedNode.importance,
+        isPersonal: editedNode.isPersonal,
       })
       setIsEditing(false)
     } catch (error) {
@@ -518,6 +519,47 @@ export function NodeDetailModal({
                     {getEisenhowerQuadrant(currentNode.urgency, currentNode.importance).replace('-', ' ')}
                   </span>
                 </div>
+              </div>
+              
+              {/* Work/Personal Mode */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Mode
+                </label>
+                {isEditing ? (
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditedNode({ ...editedNode, isPersonal: false })}
+                      className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                        !editedNode.isPersonal 
+                          ? 'bg-blue-100 text-blue-800 border-2 border-blue-300' 
+                          : 'bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200'
+                      }`}
+                    >
+                      💼 Work
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditedNode({ ...editedNode, isPersonal: true })}
+                      className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                        editedNode.isPersonal 
+                          ? 'bg-purple-100 text-purple-800 border-2 border-purple-300' 
+                          : 'bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200'
+                      }`}
+                    >
+                      🏠 Personal
+                    </button>
+                  </div>
+                ) : (
+                  <span className={`inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium ${
+                    currentNode.isPersonal 
+                      ? 'bg-purple-100 text-purple-800' 
+                      : 'bg-blue-100 text-blue-800'
+                  }`}>
+                    {currentNode.isPersonal ? '🏠 Personal' : '💼 Work'}
+                  </span>
+                )}
               </div>
               
               {/* Urgency and Importance */}

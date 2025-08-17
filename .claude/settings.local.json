@@ -42,7 +42,8 @@
       "Bash(git pull:*)",
       "Bash(echo $NODE_ENV)",
       "Bash(unset NODE_ENV)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }

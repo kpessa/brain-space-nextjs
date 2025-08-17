@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { useNodesStore } from '@/store/nodeStore'
@@ -41,23 +41,13 @@ export default function RecurringClient({ userId }: { userId: string }) {
 
   // Get all recurring tasks
 
-  console.log('Sample nodes:', nodes.slice(0, 3).map(n => ({ 
-    id: n.id, 
-    title: n.title, 
-    taskType: n.taskType,
-    recurrence: n.recurrence 
-  })))
+  // Sample nodes data
   
   const recurringNodes = nodes.filter(
     node => node.taskType === 'recurring' || node.taskType === 'habit'
   )
 
-  console.log('Recurring nodes:', recurringNodes.map(n => ({ 
-    id: n.id, 
-    title: n.title, 
-    taskType: n.taskType,
-    recurrence: n.recurrence 
-  })))
+  // Recurring nodes data
 
   // Get tasks for selected date
   const tasksForDate = recurringNodes.filter(node => {

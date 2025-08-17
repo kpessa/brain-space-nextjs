@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { format, subWeeks, addWeeks, startOfWeek, endOfWeek } from 'date-fns'
+import { useState, useEffect, useCallback } from 'react'
+import { format, subWeeks, addWeeks } from 'date-fns'
 import { 
   FileText, 
   Calendar, 
@@ -13,11 +13,11 @@ import {
   ChevronDown,
   ChevronUp,
   Plane,
-  Rocket,
   Briefcase,
   Home,
   Globe,
-  CalendarCheck
+  CalendarCheck,
+  Star
 } from 'lucide-react'
 import { useUserPreferencesStore, type UserMode } from '@/store/userPreferencesStore'
 

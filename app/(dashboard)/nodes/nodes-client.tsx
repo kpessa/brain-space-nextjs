@@ -11,7 +11,6 @@ import { getNodeTypeColor, getNodeTypeIcon, getEisenhowerQuadrant } from '@/type
 import { AIProviderSelector } from '@/components/AIProviderSelector'
 import { NodeRelationshipModal } from '@/components/nodes/NodeRelationshipModal'
 import { NodeHierarchyView } from '@/components/nodes/NodeHierarchyView'
-import { NodeBreadcrumb } from '@/components/nodes/NodeBreadcrumb'
 import { NodeGraphView } from '@/components/nodes/NodeGraphView'
 import { NodeUpdateModal } from '@/components/nodes/NodeUpdateModal'
 import { NodeDetailModal } from '@/components/nodes/NodeDetailModal'
@@ -31,7 +30,6 @@ import {
   Tag,
   CheckCircle,
   Circle,
-  Clock,
   Target,
   Download,
   Upload,
@@ -403,11 +401,11 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
           
           if (docSnap.exists()) {
             const data = docSnap.data()
-            console.log('Recurrence update verified in Firestore:', data.recurrence)
+            // Recurrence update verified in Firestore
           }
         }
       } catch (error) {
-        console.error('Error verifying recurrence update:', error)
+        // Failed to verify recurrence update
       }
     }
     setShowRecurrenceDialog(false)
@@ -561,6 +559,26 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
                     </button>
                     <button
                       className="flex items-center w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent dark:hover:bg-gray-700"
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        await updateNode(node.id, { isPersonal: !node.isPersonal })
+                        setShowDropdown(false)
+                      }}
+                    >
+                      {node.isPersonal ? (
+                        <>
+                          <span className="w-4 h-4 mr-2">💼</span>
+                          Switch to Work
+                        </>
+                      ) : (
+                        <>
+                          <span className="w-4 h-4 mr-2">🏠</span>
+                          Switch to Personal
+                        </>
+                      )}
+                    </button>
+                    <button
+                      className="flex items-center w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent dark:hover:bg-gray-700"
                       onClick={(e) => {
                         e.stopPropagation()
                         onCreateChild?.(node)
@@ -664,6 +682,15 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
             {node.calendarEventId && (
               <span className="px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded flex items-center gap-0.5">
                 <Calendar className="w-2.5 h-2.5" />
+              </span>
+            )}
+            {node.isPersonal !== undefined && (
+              <span className={`px-1.5 py-0.5 text-xs rounded flex items-center gap-0.5 ${
+                node.isPersonal 
+                  ? 'bg-purple-100 text-purple-700' 
+                  : 'bg-blue-100 text-blue-700'
+              }`}>
+                {node.isPersonal ? '🏠' : '💼'}
               </span>
             )}
           </div>

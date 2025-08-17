@@ -285,7 +285,7 @@ export default function BraindumpClient({ userId }: { userId: string }) {
       
       alert(`Successfully converted ${successCount} thoughts to nodes with hierarchy!`)
     } catch (error) {
-      console.error('Error converting nodes:', error)
+      // Failed to convert nodes
       alert('Failed to convert some thoughts to nodes')
     } finally {
       setConvertLoading(false)

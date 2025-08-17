@@ -5,10 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { Label } from '@/components/ui/Label'
-import { Textarea } from '@/components/ui/Textarea'
-import { ArrowLeft, Plus, X, Heart, Sword, Shield, Users, Scroll } from 'lucide-react'
+import { ArrowLeft, Heart, Sword, Shield, Users, Scroll } from 'lucide-react'
 import { useJournalStore } from '@/store/journalStore'
 import { 
   GratitudeSection, 
@@ -17,7 +14,6 @@ import {
   QuestSection, 
   NotesSection 
 } from '@/components/journal'
-import { migrateToArray } from '@/types/journal'
 
 export default function NewJournalEntryClient({ userId }: { userId: string }) {
   const router = useRouter()
@@ -50,7 +46,7 @@ export default function NewJournalEntryClient({ userId }: { userId: string }) {
       
       router.push('/journal')
     } catch (error) {
-      console.error('Failed to create entry:', error)
+      // Failed to create entry
     } finally {
       setIsSubmitting(false)
     }

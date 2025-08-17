@@ -4,10 +4,9 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
-import { SunMoon, Sun, Moon, Target, Calendar, TrendingUp, CheckCircle, Circle, Play, Pause, ChevronRight } from 'lucide-react'
+import { SunMoon, Sun, Moon, Target, TrendingUp, CheckCircle, Circle, Play } from 'lucide-react'
 import { useRoutineStore } from '@/store/routineStore'
-import { ROUTINE_MILESTONES, MORNING_RITUAL_SUGGESTIONS, DISTRACTION_CATEGORIES } from '@/types/routines'
-import { format } from 'date-fns'
+import { MORNING_RITUAL_SUGGESTIONS } from '@/types/routines'
 import { Badge } from '@/components/ui/Badge'
 import { X } from 'lucide-react'
 
@@ -167,7 +166,7 @@ export default function RoutinesClient({ userId }: { userId: string }) {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">66-Day Transformation Challenge</CardTitle>
             <CardDescription>
-              Building habits that stick - you're {progress?.currentDay || 0} days into your journey!
+              Building habits that stick - you&apos;re {progress?.currentDay || 0} days into your journey!
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -223,7 +222,7 @@ export default function RoutinesClient({ userId }: { userId: string }) {
                   <div className="text-2xl font-bold text-yellow-600">
                     {currentEntry?.morningCompleted ? '100%' : '0%'}
                   </div>
-                  <div className="text-xs text-gray-500">Today's Progress</div>
+                  <div className="text-xs text-gray-500">Today&apos;s Progress</div>
                 </div>
               </div>
             </CardHeader>
@@ -249,7 +248,7 @@ export default function RoutinesClient({ userId }: { userId: string }) {
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  <p className="mb-4">Complete your evening routine first to plan tomorrow's morning ritual</p>
+                  <p className="mb-4">Complete your evening routine first to plan tomorrow&apos;s morning ritual</p>
                 </div>
               )}
               <Button 
@@ -281,14 +280,14 @@ export default function RoutinesClient({ userId }: { userId: string }) {
                   <div className="text-2xl font-bold text-purple-600">
                     {currentEntry?.eveningCompleted ? '100%' : '0%'}
                   </div>
-                  <div className="text-xs text-gray-500">Today's Progress</div>
+                  <div className="text-xs text-gray-500">Today&apos;s Progress</div>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <p className="text-gray-600">
-                  Plan tomorrow's morning ritual, set sleep intentions, and capture today's magical moment.
+                  Plan tomorrow&apos;s morning ritual, set sleep intentions, and capture today&apos;s magical moment.
                 </p>
               </div>
               <Button 
@@ -531,7 +530,7 @@ export default function RoutinesClient({ userId }: { userId: string }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              What's your Most Important Task (MIT) for today?
+              What&apos;s your Most Important Task (MIT) for today?
             </label>
             <input
               type="text"
@@ -544,7 +543,7 @@ export default function RoutinesClient({ userId }: { userId: string }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              What's your 1% improvement for today?
+              What&apos;s your 1% improvement for today?
             </label>
             <input
               type="text"

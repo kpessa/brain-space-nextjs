@@ -5,10 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { Label } from '@/components/ui/Label'
-import { Textarea } from '@/components/ui/Textarea'
-import { ArrowLeft, Plus, X, Heart, Sword, Shield, Users, Scroll, Trash2 } from 'lucide-react'
+import { ArrowLeft, Heart, Sword, Shield, Users, Scroll, Trash2 } from 'lucide-react'
 import { useJournalStore } from '@/store/journalStore'
 import { 
   GratitudeSection, 
@@ -76,7 +73,7 @@ export default function EditJournalEntryClient({ userId }: { userId: string }) {
       await updateEntry(entry.id, formData)
       router.push(`/journal/entry/${entry.id}`)
     } catch (error) {
-      console.error('Error updating journal entry:', error)
+      // Failed to update journal entry
     } finally {
       setIsSubmitting(false)
     }
@@ -87,7 +84,7 @@ export default function EditJournalEntryClient({ userId }: { userId: string }) {
       await deleteEntry(entry.id)
       router.push('/journal')
     } catch (error) {
-      console.error('Error deleting journal entry:', error)
+      // Failed to delete journal entry
     }
   }
 

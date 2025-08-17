@@ -208,3 +208,46 @@ NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=...
 - Path alias `@/` configured for imports from root directory
 - Using Next.js 15 with React 19 and Turbopack for fast development
 - All AI API keys must be server-side environment variables (not NEXT_PUBLIC_)
+
+## Current Development State
+
+**Last Updated**: 2024-08-17
+
+### Active Priorities
+1. **🔴 CRITICAL**: Bundle size optimization - /nodes route at 83.3kB (target: <50kB)
+2. **🟡 HIGH**: Testing coverage - Only 1/15 stores tested
+3. **🟡 HIGH**: PWA implementation - Service Worker needed for offline
+4. **🟢 MEDIUM**: Performance monitoring setup
+
+### Recent Completions
+- ✅ Knowledge base initialized with comprehensive documentation
+- ✅ Work/Personal mode toggle for nodes implemented
+- ✅ Build errors fixed (TypeScript, imports, console logs)
+- ✅ Research agents deployed and documentation created
+
+### Quick Resume Commands
+```bash
+# Check current state
+git status
+git log -3 --oneline
+
+# Analyze bundle (PRIORITY)
+pnpm run analyze
+
+# Run tests
+pnpm test
+
+# Start development
+pnpm run dev
+```
+
+### Where to Find Information
+- **Current Focus**: `/knowledge/CURRENT_FOCUS.md`
+- **Architecture**: `/knowledge/architecture/`
+- **Roadmaps**: `/knowledge/roadmap/`
+- **Quick Start**: `/knowledge/QUICK_START.md`
+
+### Known Issues
+- Firebase Admin shows "Missing credentials" warnings (expected in dev)
+- Bundle size exceeds target on /nodes route
+- Limited test coverage (6.7% stores, 0% components)

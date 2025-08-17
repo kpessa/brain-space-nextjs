@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Trophy, Star, Target, Calendar, TrendingUp, Award, Crown, Zap, Flame } from 'lucide-react'
+import { Trophy, Star, Target, Calendar, TrendingUp, Award, Crown, Zap } from 'lucide-react'
 import { useJournalStore } from '@/store/journalStore'
 import { useNodesStore } from '@/store/nodeStore'
 import { useXPStore } from '@/store/xpStore'

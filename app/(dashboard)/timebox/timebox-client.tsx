@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Eye, ChevronDown, ChevronUp, Users, Stethoscope, Settings, Coffee, Car, User, Lock, Mic, Sparkles, Settings2, CalendarSync, Filter, Search, Clock, Calendar, Zap, Target, ChevronLeft, ChevronRight, CheckCircle, X, MapPin } from 'lucide-react'
@@ -30,11 +30,6 @@ import { NodeRelationshipModal } from '@/components/nodes/NodeRelationshipModal'
 import { type Node, type NodeType, getNodeTypeIcon } from '@/types/node'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
-// Import new components
-import { TimeboxHeader } from '@/components/timebox/TimeboxHeader'
-import { TimeboxStats } from '@/components/timebox/TimeboxStats'
-import { TimeSlot } from '@/components/timebox/TimeSlot'
-import { NodePool } from '@/components/timebox/NodePool'
 
 // Helper to get priority color
 function getPriorityColor(importance?: number, urgency?: number) {
@@ -68,8 +63,7 @@ const blockReasonIcons = {
 }
 
 export default function TimeboxClient({ userId }: { userId: string }) {
-  // DEBUG: Log when component renders
-  console.log('🔍 TIMEBOX DEBUG: TimeboxClient component rendered with userId:', userId)
+  // Component renders with userId
 
   // Use optimized selectors
   const selectedDate = useSelectedDate()
@@ -147,18 +141,18 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   // Prevent hydration mismatch by ensuring client-side rendering
   const [isClient, setIsClient] = useState(false)
   useEffect(() => {
-    console.log('🔍 TIMEBOX DEBUG: Component mounting - setting isClient to true')
+    // Component mounting - setting isClient to true
     setIsClient(true)
     
     // Add page unload event to track refreshes
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      console.log('🔄 TIMEBOX DEBUG: Page refresh/navigation detected - data should persist')
+      // Page refresh/navigation detected - data should persist
     }
     
     window.addEventListener('beforeunload', handleBeforeUnload)
     
     return () => {
-      console.log('🔍 TIMEBOX DEBUG: Component unmounting')
+      // Component unmounting
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
   }, [])
@@ -170,18 +164,13 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   
   // Load data on mount and date change
   useEffect(() => {
-    console.group('🔍 TIMEBOX DEBUG: useEffect - loading data')
-    console.log('Effect triggered with:', { userId, selectedDate, effectiveInterval })
+    // Effect triggered with loading data
     
     if (selectedDate) {
-      console.log('🔮 Loading nodes for userId:', userId)
+      // Loading nodes and timebox data
       loadNodes(userId)
-      console.log('🗋 Loading timebox data for:', { userId, selectedDate, effectiveInterval })
       loadTimeboxData(userId, selectedDate, effectiveInterval)
-    } else {
-      console.log('⚠️ selectedDate is not available yet')
     }
-    console.groupEnd()
   }, [userId, selectedDate, effectiveInterval, loadNodes, loadTimeboxData])
   
   // Load calendar events when sync is enabled
@@ -479,58 +468,41 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     e.preventDefault()
     e.stopPropagation() // Prevent event bubbling
     
-    console.group('🔍 TIMEBOX DEBUG: handleDrop called')
-    console.log('Original slot ID:', slotId)
+    // Handle drop operation
     
     // Extract the actual slot ID (remove 'past-' or 'current-' prefix if present)
     const actualSlotId = slotId.replace(/^(past-|current-)/, '')
-    console.log('Actual slot ID:', actualSlotId)
     
     // Try to get task from dataTransfer first, fall back to state
     let taskToAdd: TimeboxTask | null = null
     
     try {
       const dataTransferData = e.dataTransfer.getData('application/json')
-      console.log('DataTransfer data length:', dataTransferData?.length || 0)
       if (dataTransferData) {
         taskToAdd = JSON.parse(dataTransferData)
-        console.log('✅ Got task from dataTransfer:', { id: taskToAdd?.id, label: taskToAdd?.label })
       }
     } catch (error) {
-      console.log('⚠️ Failed to parse dataTransfer data:', error)
       // Failed to parse dataTransfer, will use state fallback
     }
     
     // Fall back to state if dataTransfer failed
     if (!taskToAdd) {
       taskToAdd = draggedTask
-      console.log('🔄 Using draggedTask from state:', { id: taskToAdd?.id, label: taskToAdd?.label })
     }
     
     if (!taskToAdd) {
-      console.error('❌ No task found in either dataTransfer or state!')
-      console.groupEnd()
       return
     }
     
     // Check if slot is blocked
     const targetSlot = timeSlots.find(slot => slot.id === actualSlotId)
-    console.log('Target slot found:', targetSlot ? { id: targetSlot.id, displayTime: targetSlot.displayTime, isBlocked: targetSlot.isBlocked } : 'NOT FOUND')
 
     if (!targetSlot) {
-      console.error('❌ Target slot not found!')
-      console.log('Available slots:')
-      timeSlots.forEach((slot, index) => {
-        console.log(`  [${index}] ${slot.id} (${slot.displayTime})`)
-      })
-      console.groupEnd()
       handleDragEnd()
       return
     }
     
     if (targetSlot?.isBlocked) {
-      console.warn('⚠️ Target slot is blocked, cannot drop')
-      console.groupEnd()
       handleDragEnd()
       return
     }
@@ -541,10 +513,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
         slot.tasks.some(t => t.id === taskToAdd!.id)
       )
       
-      console.log('Source slot:', sourceSlot ? { id: sourceSlot.id, displayTime: sourceSlot.displayTime } : 'None (new task)')
-      
       if (sourceSlot) {
-        console.log('🔄 Moving task between slots')
         await moveTaskBetweenSlots(taskToAdd.id, sourceSlot.id, actualSlotId)
       } else {
         // Add new task to slot with unique ID
@@ -556,16 +525,11 @@ export default function TimeboxClient({ userId }: { userId: string }) {
           isPersonal: taskToAdd.isPersonal,
         }
         
-        console.log('➕ Adding new task to slot:', { taskId: taskWithId.id, slotId: actualSlotId })
         await addTaskToSlot(taskWithId, actualSlotId)
       }
-      
-      console.log('✅ Drop operation completed successfully')
     } catch (error) {
-      console.error('❌ Failed to drop task:', error)
-      // Could add toast notification here
+      // Failed to drop task
     } finally {
-      console.groupEnd()
       handleDragEnd()
     }
   }
@@ -576,10 +540,6 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   
   // Separate past and current/future slots - FIXED to properly identify current slot
   const { pastSlots, currentAndFutureSlots } = useMemo(() => {
-
-    if (displaySlots?.length) {
-      console.log('DisplaySlots IDs:', displaySlots.map(s => s.id))
-    }
     
     const today = format(new Date(), 'yyyy-MM-dd')
     const isToday = selectedDate === today
@@ -614,9 +574,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
       }
     })
     
-    console.log(`Current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')}`)
-    console.log('Past slots:', past.length, past.map(s => s.id))
-    console.log('Current/future slots:', currentFuture.length, currentFuture.map(s => s.id))
+    // Slots separated into past and current/future
     
     return {
       pastSlots: past,
@@ -626,16 +584,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   
   // Debug function to log current store state
   const debugCurrentState = () => {
-    console.group('🔍 TIMEBOX DEBUG: Current Store State')
-    console.log('selectedDate:', selectedDate)
-    console.log('timeSlots count:', timeSlots?.length || 0)
-    console.log('slots with tasks:', timeSlots?.filter(s => s.tasks.length > 0).length || 0)
-    timeSlots?.forEach(slot => {
-      if (slot.tasks.length > 0) {
-        console.log(`Slot ${slot.id} (${slot.displayTime}):`, slot.tasks.map(t => ({ id: t.id, label: t.label })))
-      }
-    })
-    console.groupEnd()
+    // Debug info would be logged here
   }
   
   // Add debug button (only in development)
@@ -643,13 +592,11 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     if (process.env.NODE_ENV === 'development') {
       // @ts-ignore - Adding debug function to window for testing
       window.debugTimeboxState = debugCurrentState
-      console.log('🔧 Debug function added to window.debugTimeboxState()')
     }
   }, [timeSlots, selectedDate])
 
   // Show loading state until client-side hydration and selectedDate is initialized
   if (!isClient || !selectedDate) {
-    console.log('🔍 TIMEBOX DEBUG: Showing loading state - isClient:', isClient, 'selectedDate:', selectedDate)
     return (
       <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(100vh-4rem)] flex items-center justify-center">
         <div className="text-white">Loading...</div>

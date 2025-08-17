@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Calendar, Cloud, ChevronRight, Check, ArrowLeft, X } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
@@ -45,16 +45,16 @@ export default function CalendarSettingsClient({ userId }: { userId: string }) {
     if (isConnected) {
       loadCalendars()
     }
-  }, [isConnected])
+  }, [isConnected, loadCalendars])
 
-  const loadCalendars = async () => {
+  const loadCalendars = useCallback(async () => {
     try {
       const calendars = await getCalendars()
       setAvailableCalendars(calendars)
     } catch (error) {
-      console.error('Error loading calendars:', error)
+      // Failed to load calendars
     }
-  }
+  }, [getCalendars])
 
   const handleGoogleConnect = async () => {
     const success = await connect()
@@ -70,7 +70,7 @@ export default function CalendarSettingsClient({ userId }: { userId: string }) {
       // Clear all selected calendars
       selectedCalendarIds.forEach(id => toggleCalendarSelection(id))
     } catch (error) {
-      console.error('Error disconnecting from Google:', error)
+      // Failed to disconnect from Google
     }
   }
 
@@ -97,7 +97,7 @@ export default function CalendarSettingsClient({ userId }: { userId: string }) {
           
           <p className="text-white/80">
             Connect your calendars to sync events with Brain Space. Your calendar data is stored
-            securely with Firebase and accessed through Google's OAuth API.
+            securely with Firebase and accessed through Google&apos;s OAuth API.
           </p>
         </div>
 
@@ -223,7 +223,7 @@ export default function CalendarSettingsClient({ userId }: { userId: string }) {
                 <p className="text-sm text-blue-700">
                   Your calendar authentication tokens are securely stored in Firebase. Google OAuth
                   ensures we never see your Google password. Calendar data is fetched directly from
-                  Google's APIs and processed in your browser.
+                  Google&apos;s APIs and processed in your browser.
                 </p>
               </div>
             </CardContent>

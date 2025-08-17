@@ -1,0 +1,210 @@
+{
+  "main": {
+    "id": "0657aa20987298d1",
+    "type": "split",
+    "children": [
+      {
+        "id": "fa978abf0c470a89",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "59ce632d8d553145",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "knowledge/README.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "README"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "3a5382dba008a688",
+    "type": "split",
+    "children": [
+      {
+        "id": "ed6da03e7e3f8988",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "09fe0e7409549836",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "539d624091904d68",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "ad8b376dbb84737e",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "8f31a5917ca1d634",
+    "type": "split",
+    "children": [
+      {
+        "id": "6961ffba01f8af4e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "737572d2c474ebca",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "CORS_FIX.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for CORS_FIX"
+            }
+          },
+          {
+            "id": "1536e984c10218dc",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "CORS_FIX.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from CORS_FIX"
+            }
+          },
+          {
+            "id": "eddc2b285413a9bf",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "7624164ec15181cd",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "CORS_FIX.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of CORS_FIX"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false
+    }
+  },
+  "active": "59ce632d8d553145",
+  "lastOpenFiles": [
+    "knowledge/QUICK_START.md",
+    "knowledge/CURRENT_FOCUS.md",
+    "knowledge/research/patterns/data-flow-patterns.md",
+    "knowledge/guides/deployment.md",
+    "knowledge/guides/setup.md",
+    "knowledge/roadmap/technical-debt.md",
+    "knowledge/architecture/overview.md",
+    "knowledge/roadmap/improvements/design-system.md",
+    "knowledge/research/technologies/tailwind-patterns.md",
+    "knowledge/roadmap/features/ai-enhancements.md",
+    "knowledge/research/integrations/ai-integration-patterns.md",
+    "knowledge/guides/testing.md",
+    "knowledge/research/technologies/testing-strategy.md",
+    "knowledge/roadmap/features/pwa-enhancements.md",
+    "knowledge/research/optimizations/pwa-ios-optimization.md",
+    "knowledge/roadmap/improvements/performance-optimization.md",
+    "knowledge/research/optimizations/performance-analysis.md",
+    "knowledge/roadmap/features/firestore-migration.md",
+    "knowledge/research/integrations/firebase-patterns.md",
+    "knowledge/architecture/component-hierarchy.md",
+    "knowledge/research/technologies/react-nextjs-patterns.md",
+    "knowledge/README.md",
+    "knowledge/decisions/templates/adr-template.md",
+    "knowledge/architecture/data-flow.md",
+    "CORS_FIX.md",
+    "knowledge/decisions/templates/adr-template.md.tmp.15232.1755390820206",
+    "knowledge/roadmap/improvements",
+    "knowledge/roadmap/features",
+    "knowledge/research/technologies",
+    "knowledge/research/patterns",
+    "knowledge/research/optimizations",
+    "knowledge/research/integrations",
+    "knowledge/decisions/templates",
+    "knowledge/roadmap",
+    "knowledge/research",
+    "AI_SETUP.md"
+  ]
+}

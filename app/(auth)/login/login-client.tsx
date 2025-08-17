@@ -55,14 +55,14 @@ export default function LoginClient() {
           }
         }
       } catch (error: any) {
-        console.error('[Login] Error checking redirect result:', error)
+        // Failed to check redirect result
         // Don't set error state here as it might not be a real error
         // (e.g., no redirect result to handle)
       }
     }
 
     checkRedirectResult()
-  }, [])
+  }, [searchParams])
 
   const handleSignIn = async () => {
     setIsSigningIn(true)
@@ -103,14 +103,14 @@ export default function LoginClient() {
 
         if (response.ok) {
           const responseData = await response.json()
-          console.log('[Login] Session set successfully:', responseData)
+          // Session set successfully
           
           // Small delay to ensure cookie is set
           await new Promise(resolve => setTimeout(resolve, 100))
           
           // Redirect to intended page or journal
           const redirect = searchParams.get('redirect') || '/journal'
-          console.log('[Login] Redirecting to:', redirect)
+          // Redirecting to intended page
           window.location.href = redirect
         } else {
           const data = await response.json()
@@ -133,7 +133,7 @@ export default function LoginClient() {
         }
       }
     } catch (error: any) {
-      console.error('[Login] Sign in failed:', error)
+      // Sign in failed
       setError(error.message || 'Failed to sign in')
       setIsSigningIn(false)
     }
