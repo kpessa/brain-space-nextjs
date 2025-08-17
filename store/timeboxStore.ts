@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { format } from 'date-fns'
+import dayjs from 'dayjs'
 import { TimeboxService } from '@/services/timeboxService'
 
 // Task attempt tracking
@@ -151,7 +151,7 @@ const generateTimeSlots = (intervalMinutes: 30 | 60 | 120 = 120): TimeSlot[] => 
 }
 
 export const useTimeboxStore = create<TimeboxState>((set, get) => ({
-  selectedDate: format(new Date(), 'yyyy-MM-dd'), // Initialize with today's date
+  selectedDate: dayjs().format('YYYY-MM-DD'), // Initialize with today's date
   timeSlots: generateTimeSlots(),
   draggedTask: null,
   hoveredSlotId: null,

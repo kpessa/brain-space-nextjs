@@ -3,7 +3,7 @@ import { useNodesStore } from '@/store/nodeStore'
 import { useBrainDumpStore } from '@/store/braindumpStore'
 import { useRoutineStore } from '@/store/routineStore'
 import { shouldTaskOccurOnDate, isRecurringTaskCompletedForDate } from '@/lib/recurringTasks'
-import { format } from 'date-fns'
+import dayjs from 'dayjs'
 import type { RecurrencePattern } from '@/types/recurrence'
 
 export interface UnifiedTodo {
@@ -56,7 +56,7 @@ export function useUnifiedTodos() {
         // Handle recurring tasks
         if (node.taskType === 'recurring' || node.taskType === 'habit') {
           // Check if task occurs today
-          const today = format(new Date(), 'yyyy-MM-dd')
+          const today = dayjs().format('YYYY-MM-DD')
           if (node.recurrence) {
             const pattern: RecurrencePattern = {
               type: node.recurrence.frequency,
@@ -168,7 +168,7 @@ export function useUnifiedTodos() {
               sourceId: `morning-${currentEntry.id}`,
               priority: 'high',
               createdAt: currentEntry.createdAt,
-              dueDate: format(new Date(), 'yyyy-MM-dd'),
+              dueDate: dayjs().format('YYYY-MM-DD'),
             })
           }
         })
@@ -185,7 +185,7 @@ export function useUnifiedTodos() {
           sourceId: `mit-${currentEntry.id}`,
           priority: 'high',
           createdAt: currentEntry.createdAt,
-          dueDate: format(new Date(), 'yyyy-MM-dd'),
+          dueDate: dayjs().format('YYYY-MM-DD'),
           tags: ['MIT'],
         })
       }
@@ -201,7 +201,7 @@ export function useUnifiedTodos() {
           sourceId: `evening-${currentEntry.id}`,
           priority: 'medium',
           createdAt: currentEntry.createdAt,
-          dueDate: format(new Date(), 'yyyy-MM-dd'),
+          dueDate: dayjs().format('YYYY-MM-DD'),
         })
       }
     }

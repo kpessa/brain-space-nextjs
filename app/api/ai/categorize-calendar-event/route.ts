@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth } from '@/lib/auth-helpers'
-import { format, addDays, isWeekend, getDay } from 'date-fns'
+import dayjs from 'dayjs'
 
 interface CalendarEvent {
   id: string
@@ -217,17 +217,17 @@ function mockCategorization(events: CalendarEvent[]) {
       // Suggest PTO for work travel
       const suggestedPTO: string[] = []
       if (category === 'work_travel' && event.end.date) {
-        const endDate = new Date(event.end.date)
-        const nextDay = addDays(endDate, 1)
+        const endDate = dayjs(event.end.date)
+        const nextDay = endDate.add(1, 'day')
         
         // If work travel ends on Thursday/Friday, suggest Monday off
-        if (getDay(endDate) >= 4) {
-          const monday = addDays(endDate, getDay(endDate) === 4 ? 4 : 3)
-          suggestedPTO.push(format(monday, 'yyyy-MM-dd'))
+        if (endDate.day() >= 4) {
+          const monday = endDate.add(endDate.day() === 4 ? 4 : 3, 'day')
+          suggestedPTO.push(monday.format('YYYY-MM-DD'))
         }
         // If ends mid-week, suggest next day off
-        else if (getDay(nextDay) !== 0 && getDay(nextDay) !== 6) {
-          suggestedPTO.push(format(nextDay, 'yyyy-MM-dd'))
+        else if (nextDay.day() !== 0 && nextDay.day() !== 6) {
+          suggestedPTO.push(nextDay.format('YYYY-MM-DD'))
         }
       }
       
@@ -250,15 +250,15 @@ function processEventDetails(event: CalendarEvent, categorization: any): EventCa
   const startTime = event.start.dateTime?.split('T')[1]
   const endTime = event.end.dateTime?.split('T')[1]
   
-  const start = new Date(startDate!)
-  const end = endDate ? new Date(endDate) : start
+  const start = dayjs(startDate!)
+  let end = endDate ? dayjs(endDate) : start
   
   // For all-day events, end date is exclusive
   if (event.start.date && event.end.date) {
-    end.setDate(end.getDate() - 1)
+    end = end.subtract(1, 'day')
   }
   
-  const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+  const days = Math.ceil(end.diff(start, 'day')) + 1
   const isPartialDay = !!event.start.dateTime && days === 1
   
   let hours: number | undefined
@@ -269,9 +269,9 @@ function processEventDetails(event: CalendarEvent, categorization: any): EventCa
   }
   
   // Format dates string
-  let dates = format(start, 'MMM d')
-  if (end.getTime() !== start.getTime()) {
-    dates += ` - ${format(end, 'MMM d')}`
+  let dates = start.format('MMM D')
+  if (!end.isSame(start, 'day')) {
+    dates += ` - ${end.format('MMM D')}`
   }
   if (isPartialDay && startTime) {
     const [hour, min] = startTime.split(':')

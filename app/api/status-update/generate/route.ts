@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth } from '@/lib/auth-helpers'
-import { format, parseISO, isWithinInterval, differenceInDays } from 'date-fns'
+import dayjs from 'dayjs'
 import { googleCalendarService } from '@/services/googleCalendar'
 import { adminDb } from '@/lib/firebase-admin'
 import type { Node } from '@/types/node'
@@ -112,14 +112,14 @@ async function getUserNodes(userId: string, startDate: Date, endDate: Date): Pro
       
       // Check if node is relevant to the date range
       // Include if: created, updated, or completed within the range
-      const createdDate = node.createdAt ? parseISO(node.createdAt) : null
-      const updatedDate = node.updatedAt ? parseISO(node.updatedAt) : null
-      const completedDate = node.completedAt ? parseISO(node.completedAt) : null
+      const createdDate = node.createdAt ? dayjs(node.createdAt) : null
+      const updatedDate = node.updatedAt ? dayjs(node.updatedAt) : null
+      const completedDate = node.completedAt ? dayjs(node.completedAt) : null
       
       const isInRange = 
-        (createdDate && isWithinInterval(createdDate, { start: startDate, end: endDate })) ||
-        (updatedDate && isWithinInterval(updatedDate, { start: startDate, end: endDate })) ||
-        (completedDate && isWithinInterval(completedDate, { start: startDate, end: endDate }))
+        (createdDate && createdDate.isBetween(startDate, endDate, null, '[]')) ||
+        (updatedDate && updatedDate.isBetween(startDate, endDate, null, '[]')) ||
+        (completedDate && completedDate.isBetween(startDate, endDate, null, '[]'))
       
       if (isInRange) {
         nodes.push(node)
@@ -144,8 +144,8 @@ export async function POST(request: NextRequest) {
     const data: StatusUpdateRequest = await request.json()
     const { userId, mode, dateRange, manualCategorizations } = data
     
-    const startDate = parseISO(dateRange.start)
-    const endDate = parseISO(dateRange.end)
+    const startDate = dayjs(dateRange.start)
+    const endDate = dayjs(dateRange.end)
     const now = new Date()
     
     // Get nodes for the period
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
     const completedNodes = nodes.filter(n => 
       n.completed && 
       n.completedAt && 
-      isWithinInterval(parseISO(n.completedAt), { start: startDate, end: now })
+      dayjs(n.completedAt).isBetween(startDate, now, null, '[]')
     )
     
     const inProgressNodes = nodes.filter(n => 
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
       })),
       inProgress: inProgressNodes.map(node => {
         const recentUpdates = node.updates?.filter(u => 
-          isWithinInterval(parseISO(u.timestamp), { start: startDate, end: now })
+          dayjs(u.timestamp).isBetween(startDate, now, null, '[]')
         ) || []
         
         const latestUpdate = node.updates?.[node.updates.length - 1]
@@ -323,12 +323,12 @@ export async function POST(request: NextRequest) {
                 end.setDate(end.getDate() - 1)
               }
               
-              const duration = Math.ceil(differenceInDays(end, start)) + 1
+              const duration = Math.ceil(dayjs(end).diff(start, 'day')) + 1
               
               outOfOffice.push({
-                dates: start.toDateString() === end.toDateString() 
-                  ? format(start, 'MMM d, yyyy')
-                  : `${format(start, 'MMM d')} - ${format(end, 'MMM d, yyyy')}`,
+                dates: dayjs(start).isSame(end, 'day') 
+                  ? dayjs(start).format('MMM D, YYYY')
+                  : `${dayjs(start).format('MMM D')} - ${dayjs(end).format('MMM D, YYYY')}`,
                 duration,
                 type: getOOOType(event.summary),
                 reason: event.summary
@@ -360,7 +360,7 @@ export async function POST(request: NextRequest) {
     // Calculate metrics
     const totalUpdates = nodes.reduce((sum, node) => 
       sum + (node.updates?.filter(u => 
-        isWithinInterval(parseISO(u.timestamp), { start: startDate, end: now })
+        dayjs(u.timestamp).isBetween(startDate, now, null, '[]')
       ).length || 0), 0
     )
     

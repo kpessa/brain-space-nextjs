@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { RoutineEntry, RoutineProgress } from '@/types/routines'
-import { format, isToday, differenceInDays } from 'date-fns'
+import dayjs from 'dayjs'
 
 // Helper to get Firebase dynamically
 async function getFirebase() {
@@ -110,7 +110,7 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
       set({ entries })
 
       // Find today's entry
-      const todayEntry = entries.find(entry => isToday(new Date(entry.date)))
+      const todayEntry = entries.find(entry => dayjs(entry.date).isSame(dayjs(), 'day'))
       set({ currentEntry: todayEntry || null })
     } catch (error) {
       console.error('Error loading entries:', error)
@@ -149,7 +149,7 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
           id,
           userId: data.userId!,
           dayNumber: data.dayNumber || 0,
-          date: data.date || format(new Date(), 'yyyy-MM-dd'),
+          date: data.date || dayjs().format('YYYY-MM-DD'),
           isComplete: false,
           morningCompleted: false,
           eveningCompleted: false,
@@ -182,7 +182,7 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
     try {
       // Create entry for today if it doesn't exist
       if (!currentEntry) {
-        const today = format(new Date(), 'yyyy-MM-dd')
+        const today = dayjs().format('YYYY-MM-DD')
         await get().createOrUpdateEntry({
           userId,
           dayNumber: progress.currentDay || 1,
@@ -208,7 +208,7 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
       
       // Update progress
       const { db, doc, updateDoc } = await getFirebase()
-      const today = format(new Date(), 'yyyy-MM-dd')
+      const today = dayjs().format('YYYY-MM-DD')
       const newProgress = {
         ...progress,
         eveningRoutinesCompleted: progress.eveningRoutinesCompleted + 1,
@@ -233,7 +233,7 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
     try {
       // Create entry for today if it doesn't exist
       if (!currentEntry) {
-        const today = format(new Date(), 'yyyy-MM-dd')
+        const today = dayjs().format('YYYY-MM-DD')
         await get().createOrUpdateEntry({
           userId,
           dayNumber: progress.currentDay || 1,
@@ -271,7 +271,7 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
         ...progress,
         morningRoutinesCompleted: progress.morningRoutinesCompleted + 1,
         totalDaysCompleted: bothCompleted ? progress.totalDaysCompleted + 1 : progress.totalDaysCompleted,
-        lastCompletedDate: format(new Date(), 'yyyy-MM-dd'),
+        lastCompletedDate: dayjs().format('YYYY-MM-DD'),
       }
       
       await updateDoc(doc(db, 'users', userId, 'routineProgress', 'current'), newProgress)
@@ -355,18 +355,17 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
     if (sortedEntries.length === 0) return 0
 
     // Check if the most recent entry is today or yesterday
-    const mostRecent = new Date(sortedEntries[0].date)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const daysDiff = differenceInDays(today, mostRecent)
+    const mostRecent = dayjs(sortedEntries[0].date)
+    const today = dayjs().startOf('day')
+    const daysDiff = today.diff(mostRecent, 'day')
 
     if (daysDiff > 1) return 0 // Streak broken
 
     streak = 1
     for (let i = 1; i < sortedEntries.length; i++) {
-      const current = new Date(sortedEntries[i - 1].date)
-      const previous = new Date(sortedEntries[i].date)
-      const diff = differenceInDays(current, previous)
+      const current = dayjs(sortedEntries[i - 1].date)
+      const previous = dayjs(sortedEntries[i].date)
+      const diff = current.diff(previous, 'day')
 
       if (diff === 1) {
         streak++

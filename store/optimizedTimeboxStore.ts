@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { format } from 'date-fns'
+import dayjs from 'dayjs'
 import type { TimeboxTask, TimeSlot } from './timeboxStore'
 
 interface OptimizedTimeboxState {
@@ -37,7 +37,7 @@ function mapToArray<T>(map: Map<string, T>): T[] {
 export const useOptimizedTimeboxStore = create<OptimizedTimeboxState>((set, get) => ({
   timeSlotsMap: new Map(),
   tasksMap: new Map(),
-  selectedDate: format(new Date(), 'yyyy-MM-dd'),
+  selectedDate: dayjs().format('YYYY-MM-DD'),
   calendarEvents: [],
   calendarSyncEnabled: false,
   timeInterval: 120,

@@ -1,6 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { addDays, format, isWeekend, isWithinInterval, parseISO, setHours, setMinutes } from 'date-fns'
+import dayjs from 'dayjs'
+import isBetween from 'dayjs/plugin/isBetween'
+
+// Initialize dayjs plugins
+dayjs.extend(isBetween)
 
 export interface WorkSchedule {
   monday: { start: string; end: string; enabled: boolean }
@@ -114,7 +118,7 @@ export const useScheduleStore = create<ScheduleStore>()(
         }
         
         // Get the day of week
-        const dayName = format(date, 'EEEE').toLowerCase() as keyof WorkSchedule
+        const dayName = dayjs(date).format('dddd').toLowerCase() as keyof WorkSchedule
         const daySchedule = workSchedule[dayName]
         
         // Check if work is enabled for this day
@@ -126,15 +130,15 @@ export const useScheduleStore = create<ScheduleStore>()(
         const [startHour, startMinute] = daySchedule.start.split(':').map(Number)
         const [endHour, endMinute] = daySchedule.end.split(':').map(Number)
         
-        const startTime = setMinutes(setHours(date, startHour), startMinute)
-        const endTime = setMinutes(setHours(date, endHour), endMinute)
+        const startTime = dayjs(date).hour(startHour).minute(startMinute)
+        const endTime = dayjs(date).hour(endHour).minute(endMinute)
         
-        return isWithinInterval(date, { start: startTime, end: endTime })
+        return dayjs(date).isBetween(startTime, endTime, null, '[]')
       },
       
       isPTODay: (date) => {
         const { ptoDays } = get()
-        const dateStr = format(date, 'yyyy-MM-dd')
+        const dateStr = dayjs(date).format('YYYY-MM-DD')
         return ptoDays.some(pto => pto.date === dateStr)
       },
       
@@ -154,7 +158,7 @@ export const useScheduleStore = create<ScheduleStore>()(
       
       getScheduleForDay: (date) => {
         const { workSchedule } = get()
-        const dayName = format(date, 'EEEE').toLowerCase() as keyof WorkSchedule
+        const dayName = dayjs(date).format('dddd').toLowerCase() as keyof WorkSchedule
         return workSchedule[dayName]
       },
     }),
@@ -168,20 +172,20 @@ export const useScheduleStore = create<ScheduleStore>()(
 // Helper function to get next work day
 export function getNextWorkDay(date: Date = new Date()): Date {
   const store = useScheduleStore.getState()
-  let nextDay = addDays(date, 1)
+  let nextDay = dayjs(date).add(1, 'day')
   
   // Keep looking until we find a work day
   for (let i = 0; i < 14; i++) { // Max 2 weeks ahead
-    if (!store.isPTODay(nextDay)) {
-      const dayName = format(nextDay, 'EEEE').toLowerCase() as keyof WorkSchedule
+    if (!store.isPTODay(nextDay.toDate())) {
+      const dayName = nextDay.format('dddd').toLowerCase() as keyof WorkSchedule
       if (store.workSchedule[dayName].enabled) {
-        return nextDay
+        return nextDay.toDate()
       }
     }
-    nextDay = addDays(nextDay, 1)
+    nextDay = nextDay.add(1, 'day')
   }
   
-  return nextDay // Fallback
+  return nextDay.toDate() // Fallback
 }
 
 // Helper to check if a specific time slot is within work hours

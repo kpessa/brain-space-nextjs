@@ -181,6 +181,9 @@
   },
   "active": "09fe0e7409549836",
   "lastOpenFiles": [
+    "store/optimizedTimeboxStore.ts.tmp.95476.1755396825047",
+    "store/optimizedTimeboxStore.ts.tmp.95476.1755396818829",
+    "store/timeboxStore.ts.tmp.95476.1755396787414",
     "knowledge/performance/BUNDLE_OPTIMIZATION_2024.md",
     "knowledge/performance",
     "lib/icons.ts.tmp.44834.1755396042054",
@@ -190,8 +193,6 @@
     "app/(dashboard)/journal/edit/[id]/edit-journal-client.tsx.tmp.44834.1755395632703",
     "lib/icons.ts.tmp.44834.1755395574805",
     "pnpm-lock.yaml.1238170672",
-    "scripts/migrate-icons.js",
-    "knowledge/CURRENT_FOCUS.md.tmp.44834.1755395167456",
     "knowledge/README.md",
     "knowledge/QUICK_START.md",
     "knowledge/CURRENT_FOCUS.md",
@@ -215,7 +216,6 @@
     "knowledge/architecture/component-hierarchy.md",
     "knowledge/research/technologies/react-nextjs-patterns.md",
     "knowledge/decisions/templates/adr-template.md",
-    "knowledge/architecture/data-flow.md",
-    "CORS_FIX.md"
+    "knowledge/architecture/data-flow.md"
   ]
 }

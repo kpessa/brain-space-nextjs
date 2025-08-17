@@ -1,4 +1,4 @@
-import { addDays, format, getDay, isWeekend, startOfDay } from 'date-fns'
+import dayjs from 'dayjs'
 
 export type HolidayType = 'federal' | 'popular' | 'cultural' | 'company'
 export type PTOStrategy = 'day-after' | 'day-before' | 'long-weekend' | 'week-off' | 'bridge-days'
@@ -64,7 +64,7 @@ export function generatePTORecommendation(holiday: Holiday): PTORecommendation |
   if (!holiday.ptoStrategy) return null
   
   const holidayDate = new Date(holiday.date)
-  const dayOfWeek = getDay(holidayDate) // 0 = Sunday, 6 = Saturday
+  const dayOfWeek = dayjs(holidayDate).day() // 0 = Sunday, 6 = Saturday
   const recommendedDates: string[] = []
   let reason = ''
   
@@ -75,8 +75,9 @@ export function generatePTORecommendation(holiday: Holiday): PTORecommendation |
       
       // If holiday is on Monday-Thursday, take the next day
       if (dayOfWeek >= 1 && dayOfWeek <= 4) {
-        recommendedDates.push(format(addDays(holidayDate, 1), 'yyyy-MM-dd'))
-        reason = `Take ${format(addDays(holidayDate, 1), 'EEEE')} off after ${holiday.name}`
+        const nextDay = dayjs(holidayDate).add(1, 'day')
+        recommendedDates.push(nextDay.format('YYYY-MM-DD'))
+        reason = `Take ${nextDay.format('dddd')} off after ${holiday.name}`
       }
       break
       
@@ -86,36 +87,37 @@ export function generatePTORecommendation(holiday: Holiday): PTORecommendation |
       
       // If holiday is on Tuesday-Friday, take the day before
       if (dayOfWeek >= 2 && dayOfWeek <= 5) {
-        recommendedDates.push(format(addDays(holidayDate, -1), 'yyyy-MM-dd'))
-        reason = `Take ${format(addDays(holidayDate, -1), 'EEEE')} off before ${holiday.name}`
+        const prevDay = dayjs(holidayDate).subtract(1, 'day')
+        recommendedDates.push(prevDay.format('YYYY-MM-DD'))
+        reason = `Take ${prevDay.format('dddd')} off before ${holiday.name}`
       }
       break
       
     case 'long-weekend':
       // For Monday holidays, take Friday before
       if (dayOfWeek === 1) {
-        recommendedDates.push(format(addDays(holidayDate, -3), 'yyyy-MM-dd'))
+        recommendedDates.push(dayjs(holidayDate).subtract(3, 'day').format('YYYY-MM-DD'))
         reason = 'Take Friday for a 4-day weekend'
       }
       // For Friday holidays, take Monday after
       else if (dayOfWeek === 5) {
-        recommendedDates.push(format(addDays(holidayDate, 3), 'yyyy-MM-dd'))
+        recommendedDates.push(dayjs(holidayDate).add(3, 'day').format('YYYY-MM-DD'))
         reason = 'Take Monday for a 4-day weekend'
       }
       // For mid-week holidays, suggest making it a long weekend
       else if (dayOfWeek >= 2 && dayOfWeek <= 4) {
         // Take days to connect to weekend
         if (dayOfWeek === 2) { // Tuesday
-          recommendedDates.push(format(addDays(holidayDate, -1), 'yyyy-MM-dd'))
+          recommendedDates.push(dayjs(holidayDate).subtract(1, 'day').format('YYYY-MM-DD'))
           reason = 'Take Monday for a 4-day weekend'
         } else if (dayOfWeek === 3) { // Wednesday
           recommendedDates.push(
-            format(addDays(holidayDate, -2), 'yyyy-MM-dd'),
-            format(addDays(holidayDate, -1), 'yyyy-MM-dd')
+            dayjs(holidayDate).subtract(2, 'day').format('YYYY-MM-DD'),
+            dayjs(holidayDate).subtract(1, 'day').format('YYYY-MM-DD')
           )
           reason = 'Take Monday-Tuesday for a 5-day break'
         } else if (dayOfWeek === 4) { // Thursday
-          recommendedDates.push(format(addDays(holidayDate, 1), 'yyyy-MM-dd'))
+          recommendedDates.push(dayjs(holidayDate).add(1, 'day').format('YYYY-MM-DD'))
           reason = 'Take Friday for a 4-day weekend'
         }
       }
@@ -123,11 +125,11 @@ export function generatePTORecommendation(holiday: Holiday): PTORecommendation |
       
     case 'week-off':
       // For holidays like Thanksgiving or Christmas, take the whole week
-      const startOfWeek = addDays(holidayDate, -dayOfWeek + 1) // Monday
+      const startOfWeek = dayjs(holidayDate).subtract(dayOfWeek - 1, 'day') // Monday
       for (let i = 0; i < 5; i++) {
-        const date = addDays(startOfWeek, i)
-        if (date.getTime() !== holidayDate.getTime() && !isWeekend(date)) {
-          recommendedDates.push(format(date, 'yyyy-MM-dd'))
+        const date = startOfWeek.add(i, 'day')
+        if (!date.isSame(holidayDate, 'day') && date.day() !== 0 && date.day() !== 6) {
+          recommendedDates.push(date.format('YYYY-MM-DD'))
         }
       }
       reason = `Take the week of ${holiday.name} off`
@@ -136,10 +138,10 @@ export function generatePTORecommendation(holiday: Holiday): PTORecommendation |
     case 'bridge-days':
       // Connect holiday to nearest weekend
       if (dayOfWeek === 2) { // Tuesday
-        recommendedDates.push(format(addDays(holidayDate, -1), 'yyyy-MM-dd'))
+        recommendedDates.push(dayjs(holidayDate).subtract(1, 'day').format('YYYY-MM-DD'))
         reason = 'Bridge Monday to create 4-day weekend'
       } else if (dayOfWeek === 4) { // Thursday
-        recommendedDates.push(format(addDays(holidayDate, 1), 'yyyy-MM-dd'))
+        recommendedDates.push(dayjs(holidayDate).add(1, 'day').format('YYYY-MM-DD'))
         reason = 'Bridge Friday to create 4-day weekend'
       }
       break
@@ -149,9 +151,9 @@ export function generatePTORecommendation(holiday: Holiday): PTORecommendation |
   
   // Calculate total days off including weekends
   const allDates = [...recommendedDates, holiday.date]
-  const minDate = new Date(Math.min(...allDates.map(d => new Date(d).getTime())))
-  const maxDate = new Date(Math.max(...allDates.map(d => new Date(d).getTime())))
-  const totalDaysOff = Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+  const minDate = dayjs(Math.min(...allDates.map(d => dayjs(d).valueOf())))
+  const maxDate = dayjs(Math.max(...allDates.map(d => dayjs(d).valueOf())))
+  const totalDaysOff = maxDate.diff(minDate, 'day') + 1
   
   const efficiency = totalDaysOff / recommendedDates.length
   
@@ -187,7 +189,7 @@ export function getPTORecommendations(startDate: Date, endDate: Date): PTORecomm
  * Check if a date is a holiday
  */
 export function isHoliday(date: Date): Holiday | null {
-  const dateStr = format(date, 'yyyy-MM-dd')
+  const dateStr = dayjs(date).format('YYYY-MM-DD')
   return holidays.find(h => h.date === dateStr) || null
 }
 
@@ -195,9 +197,8 @@ export function isHoliday(date: Date): Holiday | null {
  * Get upcoming holidays (next 6 months by default)
  */
 export function getUpcomingHolidays(monthsAhead: number = 6): Holiday[] {
-  const today = startOfDay(new Date())
-  const endDate = new Date()
-  endDate.setMonth(endDate.getMonth() + monthsAhead)
+  const today = dayjs().startOf('day').toDate()
+  const endDate = dayjs().add(monthsAhead, 'month').toDate()
   
   return getHolidaysInRange(today, endDate)
 }

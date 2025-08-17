@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { googleCalendarService } from '@/services/googleCalendar'
 import type { Node } from '@/types/node'
-import { addHours, startOfHour, parseISO } from 'date-fns'
+import dayjs from 'dayjs'
 
 interface CreateEventFromNodeRequest {
   node: Node
@@ -27,13 +27,14 @@ export async function POST(req: NextRequest) {
       end = new Date(endDateTime)
     } else if (node.dueDate?.type === 'exact') {
       // Use due date from node
-      const dueDate = parseISO(node.dueDate.date)
-      start = startOfHour(dueDate)
-      end = addHours(start, 1)
+      const dueDate = dayjs(node.dueDate.date)
+      start = dueDate.startOf('hour').toDate()
+      end = dueDate.add(1, 'hour').toDate()
     } else {
       // Default to next hour
-      start = startOfHour(addHours(new Date(), 1))
-      end = addHours(start, 1)
+      const nextHour = dayjs().add(1, 'hour').startOf('hour')
+      start = nextHour.toDate()
+      end = nextHour.add(1, 'hour').toDate()
     }
     
     // Build event description

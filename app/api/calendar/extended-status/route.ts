@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth } from '@/lib/auth-helpers'
-import { format, eachDayOfInterval, isWeekend, isSameDay, startOfMonth, endOfMonth } from 'date-fns'
+import dayjs from 'dayjs'
+import weekday from 'dayjs/plugin/weekday'
 import { getHolidaysInRange, generatePTORecommendation, type Holiday, type PTORecommendation } from '@/services/holidays'
 
 interface CalendarEvent {
@@ -119,7 +120,7 @@ function extractOutOfOfficeEvents(events: CalendarEvent[]): OutOfOfficeEvent[] {
         const duration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
         
         oooEvents.push({
-          dates: startDate === endDate || !endDate ? startDate : `${startDate} to ${format(end, 'yyyy-MM-dd')}`,
+          dates: startDate === endDate || !endDate ? startDate : `${startDate} to ${dayjs(end).format('YYYY-MM-DD')}`,
           duration,
           type: detectOOOType(event.summary),
           event
@@ -301,7 +302,7 @@ function generateInsights(
   const busiestMonth = Object.entries(commitments.byMonth)
     .sort((a, b) => b[1].meetings - a[1].meetings)[0]
   if (busiestMonth) {
-    insights.push(`Busiest month: ${format(new Date(busiestMonth[0] + '-01'), 'MMMM yyyy')} with ${busiestMonth[1].meetings} meetings`)
+    insights.push(`Busiest month: ${dayjs(busiestMonth[0] + '-01').format('MMMM YYYY')} with ${busiestMonth[1].meetings} meetings`)
   }
   
   // Critical periods warning
@@ -318,26 +319,26 @@ function analyzeFocusTime(events: CalendarEvent[], startDate: Date, endDate: Dat
   let totalMeetings = 0
   let totalWorkDays = 0
   
-  const days = eachDayOfInterval({ start: startDate, end: endDate })
+  const days = eachDayOfInterval(startDate, endDate)
   
   days.forEach(day => {
-    if (!isWeekend(day)) {
+    if (day.day() !== 0 && day.day() !== 6) {
       totalWorkDays++
       const dayMeetings = events.filter(event => {
         if (isOutOfOfficeEvent(event)) return false
         const eventDateStr = event.start.date || event.start.dateTime?.split('T')[0]
         if (!eventDateStr) return false
         
-        const eventDate = new Date(eventDateStr)
+        const eventDate = dayjs(eventDateStr)
         const isAllDay = !!event.start.date
         const userAttendee = event.attendees?.find(a => a.email === userEmail)
         const isAccepted = !userAttendee || userAttendee.responseStatus !== 'declined'
         
-        return isSameDay(eventDate, day) && !isAllDay && isAccepted
+        return eventDate.isSame(day, 'day') && !isAllDay && isAccepted
       }).length
       
       totalMeetings += dayMeetings
-      meetingsByDayOfWeek[day.getDay()] += dayMeetings
+      meetingsByDayOfWeek[day.day()] += dayMeetings
     }
   })
   
@@ -378,8 +379,8 @@ export async function POST(request: NextRequest) {
     const endDate = new Date(timeRange.end)
     
     // Calculate working days
-    const allDays = eachDayOfInterval({ start: startDate, end: endDate })
-    const workingDays = allDays.filter(day => !isWeekend(day)).length
+    const allDays = eachDayOfInterval(startDate, endDate)
+    const workingDays = allDays.filter(day => day.day() !== 0 && day.day() !== 6).length
     
     // Extract existing PTO
     const existingPTO = extractOutOfOfficeEvents(events)
@@ -419,8 +420,8 @@ export async function POST(request: NextRequest) {
     // Build response
     const response: ExtendedStatusResponse = {
       period: {
-        start: format(startDate, 'yyyy-MM-dd'),
-        end: format(endDate, 'yyyy-MM-dd'),
+        start: dayjs(startDate).format('YYYY-MM-DD'),
+        end: dayjs(endDate).format('YYYY-MM-DD'),
         workingDays,
         totalDays: allDays.length
       },

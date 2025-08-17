@@ -1,5 +1,5 @@
 import { RecurrencePattern, RecurringCompletion } from '@/types/recurrence'
-import { format, addDays } from 'date-fns'
+import dayjs from 'dayjs'
 
 /**
  * Check if a task should occur on a given date based on its recurrence pattern
@@ -108,7 +108,7 @@ export function calculateCurrentStreak(
 
   // Check backwards from today
   while (true) {
-    const dateStr = format(currentDate, 'yyyy-MM-dd')
+    const dateStr = dayjs(currentDate).format('YYYY-MM-DD')
 
     // Should this task occur on this date?
     if (shouldTaskOccurOnDate(pattern, currentDate)) {
@@ -122,7 +122,7 @@ export function calculateCurrentStreak(
     }
 
     // Move to previous day
-    currentDate = addDays(currentDate, -1)
+    currentDate = dayjs(currentDate).subtract(1, 'day').toDate()
 
     // Don't go before the start date
     if (currentDate < new Date(pattern.startDate)) break
@@ -144,9 +144,9 @@ export function getRecurringTaskDates(
 
   while (currentDate <= endDate) {
     if (shouldTaskOccurOnDate(pattern, currentDate)) {
-      dates.push(format(currentDate, 'yyyy-MM-dd'))
+      dates.push(dayjs(currentDate).format('YYYY-MM-DD'))
     }
-    currentDate = addDays(currentDate, 1)
+    currentDate = dayjs(currentDate).add(1, 'day').toDate()
   }
 
   return dates
@@ -197,13 +197,13 @@ export function getNextOccurrenceDate(pattern: RecurrencePattern, fromDate?: Dat
   currentDate.setHours(0, 0, 0, 0)
 
   // Check up to 1 year in the future
-  const maxDate = addDays(currentDate, 365)
+  const maxDate = dayjs(currentDate).add(365, 'day').toDate()
 
   while (currentDate <= maxDate) {
     if (shouldTaskOccurOnDate(pattern, currentDate)) {
       return currentDate
     }
-    currentDate = addDays(currentDate, 1)
+    currentDate = dayjs(currentDate).add(1, 'day').toDate()
   }
 
   return null
