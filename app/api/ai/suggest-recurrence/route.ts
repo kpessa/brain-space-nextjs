@@ -58,7 +58,7 @@ If the task should not recur, set shouldRecur to false and provide minimal patte
       })
     }
   } catch (error) {
-    console.error('Error suggesting recurrence:', error)
+    // Error suggesting recurrence
     return NextResponse.json(
       { error: 'Failed to suggest recurrence pattern' },
       { status: 500 }

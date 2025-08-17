@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { RecurrencePattern } from '@/types/recurrence'
-import { format } from 'date-fns'
+import dayjs from 'dayjs'
 import { Button } from '@/components/ui/Button'
 import { Calendar, Clock, Repeat } from '@/lib/icons'
 
@@ -18,7 +18,7 @@ export function RecurrenceSelector({ pattern, onChange, onClose }: RecurrenceSel
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>(pattern?.daysOfWeek || [])
   const [dayOfMonth, setDayOfMonth] = useState(pattern?.dayOfMonth || 1)
   const [startDate, setStartDate] = useState(
-    pattern?.startDate || format(new Date(), 'yyyy-MM-dd')
+    pattern?.startDate || dayjs().format('YYYY-MM-DD')
   )
   const [endDate, setEndDate] = useState(pattern?.endDate || '')
 

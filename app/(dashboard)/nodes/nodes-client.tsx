@@ -76,7 +76,7 @@ interface BulkLinkModalProps {
 function BulkLinkModal({ isOpen, onClose, selectedNodes, nodes }: BulkLinkModalProps) {
   const [selectedParentId, setSelectedParentId] = useState<string>('')
   const [loading, setLoading] = useState(false)
-  const { linkAsChild } = useNodesStore()
+  const linkAsChild = useNodesStore(state => state.linkAsChild)
   
   // Filter out selected nodes from parent options
   const availableParents = nodes.filter(node => !selectedNodes.has(node.id))
@@ -163,7 +163,9 @@ function NodeCreateModal({ isOpen, onClose, userId }: NodeCreateModalProps) {
   const [shouldUseAI, setShouldUseAI] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { createNode, loadNodes, nodes } = useNodesStore()
+  const createNode = useNodesStore(state => state.createNode)
+  const loadNodes = useNodesStore(state => state.loadNodes)
+  const nodes = useNodesStore(state => state.nodes)
   const { currentMode, addFrequentTag } = useUserPreferencesStore()
   const aiService = createAIService()
 
@@ -306,18 +308,22 @@ function NodeCreateModal({ isOpen, onClose, userId }: NodeCreateModalProps) {
 
 interface NodeCardProps {
   node: Node
-  onCreateChild?: (node: Node) => void
-  onCreateParent?: (node: Node) => void
+  onCreateChild?: () => void
+  onCreateParent?: () => void
   onNodeClick?: (node: Node) => void
   isSelected?: boolean
-  onSelect?: (nodeId: string, selected: boolean) => void
+  onSelect?: () => void
   selectMode?: boolean
   userId: string
   userName?: string
 }
 
-function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected = false, onSelect, selectMode = false, userId, userName }: NodeCardProps) {
-  const { updateNode, deleteNode, getNodeChildren, getNodeParent, toggleNodePin } = useNodesStore()
+function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected = false, onSelect, selectMode = false, userId }: NodeCardProps) {
+  const updateNode = useNodesStore(state => state.updateNode)
+  const deleteNode = useNodesStore(state => state.deleteNode)
+  const getNodeChildren = useNodesStore(state => state.getNodeChildren)
+  const getNodeParent = useNodesStore(state => state.getNodeParent)
+  const toggleNodePin = useNodesStore(state => state.toggleNodePin)
   const [showDetails, setShowDetails] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
@@ -403,7 +409,6 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
           const docSnap = await getDoc(docRef)
           
           if (docSnap.exists()) {
-            const data = docSnap.data()
             // Recurrence update verified in Firestore
           }
         }
@@ -822,12 +827,17 @@ export default function NodesClient({ userId }: { userId: string }) {
   const [showExportModal, setShowExportModal] = useState(false)
   const [showBulkImportModal, setShowBulkImportModal] = useState(false)
   
-  const { nodes, isLoading, loadNodes, deleteNode } = useNodesStore()
+  const nodes = useNodesStore(state => state.nodes)
+  const isLoading = useNodesStore(state => state.isLoading)
+  const loadNodes = useNodesStore(state => state.loadNodes)
+  const deleteNode = useNodesStore(state => state.deleteNode)
   const { currentMode, hidePersonalInWorkMode, hideWorkInPersonalMode } = useUserPreferencesStore()
 
+  // Load nodes on mount - loadNodes is excluded from deps to prevent infinite loop
   useEffect(() => {
     loadNodes(userId)
-  }, [userId, loadNodes])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
 
   // Filter nodes based on search and filters
   const filteredNodes = nodes.filter(node => {
@@ -975,7 +985,7 @@ export default function NodesClient({ userId }: { userId: string }) {
       
       // Import each node
       for (const node of importedNodes) {
-        const { id: _, userId: __, ...nodeData } = node
+        const { id: _id, userId: _userId, ...nodeData } = node
         await useNodesStore.getState().createNode({
           ...nodeData,
           userId: userId,

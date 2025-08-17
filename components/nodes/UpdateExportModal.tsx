@@ -7,7 +7,10 @@ import { useNodesStore } from '@/store/nodeStore'
 import { useUserPreferencesStore, shouldShowNode, type UserMode } from '@/store/userPreferencesStore'
 import type { Node, NodeUpdate } from '@/types/node'
 import { Download, FileText, Calendar, Filter, Copy, Check, Briefcase, Home, Globe } from '@/lib/icons'
-import { format, subDays, subMonths, startOfDay, endOfDay, isWithinInterval } from 'date-fns'
+import dayjs from 'dayjs'
+import isBetween from 'dayjs/plugin/isBetween'
+
+dayjs.extend(isBetween)
 
 interface UpdateExportModalProps {
   isOpen: boolean
@@ -39,20 +42,20 @@ export function UpdateExportModal({ isOpen, onClose }: UpdateExportModalProps) {
     
     switch (timeFrame) {
       case '2weeks':
-        start = startOfDay(subDays(now, 14))
+        start = dayjs(now).subtract(14, 'day').startOf('day').toDate()
         break
       case '1month':
-        start = startOfDay(subMonths(now, 1))
+        start = dayjs(now).subtract(1, 'month').startOf('day').toDate()
         break
       case '3months':
-        start = startOfDay(subMonths(now, 3))
+        start = dayjs(now).subtract(3, 'month').startOf('day').toDate()
         break
       case 'custom':
-        start = customStartDate ? startOfDay(new Date(customStartDate)) : startOfDay(subDays(now, 14))
-        end = customEndDate ? endOfDay(new Date(customEndDate)) : end
+        start = customStartDate ? dayjs(customStartDate).startOf('day').toDate() : dayjs(now).subtract(14, 'day').startOf('day').toDate()
+        end = customEndDate ? dayjs(customEndDate).endOf('day').toDate() : end
         break
       default:
-        start = startOfDay(subDays(now, 14))
+        start = dayjs(now).subtract(14, 'day').startOf('day').toDate()
     }
     
     return { start, end }
@@ -72,8 +75,8 @@ export function UpdateExportModal({ isOpen, onClose }: UpdateExportModalProps) {
       // Filter by updates in date range
       if (onlyWithUpdates) {
         const hasUpdatesInRange = node.updates?.some(update => {
-          const updateDate = new Date(update.timestamp)
-          return isWithinInterval(updateDate, { start: dateRange.start, end: dateRange.end })
+          const updateDate = dayjs(update.timestamp)
+          return updateDate.isBetween(dayjs(dateRange.start), dayjs(dateRange.end), null, '[]')
         })
         if (!hasUpdatesInRange) return false
       }
@@ -84,9 +87,9 @@ export function UpdateExportModal({ isOpen, onClose }: UpdateExportModalProps) {
   
   // Generate markdown report
   const generateMarkdown = () => {
-    const reportDate = format(new Date(), 'MMMM d, yyyy')
-    const startDate = format(dateRange.start, 'MMMM d, yyyy')
-    const endDate = format(dateRange.end, 'MMMM d, yyyy')
+    const reportDate = dayjs().format('MMMM D, YYYY')
+    const startDate = dayjs(dateRange.start).format('MMMM D, YYYY')
+    const endDate = dayjs(dateRange.end).format('MMMM D, YYYY')
     
     let markdown = `# Progress Report\n\n`
     markdown += `**Period**: ${startDate} - ${endDate}\n`
@@ -96,7 +99,7 @@ export function UpdateExportModal({ isOpen, onClose }: UpdateExportModalProps) {
     markdown += `## Executive Summary\n\n`
     const totalUpdates = filteredNodes.reduce((sum, node) => {
       return sum + (node.updates?.filter(u => 
-        isWithinInterval(new Date(u.timestamp), { start: dateRange.start, end: dateRange.end })
+        dayjs(u.timestamp).isBetween(dayjs(dateRange.start), dayjs(dateRange.end), null, '[]')
       ).length || 0)
     }, 0)
     const completedCount = filteredNodes.filter(n => n.completed).length
@@ -130,13 +133,13 @@ export function UpdateExportModal({ isOpen, onClose }: UpdateExportModalProps) {
         
         // Updates in date range
         const relevantUpdates = node.updates?.filter(update => 
-          isWithinInterval(new Date(update.timestamp), { start: dateRange.start, end: dateRange.end })
-        ).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+          dayjs(update.timestamp).isBetween(dayjs(dateRange.start), dayjs(dateRange.end), null, '[]')
+        ).sort((a, b) => dayjs(b.timestamp).valueOf() - dayjs(a.timestamp).valueOf())
         
         if (relevantUpdates && relevantUpdates.length > 0) {
           markdown += `#### Updates:\n`
           relevantUpdates.forEach(update => {
-            const updateDate = format(new Date(update.timestamp), 'MMM d')
+            const updateDate = dayjs(update.timestamp).format('MMM D')
             const updateType = update.type ? `[${update.type}]` : ''
             markdown += `- **${updateDate}** ${updateType}: ${update.content}\n`
           })
@@ -176,7 +179,7 @@ export function UpdateExportModal({ isOpen, onClose }: UpdateExportModalProps) {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `progress-report-${format(new Date(), 'yyyy-MM-dd')}.md`
+    link.download = `progress-report-${dayjs().format('YYYY-MM-DD')}.md`
     link.click()
     URL.revokeObjectURL(url)
   }
@@ -364,7 +367,7 @@ export function UpdateExportModal({ isOpen, onClose }: UpdateExportModalProps) {
         <div className="bg-gray-50 p-4 rounded-lg">
           <p className="text-sm font-medium text-gray-700 mb-2">Report Preview</p>
           <div className="text-sm text-gray-600 space-y-1">
-            <p>• Date range: {format(dateRange.start, 'MMM d')} - {format(dateRange.end, 'MMM d, yyyy')}</p>
+            <p>• Date range: {dayjs(dateRange.start).format('MMM D')} - {dayjs(dateRange.end).format('MMM D, YYYY')}</p>
             <p>• Nodes to export: {filteredNodes.length}</p>
             <p className="flex items-center gap-1">
               • Export mode: {getModeIcon(effectiveMode)} {getModeLabel(effectiveMode)} nodes

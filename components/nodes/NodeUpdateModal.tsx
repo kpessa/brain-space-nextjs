@@ -10,7 +10,10 @@ import type { Node, NodeUpdate } from '@/types/node'
 import { createAIService } from '@/services/ai'
 import { useXPAnimation } from '@/components/XPGainAnimation'
 import { MessageSquare, Pin, Clock, User, Trash2, Plus, Sparkles, Zap } from '@/lib/icons'
-import { formatDistanceToNow } from 'date-fns'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+
+dayjs.extend(relativeTime)
 import { useToast } from '@/hooks/useToast'
 
 interface NodeUpdateModalProps {
@@ -300,7 +303,7 @@ export function NodeUpdateModal({ isOpen, onClose, node, userId, userName }: Nod
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
-                    <span>{formatDistanceToNow(new Date(update.timestamp), { addSuffix: true })}</span>
+                    <span>{dayjs(update.timestamp).fromNow()}</span>
                   </div>
                 </div>
               </div>

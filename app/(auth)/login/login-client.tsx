@@ -1,8 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { signInWithPopup, signInWithRedirect, GoogleAuthProvider, getRedirectResult } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+// Dynamically import Firebase to reduce initial bundle size
+const getFirebaseAuth = () => import('firebase/auth').then(mod => ({
+  signInWithPopup: mod.signInWithPopup,
+  signInWithRedirect: mod.signInWithRedirect,
+  GoogleAuthProvider: mod.GoogleAuthProvider,
+  getRedirectResult: mod.getRedirectResult
+}))
+const getAuth = () => import('@/lib/firebase').then(mod => mod.auth)
 import { Brain, Sparkles } from '@/lib/icons'
 import { useSearchParams } from 'next/navigation'
 
@@ -15,7 +21,12 @@ export default function LoginClient() {
   useEffect(() => {
     const checkRedirectResult = async () => {
       try {
-        const result = await getRedirectResult(auth)
+        const [firebaseAuth, auth] = await Promise.all([
+          getFirebaseAuth(),
+          getAuth()
+        ])
+        
+        const result = await firebaseAuth.getRedirectResult(auth)
         if (result?.user) {
           setIsSigningIn(true)
           
@@ -69,11 +80,16 @@ export default function LoginClient() {
     setError(null)
 
     try {
-      const provider = new GoogleAuthProvider()
+      const [firebaseAuth, auth] = await Promise.all([
+        getFirebaseAuth(),
+        getAuth()
+      ])
+      
+      const provider = new firebaseAuth.GoogleAuthProvider()
       
       try {
         // Always try popup first (like the working manual auth button)
-        const result = await signInWithPopup(auth, provider)
+        const result = await firebaseAuth.signInWithPopup(auth, provider)
 
         // Get the ID token
         const idToken = await result.user.getIdToken()
@@ -102,7 +118,6 @@ export default function LoginClient() {
         })
 
         if (response.ok) {
-          const responseData = await response.json()
           // Session set successfully
           
           // Small delay to ensure cookie is set
@@ -127,7 +142,7 @@ export default function LoginClient() {
           const redirect = searchParams.get('redirect') || '/journal'
           sessionStorage.setItem('auth_redirect', redirect)
           
-          await signInWithRedirect(auth, provider)
+          await firebaseAuth.signInWithRedirect(auth, provider)
         } else {
           throw popupError
         }

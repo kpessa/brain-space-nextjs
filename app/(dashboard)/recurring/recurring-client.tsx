@@ -23,7 +23,7 @@ import {
   Clock,
   Target,
 } from 'lucide-react'
-import { format, addDays, subDays } from 'date-fns'
+import dayjs from 'dayjs'
 import type { Node } from '@/types/node'
 import type { RecurrencePattern } from '@/types/recurrence'
 
@@ -64,14 +64,14 @@ export default function RecurringClient({ userId }: { userId: string }) {
       }),
       dayOfMonth: node.recurrence.frequency === 'monthly' ? 
         new Date(node.createdAt || '').getDate() : undefined,
-      startDate: node.createdAt?.split('T')[0] || format(new Date(), 'yyyy-MM-dd'),
+      startDate: node.createdAt?.split('T')[0] || dayjs().format('YYYY-MM-DD'),
       endDate: node.recurrence.endDate,
     }
     return shouldTaskOccurOnDate(pattern, selectedDate)
   })
 
   const handleToggleTask = async (node: Node) => {
-    const dateStr = format(selectedDate, 'yyyy-MM-dd')
+    const dateStr = dayjs(selectedDate).format('YYYY-MM-DD')
     const completions = node.recurringCompletions || []
     const isCompleted = isRecurringTaskCompletedForDate(completions, dateStr)
 
@@ -137,7 +137,7 @@ export default function RecurringClient({ userId }: { userId: string }) {
   }
 
   const navigateDate = (days: number) => {
-    setSelectedDate(prevDate => days > 0 ? addDays(prevDate, days) : subDays(prevDate, Math.abs(days)))
+    setSelectedDate(prevDate => days > 0 ? dayjs(prevDate).add(days, 'day').toDate() : dayjs(prevDate).subtract(Math.abs(days), 'day').toDate())
   }
 
   const handleNodeSelected = (node: Node) => {
@@ -180,8 +180,8 @@ export default function RecurringClient({ userId }: { userId: string }) {
                 Previous Day
               </Button>
               <div className="text-center">
-                <h2 className="text-xl font-semibold">{format(selectedDate, 'EEEE, MMMM d, yyyy')}</h2>
-                {format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') && (
+                <h2 className="text-xl font-semibold">{dayjs(selectedDate).format('dddd, MMMM D, YYYY')}</h2>
+                {dayjs(selectedDate).format('YYYY-MM-DD') === dayjs().format('YYYY-MM-DD') && (
                   <Badge variant="primary" className="mt-1">Today</Badge>
                 )}
               </div>
@@ -199,7 +199,7 @@ export default function RecurringClient({ userId }: { userId: string }) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-brain-600" />
-                  <CardTitle>Tasks for {format(selectedDate, 'MMM d')}</CardTitle>
+                  <CardTitle>Tasks for {dayjs(selectedDate).format('MMM D')}</CardTitle>
                 </div>
                 <Badge variant="ghost">{tasksForDate.length} tasks</Badge>
               </div>
@@ -210,7 +210,7 @@ export default function RecurringClient({ userId }: { userId: string }) {
               ) : (
                 <div className="space-y-2">
                   {tasksForDate.map(node => {
-                    const dateStr = format(selectedDate, 'yyyy-MM-dd')
+                    const dateStr = dayjs(selectedDate).format('YYYY-MM-DD')
                     const isCompleted = isRecurringTaskCompletedForDate(
                       node.recurringCompletions, 
                       dateStr
@@ -218,7 +218,7 @@ export default function RecurringClient({ userId }: { userId: string }) {
                     const pattern: RecurrencePattern = {
                       type: node.recurrence!.frequency,
                       frequency: node.recurrence!.interval,
-                      startDate: node.createdAt?.split('T')[0] || format(new Date(), 'yyyy-MM-dd'),
+                      startDate: node.createdAt?.split('T')[0] || dayjs().format('YYYY-MM-DD'),
                     }
                     const streak = node.taskType === 'habit' ? 
                       calculateCurrentStreak(node.recurringCompletions, pattern) : 0
@@ -315,7 +315,7 @@ export default function RecurringClient({ userId }: { userId: string }) {
                         }
                         return dayMap[day]
                       }),
-                      startDate: node.createdAt?.split('T')[0] || format(new Date(), 'yyyy-MM-dd'),
+                      startDate: node.createdAt?.split('T')[0] || dayjs().format('YYYY-MM-DD'),
                     }
                     const patternStr = formatRecurrencePattern(pattern)
 

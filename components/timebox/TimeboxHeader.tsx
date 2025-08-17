@@ -1,7 +1,7 @@
 'use client'
 
 import { memo } from 'react'
-import { format } from 'date-fns'
+import dayjs from 'dayjs'
 import { ChevronLeft, ChevronRight, Calendar, Mic, Sparkles, Settings2, CalendarSync } from '@/lib/icons'
 import { Button } from '@/components/ui/Button'
 import { CardHeader, CardTitle } from '@/components/ui/Card'
@@ -31,8 +31,8 @@ export const TimeboxHeader = memo(function TimeboxHeader({
   onOpenSettings,
   onToggleCalendarSync
 }: TimeboxHeaderProps) {
-  const displayDate = format(new Date(selectedDate), 'EEEE, MMMM d, yyyy')
-  const isToday = format(new Date(), 'yyyy-MM-dd') === selectedDate
+  const displayDate = dayjs(selectedDate).format('dddd, MMMM D, YYYY')
+  const isToday = dayjs().format('YYYY-MM-DD') === selectedDate
   
   return (
     <CardHeader>

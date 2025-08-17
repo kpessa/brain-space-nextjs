@@ -59,7 +59,7 @@ export function AIProviderSelector() {
   }
 
   if (error) {
-    console.error('Failed to load AI providers:', error)
+    // Failed to load AI providers
     return null
   }
 

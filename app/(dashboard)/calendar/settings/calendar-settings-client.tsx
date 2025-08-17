@@ -30,7 +30,7 @@ const GoogleIcon = () => (
   </svg>
 )
 
-export default function CalendarSettingsClient({ userId }: { userId: string }) {
+export default function CalendarSettingsClient() {
   const { selectedCalendarIds, toggleCalendarSelection } = useCalendarStore()
   const { 
     isConnected,

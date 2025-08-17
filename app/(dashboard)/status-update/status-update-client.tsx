@@ -137,11 +137,7 @@ export default function StatusUpdateClient({ userId }: { userId: string }) {
   const [eventCategorizations, setEventCategorizations] = useState<Record<string, 'appointment' | 'pto' | 'work_travel' | 'skip'>>({})
   const [originalCategorizations, setOriginalCategorizations] = useState<any[]>([])
 
-  useEffect(() => {
-    fetchStatusUpdate()
-  }, [dateRange, modeOverride, currentMode])
-
-  const fetchStatusUpdate = async (applyManualCategories = false) => {
+  const fetchStatusUpdate = useCallback(async (applyManualCategories = false) => {
     setIsLoading(true)
     setError(null)
     
@@ -193,7 +189,11 @@ export default function StatusUpdateClient({ userId }: { userId: string }) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [dateRange, modeOverride, currentMode, userId])
+
+  useEffect(() => {
+    fetchStatusUpdate()
+  }, [dateRange, modeOverride, currentMode, fetchStatusUpdate])
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({

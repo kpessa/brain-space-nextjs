@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth } from '@/lib/auth-helpers'
-import { CategorizeRequestSchema, CategorizeResponseSchema } from '@/lib/validations/ai'
-import { validateBody, formatZodError } from '@/lib/validations/middleware'
-import { ZodError } from 'zod'
+import { CategorizeRequestSchema } from '@/lib/validations/ai'
+import { validateBody } from '@/lib/validations/middleware'
 
 interface ThoughtAnalysis {
   text: string
@@ -165,7 +164,7 @@ async function mockCategorize(text: string) {
   const processedThoughts: ThoughtAnalysis[] = []
   let currentParent: ThoughtAnalysis | null = null
   
-  lines.forEach((line, index) => {
+  lines.forEach((line) => {
     const trimmedLine = line.trim()
     
     // Check if this looks like a parent task (ends with colon, or contains "including", "such as")
@@ -305,7 +304,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result)
   } catch (error) {
-    console.error('Error in categorize:', error)
+    // Error in categorize
     
     // Return a basic categorization as fallback
     return NextResponse.json({

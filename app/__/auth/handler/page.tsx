@@ -19,7 +19,7 @@ export default function FirebaseAuthHandler() {
     const handleAuthCompletion = async () => {
       try {
         // First, check for redirect result
-        const result = await getRedirectResult(auth)
+        await getRedirectResult(auth)
 
         // Set up auth state listener with proper cleanup
         unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -57,7 +57,7 @@ export default function FirebaseAuthHandler() {
               }
             } catch (error) {
               if (!mounted) return
-              console.error('[Auth Handler] Error setting cookie:', error)
+              // Error setting cookie
               setError('Failed to complete sign in. Please try again.')
             }
           } else {
@@ -72,7 +72,7 @@ export default function FirebaseAuthHandler() {
 
       } catch (error) {
         if (!mounted) return
-        console.error('[Auth Handler] Error:', error)
+        // Auth handler error
         setError('An error occurred during sign in. Please try again.')
       }
     }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { format, addMonths } from 'date-fns'
+import dayjs from 'dayjs'
 import { 
   Calendar, 
   Clock, 
@@ -120,7 +120,7 @@ export function CalendarStatusDialog({ isOpen, onClose }: CalendarStatusDialogPr
       // Get time range
       const start = new Date()
       const preset = TIME_PRESETS.find(p => p.value === timePreset)
-      const end = addMonths(start, preset?.months || 3)
+      const end = dayjs(start).add(preset?.months || 3, 'month').toDate()
       
       // Fetch calendar events
       const events = await googleCalendarService.listEvents(
@@ -152,8 +152,8 @@ export function CalendarStatusDialog({ isOpen, onClose }: CalendarStatusDialogPr
         },
         body: JSON.stringify({
           timeRange: {
-            start: format(start, 'yyyy-MM-dd'),
-            end: format(end, 'yyyy-MM-dd'),
+            start: dayjs(start).format('YYYY-MM-DD'),
+            end: dayjs(end).format('YYYY-MM-DD'),
             preset: timePreset
           },
           includeHolidayAnalysis: true,
@@ -336,7 +336,7 @@ export function CalendarStatusDialog({ isOpen, onClose }: CalendarStatusDialogPr
                             <div>
                               <p className="font-medium">{item.holiday.name}</p>
                               <p className="text-sm text-gray-600">
-                                {format(new Date(item.holiday.date), 'EEEE, MMMM d, yyyy')}
+                                {dayjs(item.holiday.date).format('dddd, MMMM D, YYYY')}
                               </p>
                               {item.ptoOpportunity && (
                                 <p className="text-sm text-yellow-800 mt-1">
@@ -382,7 +382,7 @@ export function CalendarStatusDialog({ isOpen, onClose }: CalendarStatusDialogPr
                         {Object.entries(status.commitments.byMonth).map(([month, data]) => (
                           <div key={month} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                             <div>
-                              <p className="font-medium">{format(new Date(month + '-01'), 'MMMM yyyy')}</p>
+                              <p className="font-medium">{dayjs(month + '-01').format('MMMM YYYY')}</p>
                               <p className="text-sm text-gray-600">
                                 {data.meetings} meetings • {data.availableDays} available days
                               </p>
@@ -446,7 +446,7 @@ export function CalendarStatusDialog({ isOpen, onClose }: CalendarStatusDialogPr
                                 <div className="flex flex-wrap gap-2 mt-1">
                                   {rec.recommendedDates.map((date, dateIdx) => (
                                     <span key={dateIdx} className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
-                                      {format(new Date(date), 'MMM d')}
+                                      {dayjs(date).format('MMM D')}
                                     </span>
                                   ))}
                                 </div>

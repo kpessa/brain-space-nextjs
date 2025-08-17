@@ -13,7 +13,7 @@ import {
   useTimeSlots,
   useSelectedDate,
   useCalendarSyncEnabled,
-  useTimeInterval,
+  // useTimeInterval,
   useShowPastSlots,
   useHoveredSlotId,
   useTimeboxActions,
@@ -77,7 +77,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   const timeSlots = useTimeSlots()
   const hoveredSlotId = useHoveredSlotId()
   const calendarSyncEnabled = useCalendarSyncEnabled()
-  const timeInterval = useTimeInterval()
+  // const timeInterval = useTimeInterval() // Currently unused
   const showPastSlotsState = useShowPastSlots()
   const displaySlots = useTimeSlotsWithCalendarEvents()
   const stats = useTimeboxStats()
@@ -94,9 +94,9 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     initializeTimeSlots,
     blockTimeSlot,
     unblockTimeSlot,
-    setCalendarSyncEnabled,
-    setTimeInterval,
-    setShowPastSlots: setShowPastSlotsAction,
+    // setCalendarSyncEnabled,
+    // setTimeInterval,
+    // setShowPastSlots: setShowPastSlotsAction,
     loadCalendarEvents
   } = useTimeboxActions()
   
@@ -116,7 +116,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   const [currentTimeSlotId, setCurrentTimeSlotId] = useState<string | null>(null)
   const [calendarEvents, setCalendarEvents] = useState<TimeboxTask[]>([])
   const [showPastSlots, setShowPastSlots] = useState(showPastSlotsState)
-  const [collapsedSlots, setCollapsedSlots] = useState<Set<string>>(new Set())
+  // const [collapsedSlots, setCollapsedSlots] = useState<Set<string>>(new Set()) // Currently unused
   const [calendarSyncError, setCalendarSyncError] = useState<string | null>(null)
   
   // Node filtering state
@@ -152,7 +152,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     setIsClient(true)
     
     // Add page unload event to track refreshes
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    const handleBeforeUnload = () => {
       // Page refresh/navigation detected - data should persist
     }
     
@@ -180,19 +180,10 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     }
   }, [userId, selectedDate, effectiveInterval, loadNodes, loadTimeboxData])
   
-  // Load calendar events when sync is enabled
-  useEffect(() => {
-    if (calendarSyncEnabled && isConnected) {
-      loadCalendarEventsLocal()
-    } else {
-      setCalendarEvents([])
-    }
-  }, [calendarSyncEnabled, isConnected, loadCalendarEvents])
-  
   // Find current time slot for highlighting
   useEffect(() => {
     // Only run on client side to avoid hydration issues
-    if (typeof window === 'undefined' || !selectedDate) return
+    if (!isClient || !selectedDate) return
     
     const now = new Date()
     const currentHour = now.getHours()
@@ -211,10 +202,11 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     if (currentSlot) {
       setCurrentTimeSlotId(currentSlot.id)
     }
-  }, [timeSlots, selectedDate])
+  }, [timeSlots, selectedDate, isClient])
   
   // Helper to check if a time slot is COMPLETELY in the past (not including current slot)
-  const isSlotInPast = useCallback((slot: typeof timeSlots[0]) => {
+  // Currently unused function isSlotInPast
+  /* const isSlotInPast = useCallback((slot: typeof timeSlots[0]) => {
     const now = new Date()
     const today = dayjs(now).format('YYYY-MM-DD')
     
@@ -229,7 +221,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     // A slot is "past" only if the current time is AFTER the slot's END time
     // This means the slot has completely finished
     return now >= slotEndTime
-  }, [selectedDate])
+  }, [selectedDate]) */
   
   
   // Load calendar events
@@ -307,7 +299,16 @@ export default function TimeboxClient({ userId }: { userId: string }) {
       setCalendarEvents([])
       setCalendarSyncError('Failed to sync with calendar')
     }
-  }, [selectedDate, selectedCalendarIds, getEvents, userId, calendarSyncEnabled])
+  }, [selectedDate, selectedCalendarIds, getEvents, userId])
+  
+  // Load calendar events when sync is enabled (must be after loadCalendarEventsLocal definition)
+  useEffect(() => {
+    if (calendarSyncEnabled && isConnected) {
+      loadCalendarEventsLocal()
+    } else {
+      setCalendarEvents([])
+    }
+  }, [calendarSyncEnabled, isConnected, loadCalendarEventsLocal])
   
   // Get unscheduled nodes with filtering
   const unscheduledNodes = useMemo(() => {
@@ -548,6 +549,14 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   // Separate past and current/future slots - FIXED to properly identify current slot
   const { pastSlots, currentAndFutureSlots } = useMemo(() => {
     
+    // Skip time-based filtering during SSR to avoid hydration issues
+    if (!isClient) {
+      return {
+        pastSlots: [],
+        currentAndFutureSlots: displaySlots
+      }
+    }
+    
     const today = dayjs().format('YYYY-MM-DD')
     const isToday = selectedDate === today
     
@@ -587,7 +596,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
       pastSlots: past,
       currentAndFutureSlots: currentFuture
     }
-  }, [displaySlots, selectedDate])
+  }, [displaySlots, selectedDate, isClient])
   
   // Debug function to log current store state
   const debugCurrentState = () => {
@@ -1308,7 +1317,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
               )}
               
               {/* Current and Future Time Slots */}
-              {currentAndFutureSlots.map((slot, index) => {
+              {currentAndFutureSlots.map((slot) => {
                 const isCurrentSlot = currentTimeSlotId === slot.id && selectedDate === dayjs().format('YYYY-MM-DD')
                 return (
                 <Card 

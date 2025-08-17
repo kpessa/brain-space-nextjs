@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Mic, Calendar, TrendingUp, AlertCircle, Award, Clock, ChevronRight, Sparkles, Copy, Download } from 'lucide-react'
 import { useNodesStore } from '@/store/nodeStore'
 import { useAuth } from '@/contexts/AuthContext'
-import { format } from 'date-fns'
+import dayjs from 'dayjs'
 import { cn } from '@/lib/utils'
 
 interface StandupSummary {
@@ -86,7 +86,7 @@ export default function StandupSummaryDialog({ trigger }: StandupSummaryDialogPr
   const copyToClipboard = () => {
     if (!summary) return
     
-    const text = `Daily Standup - ${format(new Date(), 'MMMM d, yyyy')}
+    const text = `Daily Standup - ${dayjs().format('MMMM D, YYYY')}
 
 Yesterday:
 ${summary.yesterday.map(item => `• ${item}`).join('\n')}
@@ -106,7 +106,7 @@ ${summary.highlights.map(item => `• ${item}`).join('\n')}` : ''}`
   const downloadAsText = () => {
     if (!summary) return
     
-    const text = `Daily Standup - ${format(new Date(), 'MMMM d, yyyy')}
+    const text = `Daily Standup - ${dayjs().format('MMMM D, YYYY')}
 
 Yesterday:
 ${summary.yesterday.map(item => `• ${item}`).join('\n')}
@@ -129,7 +129,7 @@ Updates Added: ${summary.metrics.updatesAdded}`
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `standup-${format(new Date(), 'yyyy-MM-dd')}.txt`
+    a.download = `standup-${dayjs().format('YYYY-MM-DD')}.txt`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)

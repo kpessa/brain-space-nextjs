@@ -16,7 +16,7 @@ import {
 } from '@/components/journal'
 import { migrateToArray } from '@/types/journal'
 
-export default function EditJournalEntryClient({ userId }: { userId: string }) {
+export default function EditJournalEntryClient() {
   const params = useParams()
   const router = useRouter()
   const { entries, updateEntry, deleteEntry } = useJournalStore()

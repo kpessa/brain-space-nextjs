@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Clock, Calendar, CalendarOff, Settings2, Info, Trash2, Plus } from 'lucide-react'
 import { useScheduleStore, type WorkSchedule, type PTODay } from '@/store/scheduleStore'
-import { format, parseISO } from 'date-fns'
+import dayjs from 'dayjs'
 import { cn } from '@/lib/utils'
 
 interface ScheduleSettingsDialogProps {
@@ -219,7 +219,7 @@ export default function ScheduleSettingsDialog({ trigger }: ScheduleSettingsDial
                           type="date"
                           value={newPTODate}
                           onChange={(e) => setNewPTODate(e.target.value)}
-                          min={format(new Date(), 'yyyy-MM-dd')}
+                          min={dayjs().format('YYYY-MM-DD')}
                           className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brain-500"
                         />
                         <select
@@ -273,7 +273,7 @@ export default function ScheduleSettingsDialog({ trigger }: ScheduleSettingsDial
                                 <div>
                                   <div className="flex items-center gap-2">
                                     <span className="text-sm font-medium">
-                                      {format(parseISO(pto.date), 'EEEE, MMMM d, yyyy')}
+                                      {dayjs(pto.date).format('dddd, MMMM D, YYYY')}
                                     </span>
                                     <span className={cn(
                                       "text-xs px-2 py-0.5 rounded-full",

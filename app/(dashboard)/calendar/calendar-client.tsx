@@ -113,12 +113,12 @@ export default function CalendarClient() {
     setCurrentDate(newDate)
   }
 
-  const handleSelectEvent = (event: any) => {
+  const handleSelectEvent = () => {
     // Selected event
     // TODO: Show event details modal
   }
 
-  const handleSelectSlot = (slotInfo: any) => {
+  const handleSelectSlot = () => {
     // Selected slot
     // TODO: Show create event modal
   }

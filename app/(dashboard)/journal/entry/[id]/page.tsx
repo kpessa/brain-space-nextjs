@@ -1,6 +1,6 @@
 'use client'
 
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -12,7 +12,6 @@ import { LEVELS } from '@/types/journal'
 
 export default function JournalEntryView() {
   const params = useParams()
-  const router = useRouter()
   const { entries, userProgress } = useJournalStore()
   
   const entry = entries.find(e => e.id === params.id)

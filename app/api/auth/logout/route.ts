@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     // Redirect to login page using the request origin
     return NextResponse.redirect(new URL('/login', origin))
   } catch (error) {
-    console.error('Logout error:', error)
+    // Logout error
     return NextResponse.json(
       { error: 'Failed to logout' },
       { status: 500 }

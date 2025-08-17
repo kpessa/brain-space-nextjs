@@ -14,7 +14,10 @@ import { ReenhanceNodeDialog } from './ReenhanceNodeDialog'
 import { useToast } from '@/hooks/useToast'
 import { useXPAnimation } from '@/components/XPGainAnimation'
 import { CheckCircle, Circle, Clock, Calendar, CalendarPlus, Tag, GitBranch, GitMerge, Trash2, Edit3, Save, X, MessageSquare, Info, Link, AlertCircle, Sparkles, Repeat } from '@/lib/icons'
-import { format, formatDistanceToNow } from 'date-fns'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+
+dayjs.extend(relativeTime)
 import { CalendarEventModal } from '@/components/CalendarEventModal'
 
 interface NodeDetailModalProps {
@@ -620,7 +623,7 @@ export function NodeDetailModal({
                   </label>
                   <div className="text-gray-800">
                     {currentNode.dueDate.type === 'exact' 
-                      ? format(new Date(currentNode.dueDate.date), 'PPP')
+                      ? dayjs(currentNode.dueDate.date).format('MMMM D, YYYY')
                       : `${currentNode.dueDate.offset} ${currentNode.dueDate.unit} from creation`
                     }
                   </div>
@@ -676,11 +679,11 @@ export function NodeDetailModal({
               <div className="pt-4 border-t space-y-2 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4" />
-                  <span>Created: {currentNode.createdAt ? format(new Date(currentNode.createdAt), 'PPp') : 'Unknown'}</span>
+                  <span>Created: {currentNode.createdAt ? dayjs(currentNode.createdAt).format('MMM D, YYYY h:mm A') : 'Unknown'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
-                  <span>Updated: {currentNode.updatedAt ? format(new Date(currentNode.updatedAt), 'PPp') : 'Unknown'}</span>
+                  <span>Updated: {currentNode.updatedAt ? dayjs(currentNode.updatedAt).format('MMM D, YYYY h:mm A') : 'Unknown'}</span>
                 </div>
               </div>
             </div>
@@ -824,7 +827,7 @@ export function NodeDetailModal({
                     <div className="text-xs text-gray-500">
                       <span>{update.userName || 'Unknown'}</span>
                       <span className="mx-1">•</span>
-                      <span>{formatDistanceToNow(new Date(update.timestamp), { addSuffix: true })}</span>
+                      <span>{dayjs(update.timestamp).fromNow()}</span>
                     </div>
                   </div>
                 ))

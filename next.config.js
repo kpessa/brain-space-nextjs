@@ -1,3 +1,7 @@
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+})
+
 const withPWA = require('@ducanh2912/next-pwa').default({
   dest: 'public',
   register: true,
@@ -191,4 +195,7 @@ const nextConfig = {
 }
 
 // Enable PWA only when explicitly requested
-module.exports = process.env.PWA_ENABLED === 'true' ? withPWA(nextConfig) : nextConfig
+const configWithPWA = process.env.PWA_ENABLED === 'true' ? withPWA(nextConfig) : nextConfig
+
+// Apply bundle analyzer if ANALYZE is set
+module.exports = withBundleAnalyzer(configWithPWA)

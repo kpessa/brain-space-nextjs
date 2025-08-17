@@ -19,13 +19,11 @@ export default function RoutinesClient({ userId }: { userId: string }) {
     initializeProgress,
     loadEntries,
     advanceDay,
-    pauseJourney,
-    resumeJourney,
     completeEvening,
     completeMorning,
   } = useRoutineStore()
   
-  const [showStartJourney, setShowStartJourney] = useState(false)
+  // const [showStartJourney] = useState(false) // Currently unused
   const [showEveningModal, setShowEveningModal] = useState(false)
   const [showMorningModal, setShowMorningModal] = useState(false)
   

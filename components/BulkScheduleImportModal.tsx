@@ -8,7 +8,7 @@ import { Calendar, Upload, Loader2, CheckCircle, AlertCircle, Info } from '@/lib
 import { useNodesStore } from '@/store/nodeStore'
 import { googleCalendarService } from '@/services/googleCalendar'
 import { useCalendarStore } from '@/store/calendarStore'
-import { format, parse, isValid } from 'date-fns'
+import dayjs from 'dayjs'
 import type { Node } from '@/types/node'
 
 interface BulkScheduleImportModalProps {
@@ -61,15 +61,15 @@ export function BulkScheduleImportModal({
         const [_, titlePart, datePart, timePart, locationPart] = dashMatch
         try {
           // Try parsing date
-          let date = parse(datePart.trim(), 'MMMM d, yyyy', new Date())
-          if (!isValid(date)) {
-            date = parse(datePart.trim(), 'MMM d, yyyy', new Date())
+          let date = dayjs(datePart.trim(), 'MMMM D, YYYY')
+          if (!date.isValid()) {
+            date = dayjs(datePart.trim(), 'MMM D, YYYY')
           }
           
-          if (isValid(date)) {
+          if (date.isValid()) {
             parsed = {
               title: titlePart.trim(),
-              date,
+              date: date.toDate(),
               time: timePart?.trim(),
               location: locationPart?.trim(),
               isValid: true
@@ -87,12 +87,12 @@ export function BulkScheduleImportModal({
           const [_, datePart, timePart, titlePart, locationPart] = simpleMatch
           try {
             const currentYear = new Date().getFullYear()
-            const date = parse(`${datePart}/${currentYear}`, 'M/d/yyyy', new Date())
+            const date = dayjs(`${datePart}/${currentYear}`, 'M/D/YYYY')
             
-            if (isValid(date)) {
+            if (date.isValid()) {
               parsed = {
                 title: titlePart.trim(),
-                date,
+                date: date.toDate(),
                 time: timePart.trim(),
                 location: locationPart?.trim(),
                 isValid: true
@@ -353,7 +353,7 @@ LAFC vs Inter Miami - March 16, 2024 - 10:30 PM - BMO Stadium`
                           <>
                             <div className="font-medium">{event.title}</div>
                             <div className="text-xs">
-                              {format(event.date, 'MMM d, yyyy')}
+                              {dayjs(event.date).format('MMM D, YYYY')}
                               {event.time && ` at ${event.time}`}
                               {event.location && ` - ${event.location}`}
                             </div>

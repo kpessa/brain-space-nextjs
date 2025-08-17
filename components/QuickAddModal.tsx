@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { useNodesStore } from '@/store/nodeStore'
 import { createAIService } from '@/services/ai'
 import type { Node, NodeType, Recurrence } from '@/types/node'
-import { format } from 'date-fns'
+import dayjs from 'dayjs'
 import { 
   Zap, 
   Brain,
@@ -323,7 +323,7 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
           <>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                What's on your mind?
+                What&apos;s on your mind?
               </label>
               <textarea
                 ref={inputRef}
@@ -597,7 +597,7 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
                   
                   {preview.dueDate && (
                     <div className="mt-2 text-xs text-gray-500">
-                      Due: {format(new Date(preview.dueDate.date), 'MMM d, yyyy')}
+                      Due: {dayjs(preview.dueDate.date).format('MMM D, YYYY')}
                     </div>
                   )}
                   

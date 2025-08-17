@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { useUnifiedTodos, type UnifiedTodo } from '@/services/todoAggregator'
@@ -22,11 +22,9 @@ import {
   Filter,
   ChevronDown,
   ChevronRight,
-  Star,
-  Zap,
   Archive
 } from 'lucide-react'
-import { format } from 'date-fns'
+import dayjs from 'dayjs'
 
 type FilterType = 'all' | 'today' | 'upcoming' | 'overdue' | 'completed'
 type SourceFilter = 'all' | UnifiedTodo['source']
@@ -48,8 +46,8 @@ const priorityColors = {
 export default function TodosClient({ userId }: { userId: string }) {
   const { 
     todos: allTodos, 
-    getTodosBySource, 
-    getTodosByPriority, 
+    // getTodosBySource, 
+    // getTodosByPriority, 
     getOverdueTodos, 
     getTodaysTodos,
     getUpcomingTodos 
@@ -476,7 +474,7 @@ function TodoList({
               {todo.dueDate && (
                 <div className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  <span>{format(new Date(todo.dueDate), 'MMM d')}</span>
+                  <span>{dayjs(todo.dueDate).format('MMM D')}</span>
                 </div>
               )}
               {todo.tags && todo.tags.length > 0 && (

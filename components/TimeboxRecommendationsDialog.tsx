@@ -8,7 +8,7 @@ import { Sparkles, Brain, Loader2, ChevronRight, CheckCircle, Info } from '@/lib
 import { useTimeboxStore } from '@/store/timeboxStore'
 import { useNodesStore } from '@/store/nodeStore'
 import { useUserPreferencesStore } from '@/store/userPreferencesStore'
-import { format } from 'date-fns'
+import dayjs from 'dayjs'
 import { cn } from '@/lib/utils'
 // Remove the AIProviderSelector import since we'll create our own dropdown
 
@@ -377,7 +377,7 @@ export default function TimeboxRecommendationsDialog({
                               <ChevronRight className="w-3 h-3 inline" />
                               {isLaterDate ? (
                                 <span className="text-amber-700">
-                                  Suggested for {format(new Date(rec.suggestedDate), 'MMM d, yyyy')}
+                                  Suggested for {dayjs(rec.suggestedDate).format('MMM D, YYYY')}
                                 </span>
                               ) : slot?.displayTime ? (
                                 `${slot.displayTime} (${slot.period})`

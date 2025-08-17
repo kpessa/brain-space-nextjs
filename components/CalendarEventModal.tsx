@@ -5,7 +5,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Calendar, Clock, MapPin, Users, FileText, Loader2, CalendarPlus } from '@/lib/icons'
-import { format, addHours, startOfHour, parseISO } from 'date-fns'
+import dayjs from 'dayjs'
 import { googleCalendarService } from '@/services/googleCalendar'
 import { useCalendarStore } from '@/store/calendarStore'
 import type { Node } from '@/types/node'
@@ -45,14 +45,14 @@ export function CalendarEventModal({
       : new Date()
     
     // Round to next hour
-    const startDateTime = startOfHour(addHours(startDate, 1))
-    const endDateTime = addHours(startDateTime, 1)
+    const startDateTime = dayjs(startDate).add(1, 'hour').startOf('hour').toDate()
+    const endDateTime = dayjs(startDateTime).add(1, 'hour').toDate()
     
     return {
       summary: node.title || 'Untitled Event',
       description: node.description || '',
-      startDateTime: format(startDateTime, "yyyy-MM-dd'T'HH:mm"),
-      endDateTime: format(endDateTime, "yyyy-MM-dd'T'HH:mm"),
+      startDateTime: dayjs(startDateTime).format('YYYY-MM-DDTHH:mm'),
+      endDateTime: dayjs(endDateTime).format('YYYY-MM-DDTHH:mm'),
       location: '',
       attendees: '',
       calendarId: 'primary' // Default to primary, will update when calendars load
