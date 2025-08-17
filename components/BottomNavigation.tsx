@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { isNavItemActive } from '@/lib/navigation-utils'
+import { triggerHaptic } from '@/lib/haptic'
 
 interface NavItem {
   path: string
@@ -54,7 +55,10 @@ export function BottomNavigation() {
             return (
               <button
                 key={item.path}
-                onClick={item.action}
+                onClick={() => {
+                  triggerHaptic('light')
+                  item.action!()
+                }}
                 className="flex flex-col items-center justify-center gap-1 text-xs transition-all text-muted-foreground hover:text-foreground"
               >
                 <div className="p-1 rounded-lg transition-all">
@@ -69,6 +73,7 @@ export function BottomNavigation() {
             <Link
               key={item.path}
               href={item.path}
+              onClick={() => triggerHaptic('selection')}
               className={cn(
                 'flex flex-col items-center justify-center gap-1 text-xs transition-all',
                 isActive 

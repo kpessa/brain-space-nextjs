@@ -48,6 +48,7 @@ export {
   CalendarPlus,
   CalendarDays,
   Clock,
+  Lock,
   Timer,
   Target,
   Zap,

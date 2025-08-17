@@ -47,7 +47,7 @@ export function ConfirmDialog({
   }[variant]
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 px-safe py-safe">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-background/80 backdrop-blur-sm" 

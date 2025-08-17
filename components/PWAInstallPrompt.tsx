@@ -71,7 +71,7 @@ export function PWAInstallPrompt() {
   // iOS-specific prompt
   if (isIOS) {
     return (
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-50 animate-in slide-in-from-bottom-5">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 pb-safe z-50 animate-in slide-in-from-bottom-5">
         <button
           onClick={handleDismiss}
           className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100"
@@ -109,7 +109,7 @@ export function PWAInstallPrompt() {
 
   // Chrome/Edge prompt
   return (
-    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-white rounded-lg shadow-xl border p-4 z-50 animate-in slide-in-from-bottom-5">
+    <div className="fixed bottom-4 left-4 right-4 mb-safe md:left-auto md:right-4 md:w-96 bg-white rounded-lg shadow-xl border p-4 z-50 animate-in slide-in-from-bottom-5">
       <button
         onClick={handleDismiss}
         className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100"

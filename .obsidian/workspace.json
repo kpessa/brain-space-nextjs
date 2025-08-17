@@ -183,24 +183,25 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "44b6607c4c486624",
+  "active": "09fe0e7409549836",
   "lastOpenFiles": [
-    "public/manifest.json.tmp.87484.1755411264161",
+    "components/demo/IOSFeatureDemo.tsx.tmp.87484.1755414141847",
+    "components/demo/IOSFeatureDemo.tsx.tmp.87484.1755414129147",
+    "components/demo/IOSFeatureDemo.tsx.tmp.87484.1755414117452",
+    "components/ui/PullToRefresh.tsx",
+    "hooks/usePullToRefresh.ts",
+    "components/ui/InputDialog.tsx.tmp.87484.1755414018075",
+    "components/ui/ConfirmDialog.tsx.tmp.87484.1755414003483",
+    "components/demo/IOSFeatureDemo.tsx",
+    "components/demo",
+    "components/ui/IOSButton.tsx",
+    "lib/haptic.ts",
+    "knowledge/analysis/ios-compatibility-audit.md",
     "knowledge/research/ios-pwa-development.md",
-    "components/MobileNavigation.tsx.tmp.87484.1755410681340",
     "knowledge/features/pwa-implementation.md",
-    "knowledge/features",
     "knowledge/testing/coverage-report.md",
-    "knowledge/testing",
     "knowledge/performance/metrics-2024-08.md",
     "knowledge/architecture/current-state.md",
-    "__tests__/store/timeboxStore.test.ts.tmp.87484.1755408645345",
-    "__tests__/store/timeboxStore.test.ts.tmp.87484.1755408452502",
-    "app/layout.tsx.tmp.87484.1755408119307",
-    "app/layout.tsx.tmp.87484.1755408111010",
-    "components/PWAInstallPrompt.tsx",
-    "public/workbox-b878f56b.js",
-    "public/sw.js",
     "coverage/lcov-report/sort-arrow-sprite.png",
     "coverage/lcov-report/favicon.png",
     "knowledge/README.md",
@@ -221,7 +222,6 @@
     "knowledge/research/technologies/testing-strategy.md",
     "knowledge/roadmap/features/pwa-enhancements.md",
     "knowledge/research/optimizations/pwa-ios-optimization.md",
-    "knowledge/roadmap/improvements/performance-optimization.md",
-    "knowledge/research/optimizations/performance-analysis.md"
+    "knowledge/roadmap/improvements/performance-optimization.md"
   ]
 }

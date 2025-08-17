@@ -35,7 +35,7 @@ export function RecurrenceDialog({
   }
 
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-safe">
       <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4 border">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
