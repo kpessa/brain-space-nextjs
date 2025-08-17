@@ -214,7 +214,7 @@ export function useGoogleCalendar() {
 
   // Get debug info
   const getDebugInfo = async () => {
-    const tokenInfo = await googleCalendarService.getTokenInfo()
+    const tokenInfo = await googleCalendarService.getStoredAccessToken()
     const initStatus = googleCalendarService.getInitStatus()
     
     return {

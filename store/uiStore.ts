@@ -8,6 +8,15 @@ interface Toast {
   duration?: number
 }
 
+// Extended toast interface for component usage
+export interface ToastState {
+  toasts: Toast[]
+  success: (message: string, duration?: number) => void
+  error: (message: string, duration?: number) => void
+  warning: (message: string, duration?: number) => void
+  info: (message: string, duration?: number) => void
+}
+
 interface UIState {
   // Theme
   theme: 'light' | 'dark' | 'system'
@@ -43,6 +52,12 @@ interface UIState {
   setGlobalLoading: (loading: boolean) => void
   setAIProvider: (provider: string) => void
   toggleAIDebugMode: () => void
+  
+  // Convenience toast methods
+  success: (message: string, duration?: number) => void
+  error: (message: string, duration?: number) => void
+  warning: (message: string, duration?: number) => void
+  info: (message: string, duration?: number) => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -107,6 +122,23 @@ export const useUIStore = create<UIState>()(
       
       toggleAIDebugMode: () =>
         set((state) => ({ aiDebugMode: !state.aiDebugMode })),
+
+      // Convenience toast methods
+      success: (message, duration) => {
+        get().addToast({ type: 'success', message, duration })
+      },
+      
+      error: (message, duration) => {
+        get().addToast({ type: 'error', message, duration })
+      },
+      
+      warning: (message, duration) => {
+        get().addToast({ type: 'warning', message, duration })
+      },
+      
+      info: (message, duration) => {
+        get().addToast({ type: 'info', message, duration })
+      },
     }),
     {
       name: 'ui-store',

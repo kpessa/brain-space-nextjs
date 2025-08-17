@@ -32,7 +32,11 @@ function NoSSR({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-export default function CalendarClient() {
+interface CalendarClientProps {
+  userId: string
+}
+
+export default function CalendarClient({ userId }: CalendarClientProps) {
   const router = useRouter()
   const { selectedCalendarIds, setIsAuthenticated } = useCalendarStore()
   const [isClient, setIsClient] = useState(false)

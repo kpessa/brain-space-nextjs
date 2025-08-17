@@ -1,6 +1,15 @@
 import { act, renderHook } from '@testing-library/react'
 import { useTodoStore, Todo, TodoType, TodoStatus, TodoSourceType } from '@/store/todoStore'
 
+// Helper function to create minimal todo data with required fields
+const createMinimalTodo = (overrides: any = {}) => ({
+  title: 'Default title',
+  status: 'pending' as TodoStatus,
+  type: 'task' as TodoType,
+  sourceType: 'manual' as TodoSourceType,
+  ...overrides,
+})
+
 describe('TodoStore', () => {
   beforeEach(() => {
     // Reset store state before each test
@@ -68,9 +77,9 @@ describe('TodoStore', () => {
     it('adds todo with minimal fields and applies defaults', () => {
       const { result } = renderHook(() => useTodoStore())
       
-      const todoData = {
+      const todoData = createMinimalTodo({
         title: 'Simple task',
-      }
+      })
       
       let createdTodo: Todo
       
@@ -91,20 +100,20 @@ describe('TodoStore', () => {
       
       // Add delay between todo creation to ensure unique timestamps
       act(() => {
-        result.current.addTodo({ title: 'Todo 1' })
+        result.current.addTodo(createMinimalTodo({ title: 'Todo 1' }))
       })
       
       // Wait 1ms to ensure different timestamps
       await new Promise(resolve => setTimeout(resolve, 1))
       
       act(() => {
-        result.current.addTodo({ title: 'Todo 2' })
+        result.current.addTodo(createMinimalTodo({ title: 'Todo 2' }))
       })
       
       await new Promise(resolve => setTimeout(resolve, 1))
       
       act(() => {
-        result.current.addTodo({ title: 'Todo 3' })
+        result.current.addTodo(createMinimalTodo({ title: 'Todo 3' }))
       })
       
       expect(result.current.todos).toHaveLength(3)
@@ -121,10 +130,10 @@ describe('TodoStore', () => {
       
       act(() => {
         todoTypes.forEach((type, index) => {
-          result.current.addTodo({
+          result.current.addTodo(createMinimalTodo({
             title: `${type} example`,
             type,
-          })
+          }))
         })
       })
       
@@ -142,12 +151,12 @@ describe('TodoStore', () => {
       const { result } = renderHook(() => useTodoStore())
       
       act(() => {
-        result.current.addTodo({
+        result.current.addTodo(createMinimalTodo({
           title: 'Original Todo',
           type: 'task',
           status: 'pending',
           importance: 5,
-        })
+        }))
       })
     })
 
@@ -411,12 +420,12 @@ describe('TodoStore', () => {
       const { result } = renderHook(() => useTodoStore())
       
       act(() => {
-        result.current.addTodo({ title: 'Pending 1', status: 'pending' })
-        result.current.addTodo({ title: 'Completed 1', status: 'completed' })
-        result.current.addTodo({ title: 'In Progress', status: 'in_progress' })
-        result.current.addTodo({ title: 'Completed 2', status: 'completed' })
-        result.current.addTodo({ title: 'Deferred', status: 'deferred' })
-        result.current.addTodo({ title: 'Cancelled', status: 'cancelled' })
+        result.current.addTodo(createMinimalTodo({ title: 'Pending 1', status: 'pending' }))
+        result.current.addTodo(createMinimalTodo({ title: 'Completed 1', status: 'completed' }))
+        result.current.addTodo(createMinimalTodo({ title: 'In Progress', status: 'in_progress' }))
+        result.current.addTodo(createMinimalTodo({ title: 'Completed 2', status: 'completed' }))
+        result.current.addTodo(createMinimalTodo({ title: 'Deferred', status: 'deferred' }))
+        result.current.addTodo(createMinimalTodo({ title: 'Cancelled', status: 'cancelled' }))
       })
     })
 
@@ -454,8 +463,8 @@ describe('TodoStore', () => {
       
       act(() => {
         useTodoStore.setState({ todos: [] })
-        result.current.addTodo({ title: 'Pending', status: 'pending' })
-        result.current.addTodo({ title: 'In Progress', status: 'in_progress' })
+        result.current.addTodo(createMinimalTodo({ title: 'Pending', status: 'pending' }))
+        result.current.addTodo(createMinimalTodo({ title: 'In Progress', status: 'in_progress' }))
       })
       
       act(() => {
@@ -625,7 +634,7 @@ describe('TodoStore', () => {
       const { result } = renderHook(() => useTodoStore())
       
       act(() => {
-        result.current.addTodo({ title: 'No Tags Todo' })
+        result.current.addTodo(createMinimalTodo({ title: 'No Tags Todo' }))
       })
       
       act(() => {

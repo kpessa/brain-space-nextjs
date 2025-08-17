@@ -38,7 +38,7 @@ export function UpdateExportModal({ isOpen, onClose }: UpdateExportModalProps) {
   const dateRange = useMemo(() => {
     const now = new Date()
     let start: Date
-    let end: Date = endOfDay(now)
+    let end: Date = dayjs(now).endOf('day').toDate()
     
     switch (timeFrame) {
       case '2weeks':

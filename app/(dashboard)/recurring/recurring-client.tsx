@@ -13,6 +13,7 @@ import {
   calculateCurrentStreak,
   isRecurringTaskCompletedForDate,
 } from '@/lib/recurringTasks'
+import dayjs from 'dayjs'
 import { 
   CheckCircle2, 
   Circle, 
@@ -23,7 +24,6 @@ import {
   Clock,
   Target,
 } from 'lucide-react'
-import dayjs from 'dayjs'
 import type { Node } from '@/types/node'
 import type { RecurrencePattern } from '@/types/recurrence'
 
@@ -373,7 +373,7 @@ export default function RecurringClient({ userId }: { userId: string }) {
                 }
                 return dayMap[day]
               }),
-              startDate: selectedNode.createdAt?.split('T')[0] || format(new Date(), 'yyyy-MM-dd'),
+              startDate: selectedNode.createdAt?.split('T')[0] || dayjs().format('YYYY-MM-DD'),
               endDate: selectedNode.recurrence.endDate,
             } : undefined}
             currentTaskType={selectedNode.taskType}

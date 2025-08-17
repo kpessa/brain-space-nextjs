@@ -19,6 +19,7 @@ export interface RoutineEntry {
   mit?: string // Most Important Task
   onePercentImprovement?: string
   distractionsToMinimize?: { distraction: string; limit: string }[]
+  isComplete?: boolean // Adding isComplete property referenced in stores
 
   createdAt: string
   updatedAt: string

@@ -30,7 +30,11 @@ const GoogleIcon = () => (
   </svg>
 )
 
-export default function CalendarSettingsClient() {
+interface CalendarSettingsClientProps {
+  userId: string
+}
+
+export default function CalendarSettingsClient({ userId }: CalendarSettingsClientProps) {
   const { selectedCalendarIds, toggleCalendarSelection } = useCalendarStore()
   const { 
     isConnected,
@@ -41,12 +45,6 @@ export default function CalendarSettingsClient() {
   } = useGoogleCalendar()
   const [availableCalendars, setAvailableCalendars] = useState<any[]>([])
 
-  useEffect(() => {
-    if (isConnected) {
-      loadCalendars()
-    }
-  }, [isConnected, loadCalendars])
-
   const loadCalendars = useCallback(async () => {
     try {
       const calendars = await getCalendars()
@@ -55,6 +53,12 @@ export default function CalendarSettingsClient() {
       // Failed to load calendars
     }
   }, [getCalendars])
+
+  useEffect(() => {
+    if (isConnected) {
+      loadCalendars()
+    }
+  }, [isConnected, loadCalendars])
 
   const handleGoogleConnect = async () => {
     const success = await connect()

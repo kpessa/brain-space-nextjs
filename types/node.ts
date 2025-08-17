@@ -76,6 +76,7 @@ export interface Node {
 
   title?: string
   description?: string
+  content?: string // Adding content property that's referenced in components
 
   // Aliases (optional)
   aliases?: string[]

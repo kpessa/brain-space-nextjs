@@ -10,7 +10,8 @@ describe('TimeboxStore', () => {
       timeSlots: [],
       draggedTask: null,
       hoveredSlotId: null,
-      calendarEvents: [],
+      isLoading: false,
+      error: null,
     })
   })
 

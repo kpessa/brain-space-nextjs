@@ -55,10 +55,23 @@ export interface BrainDumpNode {
   height?: number
   data: {
     label: string
+    type?: string
     category?: string
+    description?: string
+    tags?: string[]
+    urgency?: number
+    importance?: number
+    dueDate?: string
+    confidence?: number
+    keywords?: string[]
     isCollapsed?: boolean
+    nodeType?: string
+    sourceText?: string
+    textPosition?: { start: number; end: number }
     children?: string[]
+    parent?: string
     parentId?: string
+    isPersonal?: boolean
     originalText?: string
     aiGenerated?: boolean
     style?: NodeStyle
@@ -73,10 +86,7 @@ export interface BrainDumpNode {
     instances?: string[] // IDs of instance nodes (for prototypes)
     hasTopicBrainDump?: boolean // True if this node has an associated topic brain dump
     topicBrainDumpId?: string // ID of the associated topic brain dump
-    importance?: number // Importance value (0-10 scale, stored as log value)
-    urgency?: number // Urgency value (0-10 scale, stored as log value)
     priorityMode?: 'simple' | 'advanced' // Priority input mode (default: 'simple')
-    dueDate?: string // ISO date string for task due date
     dueDateMode?: 'none' | 'specific' | 'relative' // Due date input mode
     autoUrgencyFromDueDate?: boolean // Auto-calculate urgency from due date
     timeboxStartTime?: string // ISO timestamp for when task is scheduled

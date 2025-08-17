@@ -308,17 +308,17 @@ function NodeCreateModal({ isOpen, onClose, userId }: NodeCreateModalProps) {
 
 interface NodeCardProps {
   node: Node
-  onCreateChild?: () => void
-  onCreateParent?: () => void
+  onCreateChild?: (node: Node) => void
+  onCreateParent?: (node: Node) => void
   onNodeClick?: (node: Node) => void
   isSelected?: boolean
-  onSelect?: () => void
+  onSelect?: (nodeId: string, selected: boolean) => void
   selectMode?: boolean
   userId: string
   userName?: string
 }
 
-function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected = false, onSelect, selectMode = false, userId }: NodeCardProps) {
+function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected = false, onSelect, selectMode = false, userId, userName }: NodeCardProps) {
   const updateNode = useNodesStore(state => state.updateNode)
   const deleteNode = useNodesStore(state => state.deleteNode)
   const getNodeChildren = useNodesStore(state => state.getNodeChildren)

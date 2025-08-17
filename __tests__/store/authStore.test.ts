@@ -544,6 +544,8 @@ describe('AuthStore', () => {
         email: 'test@example.com',
         displayName: 'Test User',
         photoURL: 'https://example.com/avatar.jpg',
+        phoneNumber: null, // Adding missing property
+        providerId: 'firebase', // Adding missing property
         emailVerified: true,
         isAnonymous: false,
         metadata: {
