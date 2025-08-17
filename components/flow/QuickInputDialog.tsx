@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { X, Zap } from '@/lib/icons'
+import { useFocusTrapWithRef } from '@/hooks/useFocusTrap'
 import { Button } from '@/components/ui/Button'
 import type { BrainDumpNode } from '@/store/braindumpStore'
 
@@ -36,6 +37,10 @@ export function QuickInputDialog({ isOpen, onClose, onSubmit, position }: QuickI
   const [input, setInput] = useState('')
   const [thoughts, setThoughts] = useState<string[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  
+  // Apply focus trap to the dialog
+  useFocusTrapWithRef(dialogRef, isOpen)
 
   useEffect(() => {
     if (isOpen && textareaRef.current) {
@@ -108,16 +113,24 @@ export function QuickInputDialog({ isOpen, onClose, onSubmit, position }: QuickI
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl mx-4">
+      <div 
+        ref={dialogRef}
+        className="bg-white rounded-lg shadow-2xl w-full max-w-2xl mx-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quick-input-dialog-title"
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-yellow-500" />
-            <h3 className="font-semibold text-lg">Quick Brain Dump</h3>
+            <h3 id="quick-input-dialog-title" className="font-semibold text-lg">Quick Brain Dump</h3>
           </div>
           <button
             onClick={onClose}
             className="p-1 hover:bg-gray-100 rounded transition-colors"
+            aria-label="Close"
+            data-close-button
           >
             <X className="w-4 h-4" />
           </button>

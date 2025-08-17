@@ -81,7 +81,7 @@ export class GoogleCalendarService {
 
         this.gapiLoaded()
       } catch (error) {
-        console.error('Failed to load GAPI script:', error)
+        // Failed to load GAPI script
         this.gapiInited = false
       }
     } else {
@@ -99,7 +99,7 @@ export class GoogleCalendarService {
         await new Promise(resolve => setTimeout(resolve, 500))
         this.gisLoaded()
       } catch (error) {
-        console.error('Failed to load GIS script:', error)
+        // Failed to load GIS script
         this.gisInited = false
       }
     } else {
@@ -128,7 +128,7 @@ export class GoogleCalendarService {
 
   private gapiLoaded() {
     if (!window.gapi) {
-      console.error('GAPI not loaded')
+      throw new Error('GAPI not loaded')
       return
     }
 
@@ -143,11 +143,11 @@ export class GoogleCalendarService {
         this.gapiInited = true
         this.maybeEnableButtons()
       } catch (error) {
-        console.error('Failed to initialize GAPI client:', error)
+        // Failed to initialize GAPI client
         this.gapiInited = false
       }
     }, (error: any) => {
-      console.error('Failed to load GAPI client:', error)
+      // Failed to load GAPI client
       this.gapiInited = false
     })
   }
@@ -156,7 +156,7 @@ export class GoogleCalendarService {
     try {
       // Check if Google Identity Services is available
       if (!window.google?.accounts?.oauth2) {
-        console.error('[GoogleCalendar] Google Identity Services not available on window.google.accounts.oauth2')
+        throw new Error('Google Identity Services not available')
         this.gisInited = false
         return
       }
@@ -169,7 +169,7 @@ export class GoogleCalendarService {
       this.gisInited = true
       this.maybeEnableButtons()
     } catch (error) {
-      console.error('Failed to initialize GIS token client:', error)
+      // Failed to initialize GIS token client
       this.gisInited = false
     }
   }
@@ -220,7 +220,7 @@ export class GoogleCalendarService {
     if (data.expiresAt) {
       const expiresAt = data.expiresAt.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt)
       if (expiresAt < new Date()) {
-        console.log('[GoogleCalendar] Stored token has expired')
+        // Stored token has expired
         return null
       }
     }
@@ -243,7 +243,7 @@ export class GoogleCalendarService {
       try {
         // Test if token is still valid
         await window.gapi.client.calendar.calendarList.list({ maxResults: 1 })
-        console.log('[GoogleCalendar] Using valid stored token')
+        // Using valid stored token
         return true
       } catch (error: any) {
         // Token is invalid or expired, clear it
@@ -279,7 +279,7 @@ export class GoogleCalendarService {
     return new Promise(resolve => {
       this.tokenClient.callback = async (resp: any) => {
         if (resp.error) {
-          console.error('Token error:', resp.error)
+          // Token error
           resolve(false)
           return
         }
@@ -329,11 +329,11 @@ export class GoogleCalendarService {
       this.calendars = response.result.items || []
       return this.calendars
     } catch (error: any) {
-      console.error('Error listing calendars:', error)
+      // Error listing calendars
       
       // If we get a 401, it means our token is invalid
       if (error.status === 401) {
-        console.log('[GoogleCalendar] Token invalid, clearing stored token')
+        // Token invalid, clearing stored token
         // Clear the invalid token
         const userId = await this.getCurrentUserId()
         if (userId) {
@@ -381,7 +381,7 @@ export class GoogleCalendarService {
 
       return response.result.items || []
     } catch (error) {
-      console.error('Error listing events:', error)
+      // Error listing events
       return []
     }
   }
@@ -398,7 +398,7 @@ export class GoogleCalendarService {
 
       return response.result
     } catch (error) {
-      console.error('Error creating event:', error)
+      // Error creating event
       return null
     }
   }
@@ -417,7 +417,7 @@ export class GoogleCalendarService {
 
       return response.result
     } catch (error) {
-      console.error('Error updating event:', error)
+      // Error updating event
       return null
     }
   }
@@ -431,7 +431,7 @@ export class GoogleCalendarService {
 
       return true
     } catch (error) {
-      console.error('Error deleting event:', error)
+      // Error deleting event
       return false
     }
   }

@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { X } from '@/lib/icons'
+import { useFocusTrapWithRef } from '@/hooks/useFocusTrap'
 import { Button } from './Button'
 
 interface ConfirmDialogProps {
@@ -25,6 +26,11 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  
+  // Apply focus trap to the dialog
+  useFocusTrapWithRef(dialogRef, isOpen)
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -55,15 +61,23 @@ export function ConfirmDialog({
       />
 
       {/* Dialog */}
-      <div className="relative bg-card rounded-lg shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200 border">
+      <div 
+        ref={dialogRef}
+        className="relative bg-card rounded-lg shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200 border"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
+      >
         <button
           onClick={onCancel}
           className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Close"
+          data-close-button
         >
           <X className="w-5 h-5" />
         </button>
 
-        <h3 className="text-lg font-semibold mb-2 text-foreground">
+        <h3 id="confirm-dialog-title" className="text-lg font-semibold mb-2 text-foreground">
           {title}
         </h3>
         <p className="text-muted-foreground mb-6">

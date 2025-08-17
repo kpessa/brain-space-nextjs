@@ -25,12 +25,8 @@ export class TimeboxService {
     date: string
   ): Promise<{ slots: Record<string, TimeboxTask[]>; intervalMinutes?: number } | null> {
     if (!userId) {
-      console.warn('TimeboxService: loadTimeboxData called without userId')
       return null
     }
-
-    console.group('🔍 TIMEBOX SERVICE: loadTimeboxData called')
-    console.log('Parameters:', { userId, date })
 
     try {
       const { db, collection, query, where, getDocs } = await getFirebase()
@@ -41,31 +37,18 @@ export class TimeboxService {
       )
       
       const timeboxDoc = await getDocs(timeboxQuery)
-      console.log('📄 Query result - document count:', timeboxDoc.docs.length)
-
       if (!timeboxDoc.empty) {
         const data = timeboxDoc.docs[0].data() as TimeboxData
-        console.log('✅ Found existing timebox data:', {
-          docId: timeboxDoc.docs[0].id,
-          userId: data.userId,
-          date: data.date,
-          slotCount: Object.keys(data.slots || {}).length,
-          intervalMinutes: data.intervalMinutes,
-        })
         
         return {
           slots: data.slots || {},
           intervalMinutes: data.intervalMinutes
         }
       } else {
-        console.log('📭 No existing data found for this date')
         return null
       }
     } catch (error) {
-      console.error('❌ Error loading timebox data:', error)
       throw error
-    } finally {
-      console.groupEnd()
     }
   }
 
@@ -95,7 +78,6 @@ export class TimeboxService {
       console.log('🕒 Detected interval from slots:', detectedInterval, 'minutes')
     } else if (!detectedInterval) {
       detectedInterval = 120 // Default fallback
-      console.log('🕒 Using default interval:', detectedInterval, 'minutes')
     }
     
     try {
@@ -107,12 +89,9 @@ export class TimeboxService {
         if (slot.tasks.length > 0) {
           slotsData[slot.id] = slot.tasks
           totalTasksToSave += slot.tasks.length
-          console.log('📦 Slot', slot.id, 'has', slot.tasks.length, 'tasks')
         }
       })
       
-      console.log('📊 Total tasks to save:', totalTasksToSave)
-      console.log('📋 Slots with data:', Object.keys(slotsData))
 
       const { db, doc, collection, query, where, getDocs, setDoc, updateDoc, serverTimestamp } = await getFirebase()
       
@@ -133,17 +112,13 @@ export class TimeboxService {
         where('date', '==', date)
       )
       const existingDoc = await getDocs(existingDocQuery)
-      console.log('🔍 Checking for existing document - found:', existingDoc.docs.length, 'documents')
 
       if (existingDoc.empty) {
-        console.log('🆕 Creating new document')
         await setDoc(docRef, {
           ...timeboxData,
           createdAt: serverTimestamp()
         })
-        console.log('✅ Document created successfully')
       } else {
-        console.log('📝 Updating existing document:', existingDoc.docs[0].id)
         await updateDoc(docRef, {
           userId,
           date,
@@ -151,10 +126,8 @@ export class TimeboxService {
           intervalMinutes: detectedInterval,
           updatedAt: serverTimestamp(),
         })
-        console.log('✅ Document updated successfully')
       }
       
-      console.log('🎉 Save operation completed successfully')
     } catch (error) {
       console.error('❌ Error saving timebox data:', error)
       throw error
@@ -184,10 +157,8 @@ export class TimeboxService {
       
       if (!timeboxDoc.empty) {
         await deleteDoc(timeboxDoc.docs[0].ref)
-        console.log('✅ Timebox data deleted successfully')
       }
     } catch (error) {
-      console.error('❌ Error deleting timebox data:', error)
       throw error
     }
   }

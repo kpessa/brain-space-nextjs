@@ -115,7 +115,7 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
           }
         }
       } catch (error) {
-        console.error('Failed to check recurrence:', error)
+        // Failed to check recurrence
       } finally {
         setIsCheckingRecurrence(false)
       }
@@ -192,7 +192,7 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
         }
       }
     } catch (error) {
-      console.error('Failed to check recurrence:', error)
+      // Failed to check recurrence
     } finally {
       setIsCheckingRecurrence(false)
     }
@@ -267,7 +267,7 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
         setPreview(nodeData)
       }
     } catch (error) {
-      console.error('Failed to process input:', error)
+      // Failed to process input
       setError(error instanceof Error ? error.message : 'Failed to process input')
     } finally {
       setIsProcessing(false)
@@ -302,7 +302,7 @@ export function QuickAddModal({ isOpen, onClose, userId }: QuickAddModalProps) {
       
       onClose()
     } catch (error) {
-      console.error('Failed to create node:', error)
+      // Failed to create node
       setError(error instanceof Error ? error.message : 'Failed to create node')
     }
   }

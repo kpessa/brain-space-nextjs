@@ -85,7 +85,7 @@ export function usePullToRefresh({
       try {
         await onRefresh()
       } catch (error) {
-        console.error('Pull to refresh error:', error)
+        // Pull to refresh error
         triggerHaptic('error')
       } finally {
         setIsRefreshing(false)

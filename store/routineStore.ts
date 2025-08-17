@@ -79,7 +79,6 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
         set({ progress: newProgress })
       }
     } catch (error) {
-      console.error('Error initializing progress:', error)
       set({ error: (error as Error).message })
     } finally {
       set({ isLoading: false })
@@ -113,7 +112,6 @@ export const useRoutineStore = create<RoutineStore>((set, get) => ({
       const todayEntry = entries.find(entry => dayjs(entry.date).isSame(dayjs(), 'day'))
       set({ currentEntry: todayEntry || null })
     } catch (error) {
-      console.error('Error loading entries:', error)
       set({ error: (error as Error).message })
     } finally {
       set({ isLoading: false })

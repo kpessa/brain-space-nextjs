@@ -79,7 +79,7 @@ export function useCalendarConnection() {
       return success
     },
     onError: (error) => {
-      console.error('Failed to connect to Google Calendar:', error)
+      // Failed to connect to Google Calendar
     },
   })
   

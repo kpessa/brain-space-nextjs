@@ -342,7 +342,7 @@ export const useXPStore = create<XPStore>()(
             })
           }
         } catch (error) {
-          console.error('Error loading XP progress:', error)
+          // Error loading XP progress - use initial values
         } finally {
           set({ isLoading: false })
         }
@@ -361,7 +361,7 @@ export const useXPStore = create<XPStore>()(
             userProgress
           )
         } catch (error) {
-          console.error('Error saving XP progress:', error)
+          // Error saving XP progress - will retry on next operation
         }
       },
       

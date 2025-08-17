@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { X } from '@/lib/icons'
+import { useFocusTrapWithRef } from '@/hooks/useFocusTrap'
 import { Button } from './Button'
 import { Input } from './Input'
 
@@ -30,6 +31,10 @@ export function InputDialog({
 }: InputDialogProps) {
   const [value, setValue] = useState(defaultValue)
   const inputRef = useRef<HTMLInputElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  
+  // Apply focus trap to the dialog
+  useFocusTrapWithRef(dialogRef, isOpen)
 
   useEffect(() => {
     if (isOpen) {
@@ -71,15 +76,23 @@ export function InputDialog({
       />
 
       {/* Dialog */}
-      <div className="relative bg-card rounded-lg shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200 border">
+      <div 
+        ref={dialogRef}
+        className="relative bg-card rounded-lg shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200 border"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="input-dialog-title"
+      >
         <button
           onClick={onCancel}
           className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Close"
+          data-close-button
         >
           <X className="w-5 h-5" />
         </button>
 
-        <h3 className="text-lg font-semibold mb-4 text-foreground">
+        <h3 id="input-dialog-title" className="text-lg font-semibold mb-4 text-foreground">
           {title}
         </h3>
 

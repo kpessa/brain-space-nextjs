@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { Modal } from '@/components/ui/Modal'
 import dayjs from 'dayjs'
 import { 
   Calendar, 
@@ -183,71 +184,61 @@ export function CalendarStatusDialog({ isOpen, onClose }: CalendarStatusDialogPr
     }))
   }
 
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex justify-between items-start">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Calendar Status & PTO Planning</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Analyze your calendar and get strategic PTO recommendations
-              </p>
-            </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Calendar Status & PTO Planning"
+      size="xl"
+    >
+      <div className="space-y-6">
+        {/* Description */}
+        <p className="text-sm text-muted-foreground">
+          Analyze your calendar and get strategic PTO recommendations
+        </p>
+        
+        {/* Time Range Selector */}
+        <div className="flex gap-2 flex-wrap">
+          {TIME_PRESETS.map(preset => (
             <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              key={preset.value}
+              onClick={() => setTimePreset(preset.value)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                timePreset === preset.value
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+              }`}
             >
-              <X className="w-5 h-5" />
+              {preset.label}
             </button>
-          </div>
-          
-          {/* Time Range Selector */}
-          <div className="mt-4 flex gap-2">
-            {TIME_PRESETS.map(preset => (
-              <button
-                key={preset.value}
-                onClick={() => setTimePreset(preset.value)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  timePreset === preset.value
-                    ? 'bg-brain-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {preset.label}
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {isLoading && (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brain-600"></div>
-            </div>
-          )}
+        <div className="space-y-6">
+        {isLoading && (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        )}
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-red-600" />
-                <p className="text-red-800">{error}</p>
+        {error && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-destructive" />
+              <p className="text-destructive">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {status && !isLoading && (
+          <div className="space-y-6">
+            {/* Summary */}
+            <div className="bg-primary/5 rounded-lg p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                <h3 className="text-lg font-semibold">Summary</h3>
               </div>
-            </div>
-          )}
-
-          {status && !isLoading && (
-            <div className="space-y-6">
-              {/* Summary */}
-              <div className="bg-brain-50 rounded-lg p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="w-5 h-5 text-brain-600" />
-                  <h3 className="text-lg font-semibold">Summary</h3>
-                </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                   <div>
                     <p className="text-sm text-gray-600">Period</p>
@@ -266,15 +257,15 @@ export function CalendarStatusDialog({ isOpen, onClose }: CalendarStatusDialogPr
                     <p className="font-medium">{status.summary.focusTimeAnalysis.busiestDayOfWeek}</p>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  {status.summary.keyInsights.map((insight, idx) => (
-                    <div key={idx} className="flex items-start gap-2">
-                      <Info className="w-4 h-4 text-brain-600 mt-0.5" />
-                      <p className="text-sm text-gray-700">{insight}</p>
-                    </div>
-                  ))}
-                </div>
+              <div className="space-y-2">
+                {status.summary.keyInsights.map((insight, idx) => (
+                  <div key={idx} className="flex items-start gap-2">
+                    <Info className="w-4 h-4 text-primary mt-0.5" />
+                    <p className="text-sm text-muted-foreground">{insight}</p>
+                  </div>
+                ))}
               </div>
+            </div>
 
               {/* Existing PTO */}
               <div className="border border-gray-200 rounded-lg">
@@ -504,23 +495,11 @@ export function CalendarStatusDialog({ isOpen, onClose }: CalendarStatusDialogPr
                     </span>
                   ))}
                 </div>
-              </div>
             </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="p-6 border-t border-gray-200 bg-gray-50">
-          <div className="flex justify-end">
-            <button
-              onClick={onClose}
-              className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
-            >
-              Close
-            </button>
           </div>
+        )}
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }

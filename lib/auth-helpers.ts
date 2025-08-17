@@ -109,17 +109,22 @@ export async function setAuthCookie(token: string) {
     path: '/',
   }
   
-  console.log('[setAuthCookie] Setting cookie with options:', {
-    name: AUTH_COOKIE_NAME,
-    secure: cookieOptions.secure,
-    sameSite: cookieOptions.sameSite,
-    maxAge: cookieOptions.maxAge,
-    path: cookieOptions.path,
-    tokenLength: token.length
-  })
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[setAuthCookie] Setting cookie with options:', {
+      name: AUTH_COOKIE_NAME,
+      secure: cookieOptions.secure,
+      sameSite: cookieOptions.sameSite,
+      maxAge: cookieOptions.maxAge,
+      path: cookieOptions.path,
+      tokenLength: token.length
+    })
+  }
   
   cookieStore.set(AUTH_COOKIE_NAME, token, cookieOptions)
-  console.log('[setAuthCookie] Cookie set operation completed')
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[setAuthCookie] Cookie set operation completed')
+  }
 }
 
 /**

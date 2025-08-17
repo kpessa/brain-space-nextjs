@@ -71,7 +71,7 @@ export function useGoogleCalendar() {
           })
         }
       } catch (error) {
-        console.error('[useGoogleCalendar] Error checking connection status:', error)
+        // Error checking connection status
         setState({
           isConnected: false,
           isLoading: false,
@@ -102,7 +102,7 @@ export function useGoogleCalendar() {
       
       return success
     } catch (error) {
-      console.error('[useGoogleCalendar] Connect error:', error)
+      // Connect error
       setState(prev => ({
         ...prev,
         isConnected: false,
@@ -128,7 +128,7 @@ export function useGoogleCalendar() {
         hasError: false,
       }))
     } catch (error) {
-      console.error('[useGoogleCalendar] Disconnect error:', error)
+      // Disconnect error
       setState(prev => ({
         ...prev,
         isLoading: false,
@@ -156,7 +156,7 @@ export function useGoogleCalendar() {
       
       return success
     } catch (error) {
-      console.error('[useGoogleCalendar] Refresh error:', error)
+      // Refresh error
       setState(prev => ({
         ...prev,
         isLoading: false,

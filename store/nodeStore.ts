@@ -100,7 +100,6 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
         error: null,
       })
     } catch (error) {
-      console.error('Error loading nodes:', error)
       set({
         error: (error as Error).message,
         isLoading: false,
@@ -173,7 +172,6 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       return nodeId
     } catch (error) {
       // 4. ROLLBACK: Remove failed node from UI
-      console.error('Error creating node, rolling back:', error)
       const rollbackNodes = get().nodes.filter(n => n.id !== nodeId)
       set({ 
         nodes: rollbackNodes, 
@@ -229,7 +227,6 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       set({ nodes: successNodes, error: null })
     } catch (error) {
       // 4. ROLLBACK: Restore original state on failure
-      console.error('Error updating node, rolling back:', error)
       const rollbackNodes = get().nodes.map(n => 
         n.id === nodeId ? originalNode : n
       )
@@ -616,7 +613,6 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       
       return { success: true, actions: actionsPerformed }
     } catch (error) {
-      console.error('Error in unlinkNodes:', error)
       set({ error: (error as Error).message })
       throw error
     }

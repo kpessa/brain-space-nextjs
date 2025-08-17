@@ -34,7 +34,6 @@ export class CalendarService {
       const calendarList = await getCalendars()
       return calendarList as Calendar[]
     } catch (error) {
-      console.error('Error loading calendars:', error)
       throw new Error('Failed to load calendars')
     }
   }
@@ -87,7 +86,7 @@ export class CalendarService {
             },
           }))
         } catch (error) {
-          console.error(`Error loading events from calendar ${calendar.id}:`, error)
+          // Error loading events from calendar
           return [] // Return empty array on error
         }
       })
@@ -105,7 +104,6 @@ export class CalendarService {
 
       return allEvents
     } catch (error) {
-      console.error('Error loading calendar events:', error)
       throw new Error('Failed to load calendar events')
     }
   }

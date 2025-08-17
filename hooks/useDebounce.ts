@@ -91,7 +91,7 @@ export function useDebouncedFirebaseSave<T>(
       await saveFunction(dataToSave)
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Save failed'))
-      console.error('Firebase save error:', err)
+      // Firebase save error
     } finally {
       setIsSaving(false)
     }

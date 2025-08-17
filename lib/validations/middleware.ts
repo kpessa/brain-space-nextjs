@@ -148,7 +148,9 @@ export function validateResponse<T>(
     return { data: validated, error: null }
   } catch (error) {
     if (error instanceof ZodError) {
-      console.error('Response validation failed:', formatZodError(error))
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Response validation failed:', formatZodError(error))
+      }
       return {
         data: null,
         error: new Error('Response validation failed')
