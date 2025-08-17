@@ -7,7 +7,7 @@
     ],
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": false, // Disabled for rapid prototyping
+    "strict": false, // Gradual migration to strict mode in progress
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -16,7 +16,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "noImplicitAny": false, // Allow 'any' types
+    "noImplicitAny": false, // Will enable after fixing Jest types
     "strictNullChecks": false, // Relaxed null checks
     "strictFunctionTypes": false, // Relaxed function types
     "strictBindCallApply": false, // Relaxed bind/call/apply

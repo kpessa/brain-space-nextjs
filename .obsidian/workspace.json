@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "_knowledge/00-Overview/CURRENT_STATE.md",
+                "file": "_BRAIN-SPACE-NEXTJS.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "CURRENT_STATE"
+              "title": "_BRAIN-SPACE-NEXTJS"
             }
           }
         ],
@@ -183,19 +183,23 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "09fe0e7409549836",
+  "active": "44b6607c4c486624",
   "lastOpenFiles": [
-    "app/(auth)/login/login-client.tsx.tmp.363315.1755456123667",
-    "app/(auth)/login/login-client.tsx.tmp.363315.1755456104474",
-    "app/(auth)/login/login-client.tsx.tmp.363315.1755456028884",
-    "package.json.2508574996",
-    "pnpm-lock.yaml.3368155505",
-    "_tmp_424163_868ed6c3b07c74cdf7606f9b0535db53",
-    "components/StandupSummaryDialog.tsx.tmp.363315.1755453766194",
-    "components/calendar/CalendarStatusDialog.tsx.tmp.363315.1755453753789",
-    "components/ScheduleSettingsDialog.tsx.tmp.363315.1755453739495",
-    "app/(dashboard)/recurring/recurring-client.tsx.tmp.363315.1755453732388",
-    "components/TimeboxRecommendationsDialog.tsx.tmp.363315.1755453702802",
+    "components/ui/Modal.tsx.tmp.363315.1755457015565",
+    "components/ui/Modal.tsx.tmp.363315.1755457000568",
+    "components/ui/Modal.tsx.tmp.363315.1755456986902",
+    "hooks/useFocusTrap.ts",
+    "hooks/useFocusTrap.ts.tmp.363315.1755456972555",
+    "tsconfig.json.tmp.363315.1755456926829",
+    "tsconfig.json.tmp.363315.1755456887137",
+    "TYPESCRIPT_MIGRATION_PLAN.md",
+    "TYPESCRIPT_MIGRATION_PLAN.md.tmp.363315.1755456876870",
+    "tsconfig.strict.tsbuildinfo",
+    "tsconfig.strict.json",
+    "FIREBASE_ADMIN_SETUP.md",
+    "FIREBASE_ADMIN_SETUP.md.tmp.363315.1755456803544",
+    "_knowledge/00-Overview/CURRENT_STATE.md",
+    "_BRAIN-SPACE-NEXTJS.md",
     "_knowledge/00-Overview/ACTION_ITEMS.md",
     "_knowledge/07-Backups/CLAUDE.MD-2025-08-17-13-32.md",
     "_knowledge/00-Overview/AUDIT_SUMMARY.md",
@@ -205,7 +209,6 @@
     "CLAUDE.md",
     "_knowledge/00-Overview/MOCs/ARCHITECTURE_MOC.md",
     "AI_SETUP.md",
-    "_knowledge/00-Overview/CURRENT_STATE.md",
     "_knowledge/06-Reviews/COMPREHENSIVE-AUDIT-2025-08-17.md",
     "_knowledge/00-Overview/INDEX.md",
     "knowledge/CURRENT_FOCUS.md",
@@ -218,9 +221,6 @@
     "_knowledge/01-Research/Refactoring/AUDIT-2025-08-17.md",
     "_knowledge/01-Research/Performance/AUDIT-2025-08-17.md",
     "_knowledge/01-Research/Security/AUDIT-2025-08-17.md",
-    "knowledge/analysis/ios-compatibility-audit.md",
-    "knowledge/research/ios-pwa-development.md",
-    "knowledge/features/pwa-implementation.md",
     "coverage/lcov-report/sort-arrow-sprite.png",
     "coverage/lcov-report/favicon.png"
   ]

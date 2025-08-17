@@ -1,8 +1,9 @@
 'use client'
 
-import { ReactNode, useEffect } from 'react'
+import { ReactNode, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
+import { useFocusTrapWithRef } from '@/hooks/useFocusTrap'
 
 interface ModalProps {
   isOpen: boolean
@@ -21,23 +22,20 @@ export function Modal({
   size = 'md',
   showCloseButton = true 
 }: ModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null)
+  
+  // Apply focus trap to the modal
+  useFocusTrapWithRef(modalRef, isOpen)
+  
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose()
-      }
-    }
-
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape)
       document.body.style.overflow = 'hidden'
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEscape)
       document.body.style.overflow = 'unset'
     }
-  }, [isOpen, onClose])
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -57,20 +55,28 @@ export function Modal({
       />
       
       {/* Modal */}
-      <div className={cn(
-        'relative bg-card rounded-lg shadow-xl w-full border flex flex-col max-h-[90vh]',
-        sizeClasses[size]
-      )}>
+      <div 
+        ref={modalRef}
+        className={cn(
+          'relative bg-card rounded-lg shadow-xl w-full border flex flex-col max-h-[90vh]',
+          sizeClasses[size]
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? 'modal-title' : undefined}
+      >
         {/* Header */}
         {(title || showCloseButton) && (
           <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
             {title && (
-              <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+              <h2 id="modal-title" className="text-lg font-semibold text-foreground">{title}</h2>
             )}
             {showCloseButton && (
               <button
                 onClick={onClose}
                 className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Close"
+                data-close-button
               >
                 <span className="sr-only">Close</span>
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
