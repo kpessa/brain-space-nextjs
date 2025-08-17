@@ -25,10 +25,14 @@
             "id": "44b6607c4c486624",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "knowledge/CURRENT_FOCUS.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "CURRENT_FOCUS"
             }
           }
         ],
@@ -179,23 +183,24 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "09fe0e7409549836",
+  "active": "44b6607c4c486624",
   "lastOpenFiles": [
-    "knowledge/OPTIMIZATION_SUMMARY.md",
-    "store/optimizedTimeboxStore.ts.tmp.95476.1755396825047",
-    "store/optimizedTimeboxStore.ts.tmp.95476.1755396818829",
-    "store/timeboxStore.ts.tmp.95476.1755396787414",
-    "knowledge/performance/BUNDLE_OPTIMIZATION_2024.md",
-    "knowledge/performance",
-    "lib/icons.ts.tmp.44834.1755396042054",
-    "app/(dashboard)/calendar/calendar-client.tsx.tmp.44834.1755395955907",
-    "app/(dashboard)/calendar/calendar-client.tsx.tmp.44834.1755395947312",
-    "app/(dashboard)/journal/new/new-journal-client.tsx.tmp.44834.1755395640306",
-    "app/(dashboard)/journal/edit/[id]/edit-journal-client.tsx.tmp.44834.1755395632703",
-    "lib/icons.ts.tmp.44834.1755395574805",
+    "lib/icons.ts.tmp.71177.1755401816463",
+    "e2e/matrix-completed.spec.ts",
+    "components/matrix/NodeContextMenu.tsx.tmp.71177.1755401293572",
+    "components/matrix/NodeContextMenu.tsx.tmp.71177.1755401279860",
+    "playwright.config.ts.tmp.71177.1755400795268",
+    "playwright.config.ts.tmp.71177.1755400785973",
+    "playwright.config.ts.tmp.71177.1755400735066",
+    "e2e/matrix.spec.ts",
     "knowledge/README.md",
-    "knowledge/QUICK_START.md",
     "knowledge/CURRENT_FOCUS.md",
+    "app/(dashboard)/matrix/matrix-client.tsx.tmp.71177.1755400300622",
+    "components/matrix/NodeContextMenu.tsx",
+    "components/matrix",
+    "knowledge/OPTIMIZATION_SUMMARY.md",
+    "knowledge/performance/BUNDLE_OPTIMIZATION_2024.md",
+    "knowledge/QUICK_START.md",
     "knowledge/research/patterns/data-flow-patterns.md",
     "knowledge/guides/deployment.md",
     "knowledge/guides/setup.md",
@@ -215,7 +220,6 @@
     "knowledge/research/integrations/firebase-patterns.md",
     "knowledge/architecture/component-hierarchy.md",
     "knowledge/research/technologies/react-nextjs-patterns.md",
-    "knowledge/decisions/templates/adr-template.md",
-    "knowledge/architecture/data-flow.md"
+    "knowledge/decisions/templates/adr-template.md"
   ]
 }

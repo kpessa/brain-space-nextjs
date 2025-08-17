@@ -115,9 +115,12 @@ export interface Node {
   // Recurrence (optional)
   recurrence?: Recurrence
 
-  // Metadata (optional)
+  // Status and completion (optional)
+  status?: 'pending' | 'in-progress' | 'completed'
   completed?: boolean
   completedAt?: string
+  
+  // Timestamps (optional)
   createdAt?: string
   updatedAt?: string
   

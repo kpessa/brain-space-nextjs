@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { useNodesStore } from '@/store/nodeStore'
 import { Plus, AlertCircle, Star, Clock, Calendar } from '@/lib/icons'
 import { InputDialog } from '@/components/ui/InputDialog'
+import { NodeContextMenu } from '@/components/matrix/NodeContextMenu'
 
 // Dynamic import for drag and drop to avoid SSR issues
 const DragDropContext = dynamic(() => import('@hello-pangea/dnd').then(mod => ({ default: mod.DragDropContext })), { ssr: false })
@@ -59,7 +60,7 @@ const quadrants: Quadrant[] = [
 ]
 
 export default function MatrixClient({ userId }: { userId: string }) {
-  const { nodes, isLoading: loading, error, loadNodes, updateNode, createNode } = useNodesStore()
+  const { nodes, isLoading: loading, error, loadNodes, updateNode, createNode, deleteNode } = useNodesStore()
   const [quadrantNodes, setQuadrantNodes] = useState<Record<string, any[]>>({
     'urgent-important': [],
     'not-urgent-important': [],
@@ -68,6 +69,17 @@ export default function MatrixClient({ userId }: { userId: string }) {
   })
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [selectedQuadrant, setSelectedQuadrant] = useState<string>('')
+  
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    isOpen: boolean
+    position: { x: number; y: number }
+    node: any | null
+  }>({
+    isOpen: false,
+    position: { x: 0, y: 0 },
+    node: null
+  })
 
   useEffect(() => {
     loadNodes(userId)
@@ -83,6 +95,11 @@ export default function MatrixClient({ userId }: { userId: string }) {
     }
 
     nodes.forEach(node => {
+      // Skip completed tasks - they shouldn't appear in the matrix
+      if (node.completed || node.status === 'completed') {
+        return
+      }
+      
       const urgency = node.urgency || 5
       const importance = node.importance || 5
       
@@ -256,7 +273,15 @@ export default function MatrixClient({ userId }: { userId: string }) {
                                 snapshot.isDragging
                                   ? 'shadow-lg ring-2 ring-brain-500 opacity-90'
                                   : 'hover:shadow-md'
-                              }`}
+                              } ${contextMenu.node?.id === node.id ? 'ring-2 ring-brain-400' : ''}`}
+                              onContextMenu={(e) => {
+                                e.preventDefault()
+                                setContextMenu({
+                                  isOpen: true,
+                                  position: { x: e.clientX, y: e.clientY },
+                                  node: node
+                                })
+                              }}
                             >
                               <h4 className="font-medium text-gray-900">{node.title}</h4>
                               {node.description && (
@@ -302,6 +327,21 @@ export default function MatrixClient({ userId }: { userId: string }) {
             onCancel={() => {
               setShowAddDialog(false)
               setSelectedQuadrant('')
+            }}
+          />
+          
+          <NodeContextMenu
+            isOpen={contextMenu.isOpen}
+            position={contextMenu.position}
+            node={contextMenu.node}
+            onClose={() => setContextMenu({ isOpen: false, position: { x: 0, y: 0 }, node: null })}
+            onUpdateNode={async (nodeId, updates) => {
+              await updateNode(nodeId, updates)
+              setContextMenu({ isOpen: false, position: { x: 0, y: 0 }, node: null })
+            }}
+            onDeleteNode={async (nodeId) => {
+              await deleteNode(nodeId)
+              setContextMenu({ isOpen: false, position: { x: 0, y: 0 }, node: null })
             }}
           />
           </div>

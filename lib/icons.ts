@@ -132,7 +132,6 @@ export {
   TrendingDown,
   Loader,
   Loader2,
-  LucideIcon,
   
   // Medical & Transport
   Stethoscope,
@@ -204,5 +203,5 @@ export {
   type Icon as LucideIconType
 } from 'lucide-react'
 
-// Re-export commonly used icon types
-export type { LucideIcon } from 'lucide-react'
+// Re-export icon type with alias to avoid conflict
+export type LucideIcon = LucideIconType
