@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from './ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/Card'
-import { Brain, Sparkles, FileText, Loader2 } from 'lucide-react'
+import { Brain, Sparkles, FileText, Loader2 } from '@/lib/icons'
 
 interface BrainDumpInputProps {
   onProcess: (text: string, title?: string) => void

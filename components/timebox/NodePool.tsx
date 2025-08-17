@@ -2,7 +2,7 @@
 
 import { memo, useMemo } from 'react'
 import { cn } from '@/lib/utils'
-import { Search, Filter } from 'lucide-react'
+import { Search, Filter } from '@/lib/icons'
 import { Button } from '@/components/ui/Button'
 import type { Node, NodeType } from '@/types/node'
 import type { TimeboxTask } from '@/store/timeboxStore'

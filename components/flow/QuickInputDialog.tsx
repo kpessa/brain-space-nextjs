@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Zap } from 'lucide-react'
+import { X, Zap } from '@/lib/icons'
 import { Button } from '@/components/ui/Button'
 import type { BrainDumpNode } from '@/store/braindumpStore'
 

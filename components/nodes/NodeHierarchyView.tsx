@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { ChevronRight, ChevronDown, GitBranch, GitMerge, Circle, CheckCircle, Square, CheckSquare, Pin } from 'lucide-react'
+import { ChevronRight, ChevronDown, GitBranch, GitMerge, Circle, CheckCircle, Square, CheckSquare, Pin } from '@/lib/icons'
 import { Button } from '@/components/ui/Button'
 import { useNodesStore } from '@/store/nodeStore'
 import type { Node } from '@/types/node'

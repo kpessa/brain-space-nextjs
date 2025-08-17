@@ -9,14 +9,17 @@ import { createAIService } from '@/services/ai'
 import type { Node, NodeType } from '@/types/node'
 import { getNodeTypeColor, getNodeTypeIcon, getEisenhowerQuadrant } from '@/types/node'
 import { AIProviderSelector } from '@/components/AIProviderSelector'
-import { NodeRelationshipModal } from '@/components/nodes/NodeRelationshipModal'
-import { NodeHierarchyView } from '@/components/nodes/NodeHierarchyView'
-import { NodeGraphView } from '@/components/nodes/NodeGraphView'
-import { NodeUpdateModal } from '@/components/nodes/NodeUpdateModal'
-import { NodeDetailModal } from '@/components/nodes/NodeDetailModal'
-import { UpdateExportModal } from '@/components/nodes/UpdateExportModal'
-import { BulkTagModal } from '@/components/nodes/BulkTagModal'
-import { BulkNodeCreationDialog } from '@/components/nodes/BulkNodeCreationDialog'
+// Dynamic imports for heavy components to reduce bundle size
+import dynamic from 'next/dynamic'
+
+const NodeRelationshipModal = dynamic(() => import('@/components/nodes/NodeRelationshipModal').then(mod => ({ default: mod.NodeRelationshipModal })), { ssr: false })
+const NodeHierarchyView = dynamic(() => import('@/components/nodes/NodeHierarchyView').then(mod => ({ default: mod.NodeHierarchyView })), { ssr: false })
+const NodeGraphView = dynamic(() => import('@/components/nodes/NodeGraphView').then(mod => ({ default: mod.NodeGraphView })), { ssr: false })
+const NodeUpdateModal = dynamic(() => import('@/components/nodes/NodeUpdateModal').then(mod => ({ default: mod.NodeUpdateModal })), { ssr: false })
+const NodeDetailModal = dynamic(() => import('@/components/nodes/NodeDetailModal').then(mod => ({ default: mod.NodeDetailModal })), { ssr: false })
+const UpdateExportModal = dynamic(() => import('@/components/nodes/UpdateExportModal').then(mod => ({ default: mod.UpdateExportModal })), { ssr: false })
+const BulkTagModal = dynamic(() => import('@/components/nodes/BulkTagModal').then(mod => ({ default: mod.BulkTagModal })), { ssr: false })
+const BulkNodeCreationDialog = dynamic(() => import('@/components/nodes/BulkNodeCreationDialog').then(mod => ({ default: mod.BulkNodeCreationDialog })), { ssr: false })
 import { useUserPreferencesStore, shouldShowNode } from '@/store/userPreferencesStore'
 import { ModeToggle } from '@/components/ModeToggle'
 import { RecurrenceDialog } from '@/components/RecurrenceDialog'
@@ -50,11 +53,11 @@ import {
   Edit,
   Calendar,
   CalendarPlus
-} from 'lucide-react'
-import { format } from 'date-fns'
-import StandupSummaryDialog from '@/components/StandupSummaryDialog'
-import { CalendarEventModal } from '@/components/CalendarEventModal'
-import { BulkScheduleImportModal } from '@/components/BulkScheduleImportModal'
+} from '@/lib/icons'
+import dayjs from '@/lib/dayjs'
+const StandupSummaryDialog = dynamic(() => import('@/components/StandupSummaryDialog'), { ssr: false })
+const CalendarEventModal = dynamic(() => import('@/components/CalendarEventModal').then(mod => ({ default: mod.CalendarEventModal })), { ssr: false })
+const BulkScheduleImportModal = dynamic(() => import('@/components/BulkScheduleImportModal').then(mod => ({ default: mod.BulkScheduleImportModal })), { ssr: false })
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 interface NodeCreateModalProps {
@@ -734,9 +737,9 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
                 <div>Priority: Urgency {node.urgency}/10, Importance {node.importance}/10</div>
               )}
               {node.dueDate?.type === 'exact' && (
-                <div>Due: {format(new Date(node.dueDate.date), 'MMM d, yyyy')}</div>
+                <div>Due: {dayjs(node.dueDate.date).format('MMM D, YYYY')}</div>
               )}
-              <div>Updated: {node.updatedAt ? format(new Date(node.updatedAt), 'MMM d, yyyy') : 'Unknown'}</div>
+              <div>Updated: {node.updatedAt ? dayjs(node.updatedAt).format('MMM D, YYYY') : 'Unknown'}</div>
             </div>
           </div>
         )}
@@ -767,7 +770,7 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
               }
               return dayMap[day]
             }),
-            startDate: node.createdAt?.split('T')[0] || format(new Date(), 'yyyy-MM-dd'),
+            startDate: node.createdAt?.split('T')[0] || dayjs().format('YYYY-MM-DD'),
             endDate: (node as any).recurrence.endDate,
           } : undefined}
           currentTaskType={(node as any).taskType}
@@ -943,7 +946,7 @@ export default function NodesClient({ userId }: { userId: string }) {
   const exportNodes = () => {
     const dataStr = JSON.stringify(nodes, null, 2)
     const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`
-    const exportFileDefaultName = `brain-space-nodes-${format(new Date(), 'yyyy-MM-dd')}.json`
+    const exportFileDefaultName = `brain-space-nodes-${dayjs().format('YYYY-MM-DD')}.json`
     
     const linkElement = document.createElement('a')
     linkElement.setAttribute('href', dataUri)

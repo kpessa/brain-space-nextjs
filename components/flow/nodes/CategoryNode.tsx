@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Handle, Position, NodeResizer } from '@xyflow/react'
-import { ChevronDown, ChevronRight, Target, Edit2, Trash2, Check, X, Plus } from 'lucide-react'
+import { ChevronDown, ChevronRight, Target, Edit2, Trash2, Check, X, Plus } from '@/lib/icons'
 import { useBrainDumpStore } from '@/store/braindumpStore'
 import { useRouter } from 'next/navigation'
 

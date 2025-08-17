@@ -8,7 +8,7 @@ import { SunMoon, Sun, Moon, Target, TrendingUp, CheckCircle, Circle, Play } fro
 import { useRoutineStore } from '@/store/routineStore'
 import { MORNING_RITUAL_SUGGESTIONS } from '@/types/routines'
 import { Badge } from '@/components/ui/Badge'
-import { X } from 'lucide-react'
+import { X } from '@/lib/icons'
 
 export default function RoutinesClient({ userId }: { userId: string }) {
   const {

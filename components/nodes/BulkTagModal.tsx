@@ -6,15 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { useNodesStore } from '@/store/nodeStore'
 import { useUserPreferencesStore, TAG_CATEGORIES } from '@/store/userPreferencesStore'
 import type { Node } from '@/types/node'
-import { 
-  Plus,
-  Minus,
-  RefreshCw,
-  Briefcase,
-  Home,
-  X,
-  Check
-} from 'lucide-react'
+import { Plus, Minus, RefreshCw, Briefcase, Home, X, Check } from '@/lib/icons'
 
 interface BulkTagModalProps {
   isOpen: boolean

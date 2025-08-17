@@ -6,7 +6,7 @@ import { Modal } from '@/components/ui/Modal'
 import { useNodesStore } from '@/store/nodeStore'
 import { createAIService } from '@/services/ai'
 import type { Node, NodeType } from '@/types/node'
-import { Zap, GitBranch, GitMerge } from 'lucide-react'
+import { Zap, GitBranch, GitMerge } from '@/lib/icons'
 
 interface NodeRelationshipModalProps {
   isOpen: boolean

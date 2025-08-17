@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronRight, Home } from 'lucide-react'
+import { ChevronRight, Home } from '@/lib/icons'
 import { useNodesStore } from '@/store/nodeStore'
 import type { Node } from '@/types/node'
 

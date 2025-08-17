@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Copy, Check, Edit2, Save } from 'lucide-react'
+import { X, Copy, Check, Edit2, Save } from '@/lib/icons'
 import { Button } from '@/components/ui/Button'
 import type { BrainDumpNode } from '@/store/braindumpStore'
 

@@ -3,7 +3,11 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Eye, ChevronDown, ChevronUp, Users, Stethoscope, Settings, Coffee, Car, User, Lock, Mic, Sparkles, Settings2, CalendarSync, Filter, Search, Clock, Calendar, Zap, Target, ChevronLeft, ChevronRight, CheckCircle, X, MapPin } from 'lucide-react'
+import { 
+  Eye, ChevronDown, ChevronUp, Users, Settings, Coffee, User, Lock, Mic, Sparkles, 
+  Filter, Search, Clock, Calendar, Zap, Target, ChevronLeft, ChevronRight, CheckCircle, X,
+  Stethoscope, Car, Settings2, CalendarSync, MapPin 
+} from '@/lib/icons'
 import { type TimeboxTask } from '@/store/timeboxStore'
 import { 
   useTimeSlots,
@@ -20,13 +24,16 @@ import { useNodesStore } from '@/store/nodeStore'
 import { useUserPreferencesStore, shouldShowNode } from '@/store/userPreferencesStore'
 import { useCalendarStore } from '@/store/calendarStore'
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
-import { format, addDays, subDays, startOfDay, endOfDay } from 'date-fns'
+import dayjs from '@/lib/dayjs'
 import { cn } from '@/lib/utils'
-import StandupSummaryDialog from '@/components/StandupSummaryDialog'
-import TimeboxRecommendationsDialog from '@/components/TimeboxRecommendationsDialog'
-import ScheduleSettingsDialog from '@/components/ScheduleSettingsDialog'
-import { NodeDetailModal } from '@/components/nodes/NodeDetailModal'
-import { NodeRelationshipModal } from '@/components/nodes/NodeRelationshipModal'
+// Dynamic imports for heavy components
+import dynamic from 'next/dynamic'
+
+const StandupSummaryDialog = dynamic(() => import('@/components/StandupSummaryDialog'), { ssr: false })
+const TimeboxRecommendationsDialog = dynamic(() => import('@/components/TimeboxRecommendationsDialog'), { ssr: false })
+const ScheduleSettingsDialog = dynamic(() => import('@/components/ScheduleSettingsDialog'), { ssr: false })
+const NodeDetailModal = dynamic(() => import('@/components/nodes/NodeDetailModal').then(mod => ({ default: mod.NodeDetailModal })), { ssr: false })
+const NodeRelationshipModal = dynamic(() => import('@/components/nodes/NodeRelationshipModal').then(mod => ({ default: mod.NodeRelationshipModal })), { ssr: false })
 import { type Node, type NodeType, getNodeTypeIcon } from '@/types/node'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
@@ -209,7 +216,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   // Helper to check if a time slot is COMPLETELY in the past (not including current slot)
   const isSlotInPast = useCallback((slot: typeof timeSlots[0]) => {
     const now = new Date()
-    const today = format(now, 'yyyy-MM-dd')
+    const today = dayjs(now).format('YYYY-MM-DD')
     
     // If not today, don't mark as past
     if (selectedDate !== today) return false
@@ -243,8 +250,8 @@ export default function TimeboxClient({ userId }: { userId: string }) {
         return
       }
 
-      const startTime = startOfDay(dateObj)
-      const endTime = endOfDay(dateObj)
+      const startTime = dayjs(dateObj).startOf('day').toDate()
+      const endTime = dayjs(dateObj).endOf('day').toDate()
       
       const allEvents: TimeboxTask[] = []
       let hasError = false
@@ -275,7 +282,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
               calendarSummary: event.description,
               calendarLocation: (event as any).location,
               isCalendarEvent: true,
-              timeboxStartTime: format(startDate, 'HH:mm'),
+              timeboxStartTime: dayjs(startDate).format('HH:mm'),
               timeboxDuration: Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60)),
               timeboxDate: selectedDate,
               userId: userId,
@@ -353,23 +360,23 @@ export default function TimeboxClient({ userId }: { userId: string }) {
 
   // Date navigation
   const goToPreviousDay = () => {
-    const newDate = format(subDays(new Date(selectedDate), 1), 'yyyy-MM-dd')
+    const newDate = dayjs(selectedDate).subtract(1, 'day').format('YYYY-MM-DD')
     setSelectedDate(newDate)
   }
   
   const goToNextDay = () => {
-    const newDate = format(addDays(new Date(selectedDate), 1), 'yyyy-MM-dd')
+    const newDate = dayjs(selectedDate).add(1, 'day').format('YYYY-MM-DD')
     setSelectedDate(newDate)
   }
   
   const goToToday = () => {
-    setSelectedDate(format(new Date(), 'yyyy-MM-dd'))
+    setSelectedDate(dayjs().format('YYYY-MM-DD'))
   }
   
   // Copy incomplete tasks from today to tomorrow
   const copyIncompleteTasks = async () => {
-    const today = format(new Date(), 'yyyy-MM-dd')
-    const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd')
+    const today = dayjs().format('YYYY-MM-DD')
+    const tomorrow = dayjs().add(1, 'day').format('YYYY-MM-DD')
     
     if (selectedDate !== tomorrow) return
     
@@ -541,7 +548,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   // Separate past and current/future slots - FIXED to properly identify current slot
   const { pastSlots, currentAndFutureSlots } = useMemo(() => {
     
-    const today = format(new Date(), 'yyyy-MM-dd')
+    const today = dayjs().format('YYYY-MM-DD')
     const isToday = selectedDate === today
     
     if (!isToday) {
@@ -686,7 +693,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                     variant="primary"
                     size="sm"
                     onClick={() => {
-                      const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd')
+                      const tomorrow = dayjs().add(1, 'day').format('YYYY-MM-DD')
                       setSelectedDate(tomorrow)
                     }}
                     className="gap-1 px-2 sm:px-3"
@@ -726,18 +733,18 @@ export default function TimeboxClient({ userId }: { userId: string }) {
             <div className="text-center mt-2 sm:mt-0">
               <div className="text-white/90 text-sm sm:text-base">
                 {(() => {
-                  const today = format(new Date(), 'yyyy-MM-dd')
-                  const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd')
-                  const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd')
+                  const today = dayjs().format('YYYY-MM-DD')
+                  const tomorrow = dayjs().add(1, 'day').format('YYYY-MM-DD')
+                  const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD')
                   
                   if (selectedDate === today) {
-                    return <>Today &bull; {format(new Date(selectedDate), 'EEE, MMM d, yyyy')}</>
+                    return <>Today &bull; {dayjs(selectedDate).format('ddd, MMM D, YYYY')}</>
                   } else if (selectedDate === tomorrow) {
-                    return <>Tomorrow &bull; {format(new Date(selectedDate), 'EEE, MMM d, yyyy')}</>
+                    return <>Tomorrow &bull; {dayjs(selectedDate).format('ddd, MMM D, YYYY')}</>
                   } else if (selectedDate === yesterday) {
-                    return <>Yesterday &bull; {format(new Date(selectedDate), 'EEE, MMM d, yyyy')}</>
+                    return <>Yesterday &bull; {dayjs(selectedDate).format('ddd, MMM D, YYYY')}</>
                   } else {
-                    return format(new Date(selectedDate), 'EEE, MMM d, yyyy')
+                    return dayjs(selectedDate).format('ddd, MMM D, YYYY')
                   }
                 })()}
               </div>
@@ -818,7 +825,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
             )}
             
             {/* Copy Tasks from Today (when viewing tomorrow) */}
-            {selectedDate === format(addDays(new Date(), 1), 'yyyy-MM-dd') && (
+            {selectedDate === dayjs().add(1, 'day').format('YYYY-MM-DD') && (
               <div className="mt-2 p-3 bg-blue-500/20 border border-blue-400/30 rounded-lg backdrop-blur-sm">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
@@ -1094,7 +1101,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                             className={cn(
                               "transition-all duration-300 hover:shadow-lg opacity-75",
                               hoveredSlotId === slot.id && "ring-2 ring-brain-400",
-                              currentTimeSlotId === slot.id && selectedDate === format(new Date(), 'yyyy-MM-dd') && "ring-2 ring-orange-400 bg-orange-50"
+                              currentTimeSlotId === slot.id && selectedDate === dayjs().format('YYYY-MM-DD') && "ring-2 ring-orange-400 bg-orange-50"
                             )}
                           >
                             <CardContent className="p-3">
@@ -1302,7 +1309,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
               
               {/* Current and Future Time Slots */}
               {currentAndFutureSlots.map((slot, index) => {
-                const isCurrentSlot = currentTimeSlotId === slot.id && selectedDate === format(new Date(), 'yyyy-MM-dd')
+                const isCurrentSlot = currentTimeSlotId === slot.id && selectedDate === dayjs().format('YYYY-MM-DD')
                 return (
                 <Card 
                   key={slot.id} 

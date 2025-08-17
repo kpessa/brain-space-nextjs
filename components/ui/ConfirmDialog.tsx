@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X } from '@/lib/icons'
 import { Button } from './Button'
 
 interface ConfirmDialogProps {

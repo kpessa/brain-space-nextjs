@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X } from 'lucide-react'
+import { X } from '@/lib/icons'
 import { RecurrenceSelector } from './RecurrenceSelector'
 import { RecurrencePattern, TaskType } from '@/types/recurrence'
 

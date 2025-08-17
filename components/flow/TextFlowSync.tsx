@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Eye, EyeOff } from '@/lib/icons'
 import { Button } from '@/components/ui/Button'
 import type { BrainDumpNode } from '@/store/braindumpStore'
 

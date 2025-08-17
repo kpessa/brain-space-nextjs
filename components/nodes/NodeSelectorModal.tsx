@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { useNodesStore } from '@/store/nodeStore'
 import type { Node } from '@/types/node'
 import { getNodeTypeIcon } from '@/types/node'
-import { Search, CheckCircle, Circle } from 'lucide-react'
+import { Search, CheckCircle, Circle } from '@/lib/icons'
 
 interface NodeSelectorModalProps {
   isOpen: boolean

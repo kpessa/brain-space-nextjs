@@ -1,5 +1,5 @@
 import { getUserFromHeaders } from '@/lib/server-auth'
-import { Brain } from 'lucide-react'
+import { Brain } from '@/lib/icons'
 import { MobileNavigation } from './MobileNavigation'
 import { BottomNavigation } from './BottomNavigation'
 import { ClientProviders } from './ClientProviders'

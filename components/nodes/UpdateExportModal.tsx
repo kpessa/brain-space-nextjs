@@ -6,17 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { useNodesStore } from '@/store/nodeStore'
 import { useUserPreferencesStore, shouldShowNode, type UserMode } from '@/store/userPreferencesStore'
 import type { Node, NodeUpdate } from '@/types/node'
-import { 
-  Download, 
-  FileText, 
-  Calendar,
-  Filter,
-  Copy,
-  Check,
-  Briefcase,
-  Home,
-  Globe
-} from 'lucide-react'
+import { Download, FileText, Calendar, Filter, Copy, Check, Briefcase, Home, Globe } from '@/lib/icons'
 import { format, subDays, subMonths, startOfDay, endOfDay, isWithinInterval } from 'date-fns'
 
 interface UpdateExportModalProps {

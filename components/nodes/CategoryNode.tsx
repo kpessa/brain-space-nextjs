@@ -1,7 +1,7 @@
 'use client'
 
 import { Handle, Position } from '@xyflow/react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight } from '@/lib/icons'
 
 const categoryIcons: Record<string, string> = {
   ideas: '💡',

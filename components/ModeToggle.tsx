@@ -2,7 +2,7 @@
 
 import { useUserPreferencesStore, UserMode } from '@/store/userPreferencesStore'
 import { Button } from '@/components/ui/Button'
-import { Briefcase, Home, Globe } from 'lucide-react'
+import { Briefcase, Home, Globe } from '@/lib/icons'
 import { useState, useEffect } from 'react'
 
 export function ModeToggle() {

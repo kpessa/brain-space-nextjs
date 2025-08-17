@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useNodesStore } from '@/store/nodeStore'
-import { Plus, AlertCircle, Star, Clock, Calendar } from 'lucide-react'
+import { Plus, AlertCircle, Star, Clock, Calendar } from '@/lib/icons'
 import { InputDialog } from '@/components/ui/InputDialog'
 
 // Dynamic import for drag and drop to avoid SSR issues

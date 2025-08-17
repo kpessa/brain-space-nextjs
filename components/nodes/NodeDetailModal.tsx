@@ -13,26 +13,7 @@ import { NodeBreadcrumb } from './NodeBreadcrumb'
 import { ReenhanceNodeDialog } from './ReenhanceNodeDialog'
 import { useToast } from '@/hooks/useToast'
 import { useXPAnimation } from '@/components/XPGainAnimation'
-import { 
-  CheckCircle, 
-  Circle, 
-  Clock, 
-  Calendar,
-  CalendarPlus,
-  Tag,
-  GitBranch,
-  GitMerge,
-  Trash2,
-  Edit3,
-  Save,
-  X,
-  MessageSquare,
-  Info,
-  Link,
-  AlertCircle,
-  Sparkles,
-  Repeat
-} from 'lucide-react'
+import { CheckCircle, Circle, Clock, Calendar, CalendarPlus, Tag, GitBranch, GitMerge, Trash2, Edit3, Save, X, MessageSquare, Info, Link, AlertCircle, Sparkles, Repeat } from '@/lib/icons'
 import { format, formatDistanceToNow } from 'date-fns'
 import { CalendarEventModal } from '@/components/CalendarEventModal'
 

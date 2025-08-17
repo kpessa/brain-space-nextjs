@@ -195,4 +195,4 @@ export const LoadingState = memo(function LoadingState({
 })
 
 // Import needed for error display
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle } from '@/lib/icons'

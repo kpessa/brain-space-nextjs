@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { signInWithPopup, signInWithRedirect, GoogleAuthProvider, getRedirectResult } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
-import { Brain, Sparkles } from 'lucide-react'
+import { Brain, Sparkles } from '@/lib/icons'
 import { useSearchParams } from 'next/navigation'
 
 export default function LoginClient() {

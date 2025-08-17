@@ -2,7 +2,7 @@
 
 import { memo } from 'react'
 import { format } from 'date-fns'
-import { ChevronLeft, ChevronRight, Calendar, Mic, Sparkles, Settings2, CalendarSync } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar, Mic, Sparkles, Settings2, CalendarSync } from '@/lib/icons'
 import { Button } from '@/components/ui/Button'
 import { CardHeader, CardTitle } from '@/components/ui/Card'
 

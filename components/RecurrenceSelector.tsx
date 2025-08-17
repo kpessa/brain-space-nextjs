@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { RecurrencePattern } from '@/types/recurrence'
 import { format } from 'date-fns'
 import { Button } from '@/components/ui/Button'
-import { Calendar, Clock, Repeat } from 'lucide-react'
+import { Calendar, Clock, Repeat } from '@/lib/icons'
 
 interface RecurrenceSelectorProps {
   pattern?: RecurrencePattern

@@ -9,7 +9,7 @@ import { XPEventType } from '@/types/xp'
 import type { Node, NodeUpdate } from '@/types/node'
 import { createAIService } from '@/services/ai'
 import { useXPAnimation } from '@/components/XPGainAnimation'
-import { MessageSquare, Pin, Clock, User, Trash2, Plus, Sparkles, Zap } from 'lucide-react'
+import { MessageSquare, Pin, Clock, User, Trash2, Plus, Sparkles, Zap } from '@/lib/icons'
 import { formatDistanceToNow } from 'date-fns'
 import { useToast } from '@/hooks/useToast'
 

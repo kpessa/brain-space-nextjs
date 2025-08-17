@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Sparkles, Brain, Zap } from 'lucide-react'
+import { Sparkles, Brain, Zap } from '@/lib/icons'
 import { useAIProviders } from '@/hooks/useAIProviders'
 
 interface AIProvider {

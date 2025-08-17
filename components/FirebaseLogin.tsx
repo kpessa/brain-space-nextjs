@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Brain, LogIn, UserPlus } from 'lucide-react'
+import { Brain, LogIn, UserPlus } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth'
 import { auth } from '@/lib/firebase'

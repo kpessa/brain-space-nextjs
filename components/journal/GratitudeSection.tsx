@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Plus, X, Heart } from 'lucide-react'
+import { Plus, X, Heart } from '@/lib/icons'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 

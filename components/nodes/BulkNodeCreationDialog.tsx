@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { useNodesStore } from '@/store/nodeStore'
 import { createAIService } from '@/services/ai'
 import type { NodeType } from '@/types/node'
-import { Zap, Plus, GitBranch, Info, ChevronRight, X } from 'lucide-react'
+import { Zap, Plus, GitBranch, Info, ChevronRight, X } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 
 interface BulkNodeCreationDialogProps {

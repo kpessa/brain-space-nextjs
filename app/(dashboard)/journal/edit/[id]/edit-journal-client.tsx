@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
-import { ArrowLeft, Heart, Sword, Shield, Users, Scroll, Trash2 } from 'lucide-react'
+import { ArrowLeft, Heart, Sword, Shield, Users, Scroll, Trash2 } from '@/lib/icons'
 import { useJournalStore } from '@/store/journalStore'
 import { 
   GratitudeSection, 

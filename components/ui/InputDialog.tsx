@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X } from 'lucide-react'
+import { X } from '@/lib/icons'
 import { Button } from './Button'
 import { Input } from './Input'
 

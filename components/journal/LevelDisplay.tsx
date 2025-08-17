@@ -1,4 +1,4 @@
-import { Trophy, Sparkles } from 'lucide-react'
+import { Trophy, Sparkles } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { LEVELS } from '@/types/journal'
 

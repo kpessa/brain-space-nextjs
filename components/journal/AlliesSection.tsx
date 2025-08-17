@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Plus, X, Users, User, Wrench, BookOpen, Lightbulb } from 'lucide-react'
+import { Plus, X, Users, User, Wrench, BookOpen, Lightbulb } from '@/lib/icons'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/utils'

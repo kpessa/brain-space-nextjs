@@ -20,8 +20,19 @@
               "icon": "lucide-file",
               "title": "README"
             }
+          },
+          {
+            "id": "44b6607c4c486624",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "New tab"
+            }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -168,8 +179,20 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "59ce632d8d553145",
+  "active": "09fe0e7409549836",
   "lastOpenFiles": [
+    "app/(dashboard)/journal/new/new-journal-client.tsx.tmp.44834.1755395640306",
+    "app/(dashboard)/journal/edit/[id]/edit-journal-client.tsx.tmp.44834.1755395632703",
+    "lib/icons.ts.tmp.44834.1755395574805",
+    "pnpm-lock.yaml.1238170672",
+    "scripts/migrate-icons.js",
+    "knowledge/CURRENT_FOCUS.md.tmp.44834.1755395167456",
+    "knowledge/CURRENT_FOCUS.md.tmp.44834.1755395156574",
+    "app/(dashboard)/timebox/timebox-client.tsx.tmp.44834.1755395066783",
+    "app/(dashboard)/timebox/timebox-client.tsx.tmp.44834.1755395053635",
+    "lib/icons.ts.tmp.44834.1755395042373",
+    "app/(dashboard)/timebox/timebox-client.tsx.tmp.44834.1755394947107",
+    "knowledge/README.md",
     "knowledge/QUICK_START.md",
     "knowledge/CURRENT_FOCUS.md",
     "knowledge/research/patterns/data-flow-patterns.md",
@@ -191,20 +214,8 @@
     "knowledge/research/integrations/firebase-patterns.md",
     "knowledge/architecture/component-hierarchy.md",
     "knowledge/research/technologies/react-nextjs-patterns.md",
-    "knowledge/README.md",
     "knowledge/decisions/templates/adr-template.md",
     "knowledge/architecture/data-flow.md",
-    "CORS_FIX.md",
-    "knowledge/decisions/templates/adr-template.md.tmp.15232.1755390820206",
-    "knowledge/roadmap/improvements",
-    "knowledge/roadmap/features",
-    "knowledge/research/technologies",
-    "knowledge/research/patterns",
-    "knowledge/research/optimizations",
-    "knowledge/research/integrations",
-    "knowledge/decisions/templates",
-    "knowledge/roadmap",
-    "knowledge/research",
-    "AI_SETUP.md"
+    "CORS_FIX.md"
   ]
 }

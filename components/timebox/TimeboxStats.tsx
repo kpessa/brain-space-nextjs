@@ -1,7 +1,7 @@
 'use client'
 
 import { memo } from 'react'
-import { Clock, CheckCircle, Target, Zap } from 'lucide-react'
+import { Clock, CheckCircle, Target, Zap } from '@/lib/icons'
 import { Card, CardContent } from '@/components/ui/Card'
 
 interface TimeboxStatsProps {

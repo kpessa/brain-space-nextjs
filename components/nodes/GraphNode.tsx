@@ -2,7 +2,7 @@
 
 import { memo } from 'react'
 import { Handle, Position } from '@xyflow/react'
-import { GitBranch, GitMerge, Circle, CheckCircle } from 'lucide-react'
+import { GitBranch, GitMerge, Circle, CheckCircle } from '@/lib/icons'
 import { Button } from '@/components/ui/Button'
 import type { Node } from '@/types/node'
 import { getNodeTypeIcon, getNodeTypeColor, getEisenhowerQuadrant } from '@/types/node'

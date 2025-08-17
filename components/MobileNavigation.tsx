@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, Brain } from 'lucide-react'
+import { Menu, X, Brain } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { navigation } from '@/lib/navigation'
 import { isNavItemActive } from '@/lib/navigation-utils'
