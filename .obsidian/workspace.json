@@ -185,6 +185,12 @@
   },
   "active": "44b6607c4c486624",
   "lastOpenFiles": [
+    "knowledge/features/pwa-implementation.md",
+    "knowledge/features",
+    "knowledge/testing/coverage-report.md",
+    "knowledge/testing",
+    "knowledge/performance/metrics-2024-08.md",
+    "knowledge/architecture/current-state.md",
     "__tests__/store/timeboxStore.test.ts.tmp.87484.1755408645345",
     "__tests__/store/timeboxStore.test.ts.tmp.87484.1755408452502",
     "app/layout.tsx.tmp.87484.1755408119307",
@@ -193,9 +199,6 @@
     "public/workbox-b878f56b.js",
     "public/sw.js",
     "next.config.pwa.js",
-    "node_modules/@ducanh2912",
-    "__tests__/store/braindumpStore.test.ts.tmp.87484.1755406632650",
-    "__tests__/store/braindumpStore.test.ts.tmp.87484.1755406568195",
     "coverage/lcov-report/sort-arrow-sprite.png",
     "coverage/lcov-report/favicon.png",
     "knowledge/README.md",
@@ -219,9 +222,6 @@
     "knowledge/roadmap/improvements/performance-optimization.md",
     "knowledge/research/optimizations/performance-analysis.md",
     "knowledge/roadmap/features/firestore-migration.md",
-    "knowledge/research/integrations/firebase-patterns.md",
-    "knowledge/architecture/component-hierarchy.md",
-    "knowledge/research/technologies/react-nextjs-patterns.md",
-    "knowledge/decisions/templates/adr-template.md"
+    "knowledge/research/integrations/firebase-patterns.md"
   ]
 }
