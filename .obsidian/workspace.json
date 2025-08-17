@@ -181,6 +181,7 @@
   },
   "active": "09fe0e7409549836",
   "lastOpenFiles": [
+    "knowledge/OPTIMIZATION_SUMMARY.md",
     "store/optimizedTimeboxStore.ts.tmp.95476.1755396825047",
     "store/optimizedTimeboxStore.ts.tmp.95476.1755396818829",
     "store/timeboxStore.ts.tmp.95476.1755396787414",
@@ -192,7 +193,6 @@
     "app/(dashboard)/journal/new/new-journal-client.tsx.tmp.44834.1755395640306",
     "app/(dashboard)/journal/edit/[id]/edit-journal-client.tsx.tmp.44834.1755395632703",
     "lib/icons.ts.tmp.44834.1755395574805",
-    "pnpm-lock.yaml.1238170672",
     "knowledge/README.md",
     "knowledge/QUICK_START.md",
     "knowledge/CURRENT_FOCUS.md",
