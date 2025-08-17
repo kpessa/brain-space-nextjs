@@ -7,11 +7,14 @@
 
 ### Today's Accomplishments
 1. ✅ **Bundle Size Optimization** - Major performance wins:
-   - /nodes route: **83.3kB → 19.4kB** (77% reduction!) ✨
-   - /timebox route: **34.3kB → 15.9kB** (54% reduction!)
+   - /nodes route: **83.3kB → 14.4kB** (83% reduction!) ✨
+   - /timebox route: **34.3kB → 16.0kB** (53% reduction!)
+   - /calendar route: **20.3kB → 11.2kB** (45% reduction!)
+   - /status-update: **8.51kB → 7.46kB** (12% reduction!)
    - Created centralized icon imports (`/lib/icons.ts`)
    - Implemented dynamic imports for heavy modal components
-   - Started migration from date-fns to dayjs
+   - Migrated 50+ components to centralized icons
+   - Partial date-fns → dayjs migration (4 routes complete)
 
 ### Previous Session
 1. ✅ **Knowledge Base Initialized** - Complete `/knowledge` directory structure created

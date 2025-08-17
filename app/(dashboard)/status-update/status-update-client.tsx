@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { format, subWeeks, addWeeks } from 'date-fns'
+import dayjs from '@/lib/dayjs'
 import { 
   FileText, 
   Calendar, 
@@ -12,13 +12,13 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
-  Plane,
   Briefcase,
   Home,
   Globe,
-  CalendarCheck,
   Star
-} from 'lucide-react'
+} from '@/lib/icons'
+// Additional icons needed
+import { Plane, CalendarCheck } from 'lucide-react'
 import { useUserPreferencesStore, type UserMode } from '@/store/userPreferencesStore'
 
 interface EventCategorization {
@@ -147,8 +147,8 @@ export default function StatusUpdateClient({ userId }: { userId: string }) {
     
     try {
       const now = new Date()
-      const startDate = subWeeks(now, dateRange.lookback)
-      const endDate = addWeeks(now, dateRange.lookahead)
+      const startDate = dayjs(now).subtract(dateRange.lookback, 'week').toDate()
+      const endDate = dayjs(now).add(dateRange.lookahead, 'week').toDate()
       
       const effectiveMode = modeOverride || currentMode
       
@@ -161,8 +161,8 @@ export default function StatusUpdateClient({ userId }: { userId: string }) {
           userId,
           mode: effectiveMode,
           dateRange: {
-            start: format(startDate, 'yyyy-MM-dd'),
-            end: format(endDate, 'yyyy-MM-dd'),
+            start: dayjs(startDate).format('YYYY-MM-DD'),
+            end: dayjs(endDate).format('YYYY-MM-DD'),
             lookbackWeeks: dateRange.lookback,
             lookaheadWeeks: dateRange.lookahead
           },
@@ -228,7 +228,7 @@ export default function StatusUpdateClient({ userId }: { userId: string }) {
     const sections = []
     
     // Header
-    sections.push(`Status Update - ${format(new Date(statusData.period.start), 'MMM d')} to ${format(new Date(statusData.period.end), 'MMM d, yyyy')}`)
+    sections.push(`Status Update - ${dayjs(statusData.period.start).format('MMM D')} to ${dayjs(statusData.period.end).format('MMM D, YYYY')}`)
     sections.push('')
     
     // Completed Deliverables
@@ -258,7 +258,7 @@ export default function StatusUpdateClient({ userId }: { userId: string }) {
     if (statusData.deliverables.upcoming.length > 0) {
       sections.push('## Next Two Weeks')
       statusData.deliverables.upcoming.forEach(item => {
-        const dueInfo = item.dueDate ? ` (Due: ${format(new Date(item.dueDate), 'MMM d')})` : ''
+        const dueInfo = item.dueDate ? ` (Due: ${dayjs(item.dueDate).format('MMM D')})` : ''
         sections.push(`• ${item.title}${dueInfo}`)
       })
       sections.push('')
@@ -268,7 +268,7 @@ export default function StatusUpdateClient({ userId }: { userId: string }) {
     if (statusData.criticalEvents.length > 0) {
       sections.push('## Critical Events')
       statusData.criticalEvents.forEach(event => {
-        sections.push(`• ${format(new Date(event.date), 'MMM d')}: ${event.title}`)
+        sections.push(`• ${dayjs(event.date).format('MMM D')}: ${event.title}`)
       })
       sections.push('')
     }
@@ -489,7 +489,7 @@ export default function StatusUpdateClient({ userId }: { userId: string }) {
             
             {statusData && (
               <div className="text-sm text-gray-600">
-                {format(new Date(statusData.period.start), 'MMM d')} - {format(new Date(statusData.period.end), 'MMM d, yyyy')}
+                {dayjs(statusData.period.start).format('MMM D')} - {dayjs(statusData.period.end).format('MMM D, YYYY')}
               </div>
             )}
           </div>
@@ -557,7 +557,7 @@ export default function StatusUpdateClient({ userId }: { userId: string }) {
                         <span className="font-medium text-purple-800">Suggested PTO: </span>
                         {cat.suggestedPTO.map((date, i) => (
                           <span key={i} className="text-purple-700">
-                            {format(new Date(date), 'MMM d')}
+                            {dayjs(date).format('MMM D')}
                             {i < cat.suggestedPTO!.length - 1 ? ', ' : ''}
                           </span>
                         ))}
@@ -669,7 +669,7 @@ export default function StatusUpdateClient({ userId }: { userId: string }) {
                           </div>
                           {item.completedAt && (
                             <span className="text-xs text-green-600">
-                              {format(new Date(item.completedAt), 'MMM d')}
+                              {dayjs(item.completedAt).format('MMM D')}
                             </span>
                           )}
                         </div>
@@ -748,7 +748,7 @@ export default function StatusUpdateClient({ userId }: { userId: string }) {
                                 <p className="text-xs font-medium text-purple-800 mb-1">Suggested PTO:</p>
                                 {travel.suggestedPTO.map((date, i) => (
                                   <p key={i} className="text-xs text-purple-700">
-                                    {format(new Date(date), 'EEEE, MMM d')} - Recovery day
+                                    {dayjs(date).format('dddd, MMM D')} - Recovery day
                                   </p>
                                 ))}
                               </div>
@@ -866,7 +866,7 @@ export default function StatusUpdateClient({ userId }: { userId: string }) {
                         <Star className="w-4 h-4 text-yellow-600" />
                         <div>
                           <p className="font-medium text-yellow-900">
-                            {format(new Date(date), 'EEEE, MMMM d')}
+                            {dayjs(date).format('dddd, MMMM D')}
                           </p>
                           <p className="text-sm text-yellow-700">Recovery/Extension day</p>
                         </div>
@@ -909,7 +909,7 @@ export default function StatusUpdateClient({ userId }: { userId: string }) {
                       <div key={blocker.id} className="p-3 bg-red-50 rounded-lg">
                         <p className="font-medium text-red-900">{blocker.title}</p>
                         <p className="text-sm text-red-700 mt-1">{blocker.reason}</p>
-                        <p className="text-xs text-red-600 mt-1">Since {format(new Date(blocker.since), 'MMM d')}</p>
+                        <p className="text-xs text-red-600 mt-1">Since {dayjs(blocker.since).format('MMM D')}</p>
                       </div>
                     ))}
                   </div>

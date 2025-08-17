@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation'
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
 import { useCalendars, useCalendarEvents, useCalendarConnection, useCalendarRefresh } from '@/hooks/useCalendarData'
 import { EightWeekViewComponent } from '@/components/calendar/EightWeekView'
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Settings, TrendingUp, RefreshCw } from 'lucide-react'
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Settings, TrendingUp, RefreshCw } from '@/lib/icons'
 import { useCalendarStore } from '@/store/calendarStore'
-import { CalendarStatusDialog } from '@/components/calendar/CalendarStatusDialog'
-import { format } from 'date-fns'
+import dynamic from 'next/dynamic'
+
+const CalendarStatusDialog = dynamic(() => import('@/components/calendar/CalendarStatusDialog').then(mod => ({ default: mod.CalendarStatusDialog })), { ssr: false })
+import dayjs from '@/lib/dayjs'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 // NoSSR wrapper for client-only content
@@ -277,7 +279,7 @@ export default function CalendarClient() {
                 </div>
                 
                 <div className="text-lg font-semibold text-gray-900" suppressHydrationWarning>
-                  {format(currentDate, 'MMMM yyyy')}
+                  {dayjs(currentDate).format('MMMM YYYY')}
                 </div>
               </div>
 

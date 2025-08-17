@@ -171,6 +171,8 @@ export {
   CalendarOff,
   Keyboard,
   Puzzle,
+  Plane,
+  CalendarCheck,
   Maximize2,
   Minimize2,
   ArrowLeft,
