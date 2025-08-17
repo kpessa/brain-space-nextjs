@@ -185,6 +185,8 @@
   },
   "active": "44b6607c4c486624",
   "lastOpenFiles": [
+    "__tests__/store/timeboxStore.test.ts.tmp.87484.1755408645345",
+    "__tests__/store/timeboxStore.test.ts.tmp.87484.1755408452502",
     "app/layout.tsx.tmp.87484.1755408119307",
     "app/layout.tsx.tmp.87484.1755408111010",
     "components/PWAInstallPrompt.tsx",
@@ -194,8 +196,6 @@
     "node_modules/@ducanh2912",
     "__tests__/store/braindumpStore.test.ts.tmp.87484.1755406632650",
     "__tests__/store/braindumpStore.test.ts.tmp.87484.1755406568195",
-    "__tests__/store/braindumpStore.test.ts.tmp.87484.1755406556081",
-    "__tests__/store/braindumpStore.test.ts",
     "coverage/lcov-report/sort-arrow-sprite.png",
     "coverage/lcov-report/favicon.png",
     "knowledge/README.md",
