@@ -30,7 +30,7 @@ export function MobileNavigation({ user }: MobileNavigationProps) {
   return (
     <>
       {/* Mobile header */}
-      <div className="sticky top-0 z-40 flex items-center gap-x-6 bg-card px-4 py-4 shadow-sm sm:px-6 lg:hidden">
+      <div className="sticky top-0 z-40 flex items-center gap-x-6 bg-card px-4 py-4 pt-safe shadow-sm sm:px-6 lg:hidden">
         <button
           type="button"
           className="-m-2.5 p-2.5 text-foreground/70 lg:hidden"
@@ -61,7 +61,7 @@ export function MobileNavigation({ user }: MobileNavigationProps) {
 
       {/* Drawer */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-full max-w-xs bg-card shadow-xl transition-transform duration-300 ease-in-out lg:hidden",
+        "fixed inset-y-0 left-0 z-50 w-full max-w-xs bg-card shadow-xl transition-transform duration-300 ease-in-out lg:hidden pt-safe pb-safe",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
           <div className="flex h-full flex-col">

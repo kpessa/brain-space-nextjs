@@ -21,6 +21,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: 'cover',
+  userScalable: 'no',
 }
 
 export default function RootLayout({
@@ -32,8 +33,13 @@ export default function RootLayout({
     <html lang="en" className={inter.className}>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Brain Space" />
+        <meta name="format-detection" content="telephone=no" />
+        <link rel="apple-touch-icon" href="/android-chrome-192x192.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/android-chrome-192x192.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/android-chrome-192x192.png" />
+        <link rel="apple-touch-icon" sizes="167x167" href="/android-chrome-192x192.png" />
       </head>
       <body>
         <AppWrapper>

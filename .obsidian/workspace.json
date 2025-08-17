@@ -185,6 +185,9 @@
   },
   "active": "44b6607c4c486624",
   "lastOpenFiles": [
+    "public/manifest.json.tmp.87484.1755411264161",
+    "knowledge/research/ios-pwa-development.md",
+    "components/MobileNavigation.tsx.tmp.87484.1755410681340",
     "knowledge/features/pwa-implementation.md",
     "knowledge/features",
     "knowledge/testing/coverage-report.md",
@@ -198,7 +201,6 @@
     "components/PWAInstallPrompt.tsx",
     "public/workbox-b878f56b.js",
     "public/sw.js",
-    "next.config.pwa.js",
     "coverage/lcov-report/sort-arrow-sprite.png",
     "coverage/lcov-report/favicon.png",
     "knowledge/README.md",
@@ -220,8 +222,6 @@
     "knowledge/roadmap/features/pwa-enhancements.md",
     "knowledge/research/optimizations/pwa-ios-optimization.md",
     "knowledge/roadmap/improvements/performance-optimization.md",
-    "knowledge/research/optimizations/performance-analysis.md",
-    "knowledge/roadmap/features/firestore-migration.md",
-    "knowledge/research/integrations/firebase-patterns.md"
+    "knowledge/research/optimizations/performance-analysis.md"
   ]
 }

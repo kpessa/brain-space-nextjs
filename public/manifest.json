@@ -2,11 +2,13 @@
   "name": "Brain Space",
   "short_name": "Brain Space",
   "description": "Your intelligent thought management system",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "id": "com.brainspace.app",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#8b5cf6",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
