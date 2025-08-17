@@ -5,6 +5,7 @@ import { ToastProvider } from '@/components/ToastProvider'
 import { AppWrapper } from '@/components/AppWrapper'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -38,6 +39,7 @@ export default function RootLayout({
         <AppWrapper>
           {children}
           <ToastProvider />
+          <PWAInstallPrompt />
         </AppWrapper>
         <Analytics />
         <SpeedInsights />

@@ -4,6 +4,7 @@ const withPWA = require('@ducanh2912/next-pwa').default({
   skipWaiting: true,
   reloadOnOnline: true,
   disable: process.env.NODE_ENV === 'development',
+  // Customize the service worker
   workboxOptions: {
     runtimeCaching: [
       {
@@ -13,7 +14,7 @@ const withPWA = require('@ducanh2912/next-pwa').default({
           cacheName: 'google-fonts-webfonts',
           expiration: {
             maxEntries: 4,
-            maxAgeSeconds: 365 * 24 * 60 * 60
+            maxAgeSeconds: 365 * 24 * 60 * 60 // 1 year
           }
         }
       },
@@ -24,7 +25,18 @@ const withPWA = require('@ducanh2912/next-pwa').default({
           cacheName: 'google-fonts-stylesheets',
           expiration: {
             maxEntries: 4,
-            maxAgeSeconds: 7 * 24 * 60 * 60
+            maxAgeSeconds: 7 * 24 * 60 * 60 // 1 week
+          }
+        }
+      },
+      {
+        urlPattern: /\.(?:eot|otf|ttc|ttf|woff|woff2|font.css)$/i,
+        handler: 'StaleWhileRevalidate',
+        options: {
+          cacheName: 'static-font-assets',
+          expiration: {
+            maxEntries: 4,
+            maxAgeSeconds: 7 * 24 * 60 * 60 // 1 week
           }
         }
       },
@@ -35,7 +47,7 @@ const withPWA = require('@ducanh2912/next-pwa').default({
           cacheName: 'static-image-assets',
           expiration: {
             maxEntries: 64,
-            maxAgeSeconds: 30 * 24 * 60 * 60
+            maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
           }
         }
       },
@@ -46,7 +58,74 @@ const withPWA = require('@ducanh2912/next-pwa').default({
           cacheName: 'next-static-js-assets',
           expiration: {
             maxEntries: 64,
-            maxAgeSeconds: 24 * 60 * 60
+            maxAgeSeconds: 24 * 60 * 60 // 1 day
+          }
+        }
+      },
+      {
+        urlPattern: /\/_next\/image\?url=.+$/i,
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'next-image',
+          expiration: {
+            maxEntries: 64,
+            maxAgeSeconds: 24 * 60 * 60 // 1 day
+          }
+        }
+      },
+      {
+        urlPattern: /\.(?:mp3|wav|ogg)$/i,
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'static-audio-assets',
+          expiration: {
+            maxEntries: 32,
+            maxAgeSeconds: 24 * 60 * 60 // 1 day
+          }
+        }
+      },
+      {
+        urlPattern: /\.(?:mp4|webm)$/i,
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'static-video-assets',
+          expiration: {
+            maxEntries: 32,
+            maxAgeSeconds: 24 * 60 * 60 // 1 day
+          }
+        }
+      },
+      {
+        urlPattern: /\.(?:js)$/i,
+        handler: 'StaleWhileRevalidate',
+        options: {
+          cacheName: 'static-js-assets',
+          expiration: {
+            maxEntries: 48,
+            maxAgeSeconds: 24 * 60 * 60 // 1 day
+          }
+        }
+      },
+      {
+        urlPattern: /\.(?:css|less)$/i,
+        handler: 'StaleWhileRevalidate',
+        options: {
+          cacheName: 'static-style-assets',
+          expiration: {
+            maxEntries: 32,
+            maxAgeSeconds: 24 * 60 * 60 // 1 day
+          }
+        }
+      },
+      {
+        urlPattern: /^https:\/\/.*\.vercel\.app\/api\/.*/i,
+        handler: 'NetworkFirst',
+        options: {
+          cacheName: 'api-cache',
+          networkTimeoutSeconds: 10,
+          expiration: {
+            maxEntries: 16,
+            maxAgeSeconds: 60 * 60 // 1 hour
           }
         }
       },
@@ -54,11 +133,11 @@ const withPWA = require('@ducanh2912/next-pwa').default({
         urlPattern: /\/api\/.*/i,
         handler: 'NetworkFirst',
         options: {
-          cacheName: 'api-cache',
+          cacheName: 'local-api-cache',
           networkTimeoutSeconds: 10,
           expiration: {
             maxEntries: 16,
-            maxAgeSeconds: 60 * 60
+            maxAgeSeconds: 60 * 60 // 1 hour
           }
         }
       }
@@ -190,5 +269,4 @@ const nextConfig = {
   },
 }
 
-// Enable PWA only when explicitly requested
-module.exports = process.env.PWA_ENABLED === 'true' ? withPWA(nextConfig) : nextConfig
+module.exports = withPWA(nextConfig)
