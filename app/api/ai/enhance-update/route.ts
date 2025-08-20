@@ -85,8 +85,8 @@ export async function POST(request: Request) {
       // Mock enhancement for development
       if (isWorkNode) {
         // Simple work enhancement
-        const lines = text.split('\n').filter(line => line.trim())
-        enhancedText = lines.map(line => {
+        const lines = text.split('\n').filter((line: string) => line.trim())
+        enhancedText = lines.map((line: string) => {
           // Add bullet points if not already present
           if (!line.trim().startsWith('•') && !line.trim().startsWith('-')) {
             return `• ${line.trim()}`
@@ -104,10 +104,10 @@ export async function POST(request: Request) {
         // Simple personal enhancement - just clean up
         enhancedText = text
           .split('. ')
-          .map(sentence => sentence.trim())
-          .filter(s => s.length > 0)
-          .map(s => s.charAt(0).toUpperCase() + s.slice(1))
-          .map(s => s.endsWith('.') ? s : s + '.')
+          .map((sentence: string) => sentence.trim())
+          .filter((s: string) => s.length > 0)
+          .map((s: string) => s.charAt(0).toUpperCase() + s.slice(1))
+          .map((s: string) => s.endsWith('.') ? s : s + '.')
           .join(' ')
       }
     }

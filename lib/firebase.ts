@@ -1,7 +1,7 @@
-import { initializeApp, getApps } from 'firebase/app'
-import { getAuth, connectAuthEmulator } from 'firebase/auth'
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
-import { getStorage, connectStorageEmulator } from 'firebase/storage'
+import { initializeApp, getApps, type FirebaseApp } from 'firebase/app'
+import { getAuth, connectAuthEmulator, type Auth } from 'firebase/auth'
+import { getFirestore, connectFirestoreEmulator, type Firestore } from 'firebase/firestore'
+import { getStorage, connectStorageEmulator, type FirebaseStorage } from 'firebase/storage'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -15,12 +15,6 @@ const firebaseConfig = {
 
 // Log config for debugging (without sensitive data)
 if (typeof window !== 'undefined') {
-  console.log('🔥 FIREBASE DEBUG: Firebase config loaded:', {
-    projectId: firebaseConfig.projectId,
-    authDomain: firebaseConfig.authDomain,
-    hasApiKey: !!firebaseConfig.apiKey,
-    hasStorageBucket: !!firebaseConfig.storageBucket
-  })
 
   // Suppress expected errors that don't affect functionality
   const originalError = console.error
@@ -39,10 +33,10 @@ if (typeof window !== 'undefined') {
   }
 }
 
-let app
-let auth
-let db
-let storage
+let app: FirebaseApp
+let auth: Auth
+let db: Firestore
+let storage: FirebaseStorage
 
 try {
   // Initialize Firebase only if it hasn't been initialized
@@ -85,7 +79,7 @@ try {
       console.warn('Failed to connect to Storage emulator:', error)
     }
   } else if (typeof window !== 'undefined') {
-    console.log('🔥 FIREBASE DEBUG: Connected to production Firebase services')
+
   }
 } catch (error) {
   console.error('Failed to initialize Firebase:', error)

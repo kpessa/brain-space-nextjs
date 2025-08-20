@@ -30,8 +30,7 @@ export function ThemeToggle() {
   // During SSR, use safe defaults to prevent hydration mismatch
   const effectiveTheme = isClient ? getEffectiveTheme() : 'colorful'
   const clientDarkMode = isClient ? darkMode : false
-  
-  
+
   return (
     <div className="relative">
       <div className="flex items-center gap-1 p-1 rounded-lg bg-muted">

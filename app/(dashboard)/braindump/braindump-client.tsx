@@ -7,7 +7,7 @@ import { Brain, Plus, Upload, List, SortAsc, Layers } from 'lucide-react'
 import { BrainDumpInput } from '@/components/BrainDumpInput'
 import dynamic from 'next/dynamic'
 
-const BrainDumpFlow = dynamic(() => import('@/components/BrainDumpFlow').then(mod => ({ default: mod.BrainDumpFlow })), {
+const BrainDumpFlow = dynamic(() => import('@/components/LazyBrainDumpFlow').then(mod => ({ default: mod.LazyBrainDumpFlow })), {
   ssr: false,
   loading: () => <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brain-600"></div></div>
 })
@@ -243,18 +243,23 @@ export default function BraindumpClient({ userId }: { userId: string }) {
             parentNodeMap.set(thoughtNode.id, parentNodeId)
             successCount++
             
-            // Create child nodes
-            for (const child of nodeData.children) {
+            // Create child nodes - children array contains IDs
+            for (const childId of nodeData.children) {
+              // Find the child node in the brain dump
+              const childThoughtNode = thoughtNodes.find(n => n.id === childId)
+              if (!childThoughtNode) continue
+              
+              const childData = childThoughtNode.data
               const childNodeId = await createNode({
                 userId: userId,
-                title: child.nodeData.title,
-                description: child.nodeData.description || child.text,
-                type: (child.nodeData.type as NodeType) || 'task',
-                tags: child.nodeData.tags || [],
-                urgency: child.nodeData.urgency,
-                importance: child.nodeData.importance,
+                title: childData.label,
+                description: childData.description || childData.label,
+                type: (childData.nodeType as NodeType) || 'task',
+                tags: childData.tags || childData.keywords || [],
+                urgency: childData.urgency,
+                importance: childData.importance,
                 parent: parentNodeId, // Set parent relationship
-                isPersonal: child.nodeData.isPersonal,
+                isPersonal: childData.isPersonal,
               })
               
               if (childNodeId) {

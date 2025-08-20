@@ -5,7 +5,7 @@ import type { User } from 'firebase/auth'
 // Mock Firebase to avoid actual Firebase calls in tests
 jest.mock('@/lib/firebase', () => ({
   auth: {
-    currentUser: null,
+    currentUser: null as any,
     signInWithPopup: jest.fn(),
     signInWithEmailAndPassword: jest.fn(),
     createUserWithEmailAndPassword: jest.fn(),

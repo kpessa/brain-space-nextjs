@@ -442,14 +442,9 @@ export const useTimeboxStore = create<TimeboxState>((set, get) => ({
     if (process.env.NODE_ENV === 'development') {
       const state = get()
       console.group('📋 TIMEBOX DEBUG: Current Store State')
-      console.log('selectedDate:', state.selectedDate)
-      console.log('timeSlots count:', state.timeSlots.length)
-      console.log('isLoading:', state.isLoading)
-      console.log('error:', state.error)
-      
+
       const slotsWithTasks = state.timeSlots.filter(s => s.tasks.length > 0)
-      console.log('slots with tasks:', slotsWithTasks.length)
-      
+
       slotsWithTasks.forEach(slot => {
         console.log(`Slot ${slot.id} (${slot.displayTime}):`, 
           slot.tasks.map(t => ({

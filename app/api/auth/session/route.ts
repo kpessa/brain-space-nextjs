@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Development fallback - set cookie without full verification
-      console.warn('[Session API] Development mode - setting cookie without full verification')
+
       await setAuthCookie(token)
       
       return NextResponse.json({
@@ -67,9 +67,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Set secure HTTP-only cookie
-    console.log('[Session API] Setting auth cookie...')
+
     await setAuthCookie(token)
-    console.log('[Session API] Auth cookie set successfully')
 
     return NextResponse.json({
       success: true,

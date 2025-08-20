@@ -7,7 +7,7 @@
     ],
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": false, // Gradual migration to strict mode in progress
+    "strict": true, // 🎉 FULL STRICT MODE ENABLED!
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -16,13 +16,6 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "noImplicitAny": false, // Will enable after fixing Jest types
-    "strictNullChecks": false, // Relaxed null checks
-    "strictFunctionTypes": false, // Relaxed function types
-    "strictBindCallApply": false, // Relaxed bind/call/apply
-    "strictPropertyInitialization": false, // Relaxed property init
-    "noImplicitThis": false, // Allow implicit 'this'
-    "alwaysStrict": false, // No strict mode
     "plugins": [
       {
         "name": "next"

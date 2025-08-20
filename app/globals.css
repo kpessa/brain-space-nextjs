@@ -766,6 +766,41 @@ input[type="range"]:hover::-moz-range-thumb {
   }
 }
 
+/* Matrix Relationship Visualization Styles */
+.matrix-node-family {
+  position: relative;
+}
+
+.matrix-node-parent {
+  font-weight: 600;
+  border-left-width: 4px !important;
+}
+
+.matrix-node-child {
+  border-left-width: 2px !important;
+  margin-left: 16px;
+}
+
+/* Hover effects for relationship highlighting */
+.matrix-node-family:hover .matrix-node-child {
+  background-color: rgba(59, 130, 246, 0.05);
+  border-left-color: rgba(59, 130, 246, 0.8) !important;
+}
+
+.matrix-node-child:hover ~ .matrix-node-child {
+  opacity: 0.7;
+}
+
+/* Family color classes for consistent theming */
+.family-blue { --family-accent: #3B82F6; }
+.family-green { --family-accent: #10B981; }
+.family-purple { --family-accent: #8B5CF6; }
+.family-amber { --family-accent: #F59E0B; }
+.family-red { --family-accent: #EF4444; }
+.family-pink { --family-accent: #EC4899; }
+.family-cyan { --family-accent: #06B6D4; }
+.family-lime { --family-accent: #84CC16; }
+
 /* PWA Standalone Mode Fixes for iPhone */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   /* Sticky positioning support for iOS Safari */

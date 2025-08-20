@@ -10,11 +10,18 @@ import {
   Edit3, 
   Tag,
   ChevronRight,
-  AlertTriangle
+  AlertTriangle,
+  Plus,
+  Link,
+  Unlink,
+  FolderPlus,
+  Users
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
+import { isSnoozed, formatSnoozeUntil } from '@/lib/snooze'
+import { SnoozeInput } from '@/components/nodes/SnoozeInput'
 
 interface NodeContextMenuProps {
   isOpen: boolean
@@ -28,10 +35,19 @@ interface NodeContextMenuProps {
     status?: 'pending' | 'in-progress' | 'completed'
     completed?: boolean
     tags?: string[]
+    snoozedUntil?: string
+    parent?: string
+    children?: string[]
   } | null
   onClose: () => void
   onUpdateNode: (nodeId: string, updates: any) => void
   onDeleteNode?: (nodeId: string) => void
+  onSnoozeNode?: (nodeId: string, until: Date) => void
+  onUnsnoozeNode?: (nodeId: string) => void
+  onCreateSubtask?: (nodeId: string) => void
+  onLinkToParent?: (nodeId: string) => void
+  onUnlinkFromParent?: (nodeId: string) => void
+  onShowRelated?: (nodeId: string) => void
 }
 
 export function NodeContextMenu({
@@ -40,13 +56,20 @@ export function NodeContextMenu({
   node,
   onClose,
   onUpdateNode,
-  onDeleteNode
+  onDeleteNode,
+  onSnoozeNode,
+  onUnsnoozeNode,
+  onCreateSubtask,
+  onLinkToParent,
+  onUnlinkFromParent,
+  onShowRelated
 }: NodeContextMenuProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
   const [localUrgency, setLocalUrgency] = useState(5)
   const [localImportance, setLocalImportance] = useState(5)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showSnoozeInput, setShowSnoozeInput] = useState(false)
 
   // Update local values when node changes
   useState(() => {
@@ -94,6 +117,19 @@ export function NodeContextMenu({
     if (onDeleteNode) {
       onDeleteNode(node.id)
       onClose()
+    }
+  }
+  
+  const handleSnooze = (until: Date) => {
+    if (onSnoozeNode) {
+      onSnoozeNode(node.id, until)
+      setShowSnoozeInput(false)
+    }
+  }
+  
+  const handleUnsnooze = () => {
+    if (onUnsnoozeNode) {
+      onUnsnoozeNode(node.id)
     }
   }
 
@@ -199,6 +235,40 @@ export function NodeContextMenu({
           </div>
         </div>
 
+        {/* Snooze Actions */}
+        {showSnoozeInput ? (
+          <div className="mb-4">
+            <SnoozeInput
+              onSnooze={handleSnooze}
+              onCancel={() => setShowSnoozeInput(false)}
+            />
+          </div>
+        ) : (
+          <div className="mb-4">
+            {isSnoozed(node) ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleUnsnooze}
+                className="w-full text-xs"
+              >
+                <Clock className="w-3 h-3 mr-1" />
+                Unsnooze ({formatSnoozeUntil(node.snoozedUntil!)})
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowSnoozeInput(true)}
+                className="w-full text-xs"
+              >
+                <Clock className="w-3 h-3 mr-1" />
+                Snooze
+              </Button>
+            )}
+          </div>
+        )}
+
         {/* Priority Sliders */}
         <div className="space-y-3 mb-4">
           <div>
@@ -260,6 +330,82 @@ export function NodeContextMenu({
             </div>
           </div>
         )}
+
+        {/* Relationship Actions */}
+        <div className="space-y-2 mb-4 pt-2 border-t">
+          <Label className="text-xs text-gray-600">Relationships</Label>
+          <div className="flex flex-wrap gap-2">
+            {onCreateSubtask && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  onCreateSubtask(node.id)
+                  onClose()
+                }}
+                className="text-xs"
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                Add Subtask
+              </Button>
+            )}
+            
+            {onLinkToParent && !node.parent && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  onLinkToParent(node.id)
+                  onClose()
+                }}
+                className="text-xs"
+              >
+                <Link className="w-3 h-3 mr-1" />
+                Link to Parent
+              </Button>
+            )}
+            
+            {onUnlinkFromParent && node.parent && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  onUnlinkFromParent(node.id)
+                  onClose()
+                }}
+                className="text-xs"
+              >
+                <Unlink className="w-3 h-3 mr-1" />
+                Unlink from Parent
+              </Button>
+            )}
+            
+            {onShowRelated && (node.parent || (node.children && node.children.length > 0)) && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  onShowRelated(node.id)
+                  onClose()
+                }}
+                className="text-xs"
+              >
+                <Users className="w-3 h-3 mr-1" />
+                Show Family
+              </Button>
+            )}
+          </div>
+          
+          {/* Show current relationships */}
+          {(node.parent || (node.children && node.children.length > 0)) && (
+            <div className="text-xs text-gray-500 mt-2">
+              {node.parent && <div>Has parent</div>}
+              {node.children && node.children.length > 0 && (
+                <div>{node.children.length} subtask{node.children.length !== 1 ? 's' : ''}</div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Delete Action */}
         <div className="pt-2 border-t">

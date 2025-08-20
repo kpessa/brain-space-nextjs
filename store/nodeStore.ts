@@ -40,6 +40,13 @@ interface NodesStore {
   getNodeDescendants: (nodeId: string) => Node[]
   selectNode: (nodeId: string | null) => void
   toggleNodePin: (nodeId: string) => Promise<void>
+  
+  // Snooze Actions
+  snoozeNode: (nodeId: string, until: Date) => Promise<void>
+  unsnoozeNode: (nodeId: string) => Promise<void>
+  getSnoozedNodes: () => Node[]
+  getActiveSnoozedCount: () => number
+  clearExpiredSnoozes: () => Promise<void>
 
   // Clear state
   clearNodes: () => void
@@ -75,7 +82,13 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
       snapshot.forEach(doc => {
         const data = doc.data()
         
-        // Skip debug logging
+        // Debug: Only log nodes with relationships
+        if (data.parent || (data.children && data.children.length > 0)) {
+          console.log(`🔗 ${data.title}:`, {
+            parent: data.parent,
+            children: data.children
+          })
+        }
         
         const nodeData = {
           ...data,
@@ -738,6 +751,53 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
     }
     
     await get().updateNode(nodeId, { isPinned: !node.isPinned })
+  },
+  
+  // Snooze Actions
+  snoozeNode: async (nodeId: string, until: Date) => {
+    const node = get().getNodeById(nodeId)
+    if (!node) {
+      set({ error: 'Node not found' })
+      return
+    }
+    
+    await get().updateNode(nodeId, { snoozedUntil: until.toISOString() })
+  },
+  
+  unsnoozeNode: async (nodeId: string) => {
+    const node = get().getNodeById(nodeId)
+    if (!node) {
+      set({ error: 'Node not found' })
+      return
+    }
+    
+    await get().updateNode(nodeId, { snoozedUntil: undefined })
+  },
+  
+  getSnoozedNodes: () => {
+    const now = new Date()
+    return get().nodes.filter(node => 
+      node.snoozedUntil && new Date(node.snoozedUntil) > now
+    )
+  },
+  
+  getActiveSnoozedCount: () => {
+    const now = new Date()
+    return get().nodes.filter(node => 
+      node.snoozedUntil && new Date(node.snoozedUntil) > now
+    ).length
+  },
+  
+  clearExpiredSnoozes: async () => {
+    const now = new Date()
+    const expiredNodes = get().nodes.filter(node => 
+      node.snoozedUntil && new Date(node.snoozedUntil) <= now
+    )
+    
+    // Batch update to clear expired snoozes
+    for (const node of expiredNodes) {
+      await get().updateNode(node.id, { snoozedUntil: undefined })
+    }
   },
 
   clearNodes: () => {

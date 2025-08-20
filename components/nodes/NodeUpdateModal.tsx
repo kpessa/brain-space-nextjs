@@ -8,7 +8,7 @@ import { useXPStore } from '@/store/xpStore'
 import { XPEventType } from '@/types/xp'
 import type { Node, NodeUpdate } from '@/types/node'
 import { createAIService } from '@/services/ai'
-import { useXPAnimation } from '@/components/XPGainAnimation'
+import { useXPAnimation } from '@/components/XPGainAnimationCSS'
 import { MessageSquare, Pin, Clock, User, Trash2, Plus, Sparkles, Zap } from '@/lib/icons'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -64,13 +64,13 @@ export function NodeUpdateModal({ isOpen, onClose, node, userId, userName }: Nod
       if (response.ok) {
         const { enhancedText } = await response.json()
         setNewUpdateContent(enhancedText)
-        toast.success('Update enhanced with AI!')
+        toast.showSuccess('Update enhanced with AI!')
       } else {
-        toast.error('Failed to enhance update')
+        toast.showError('Failed to enhance update')
       }
     } catch (error) {
       console.error('Error enhancing update:', error)
-      toast.error('Failed to enhance update')
+      toast.showError('Failed to enhance update')
     } finally {
       setIsEnhancing(false)
     }
@@ -106,15 +106,15 @@ export function NodeUpdateModal({ isOpen, onClose, node, userId, userName }: Nod
       showXPGain(xpAwarded, e.nativeEvent as MouseEvent)
       
       if (leveledUp) {
-        toast.success('Level Up! 🎉')
+        toast.showSuccess('Level Up! 🎉')
       }
       
       setNewUpdateContent('')
       setIsAddingUpdate(false)
-      toast.success('Update added successfully!')
+      toast.showSuccess('Update added successfully!')
     } catch (error) {
       console.error('Failed to add update:', error)
-      toast.error('Failed to add update')
+      toast.showError('Failed to add update')
     } finally {
       setLoading(false)
     }

@@ -22,6 +22,54 @@ export interface BrainDumpNode extends Node {
       start: number
       end: number
     }
+    // Additional properties from full type definition
+    children?: string[]
+    parent?: string
+    parentId?: string
+    isPersonal?: boolean
+    originalText?: string
+    aiGenerated?: boolean
+    isLink?: boolean
+    linkedBrainDumpId?: string
+    layoutMode?: 'horizontal' | 'freeform'
+    isGhost?: boolean
+    referencedNodeId?: string
+    synonyms?: string[]
+    isInstance?: boolean
+    prototypeId?: string
+    instances?: string[]
+    hasTopicBrainDump?: boolean
+    topicBrainDumpId?: string
+    priorityMode?: 'simple' | 'advanced'
+    dueDateMode?: 'none' | 'specific' | 'relative'
+    autoUrgencyFromDueDate?: boolean
+    timeboxStartTime?: string
+    timeboxDuration?: number
+    timeboxDate?: string
+    isTimedTask?: boolean
+    taskStatus?: 'pending' | 'in-progress' | 'completed' | 'deferred'
+    completedAt?: string
+    attempts?: Array<{
+      id: string
+      timestamp: string
+      duration?: number
+      notes?: string
+      outcome: 'success' | 'partial' | 'failed' | 'blocked'
+      nextAction?: string
+    }>
+    totalAttempts?: number
+    subtasks?: string[]
+    parentTaskId?: string
+    subtaskProgress?: { completed: number; total: number }
+    subtaskLogic?: 'AND' | 'OR' | 'NONE'
+    isOptional?: boolean
+    autoCompleteParent?: boolean
+    taskType?: 'one-time' | 'recurring' | 'habit'
+    recurrencePattern?: any // We'll keep this as any for now to avoid circular dependencies
+    recurringCompletions?: any[]
+    currentStreak?: number
+    longestStreak?: number
+    lastRecurringCompletionDate?: string
   }
 }
 

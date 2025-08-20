@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Calendar, Clock, MapPin, Users, FileText, Loader2, CalendarPlus } from '@/lib/icons'
 import dayjs from 'dayjs'
 import { googleCalendarService } from '@/services/googleCalendar'
-import { useCalendarStore } from '@/store/calendarStore'
+import { useCalendarStore, useCalendarStoreBase } from '@/store/calendarStore'
 import type { Node } from '@/types/node'
 import { cn } from '@/lib/utils'
 
@@ -72,13 +72,13 @@ export function CalendarEventModal({
       if (isOpen) {
         // Check if already authenticated
         const isAuth = googleCalendarService.isAuthorized()
-        useCalendarStore.getState().setIsAuthenticated(isAuth)
+        useCalendarStoreBase.getState().setIsAuthenticated(isAuth)
         
         // If authenticated, load calendars
         if (isAuth) {
           try {
             const calendarList = await googleCalendarService.listCalendars()
-            useCalendarStore.getState().setCalendars(calendarList)
+            useCalendarStoreBase.getState().setCalendars(calendarList)
           } catch (error) {
             console.error('Failed to load calendars:', error)
           }
@@ -148,11 +148,11 @@ export function CalendarEventModal({
       const success = await googleCalendarService.authorize()
       if (success) {
         // Update global auth state
-        useCalendarStore.getState().setIsAuthenticated(true)
+        useCalendarStoreBase.getState().setIsAuthenticated(true)
         
         // Load calendars after successful auth
         const calendarList = await googleCalendarService.listCalendars()
-        useCalendarStore.getState().setCalendars(calendarList)
+        useCalendarStoreBase.getState().setCalendars(calendarList)
       } else {
         setError('Failed to authenticate with Google Calendar')
       }

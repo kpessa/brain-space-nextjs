@@ -110,20 +110,13 @@ export async function setAuthCookie(token: string) {
   }
   
   if (process.env.NODE_ENV === 'development') {
-    console.log('[setAuthCookie] Setting cookie with options:', {
-      name: AUTH_COOKIE_NAME,
-      secure: cookieOptions.secure,
-      sameSite: cookieOptions.sameSite,
-      maxAge: cookieOptions.maxAge,
-      path: cookieOptions.path,
-      tokenLength: token.length
-    })
+
   }
   
   cookieStore.set(AUTH_COOKIE_NAME, token, cookieOptions)
   
   if (process.env.NODE_ENV === 'development') {
-    console.log('[setAuthCookie] Cookie set operation completed')
+
   }
 }
 

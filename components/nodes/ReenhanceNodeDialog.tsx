@@ -105,11 +105,11 @@ export function ReenhanceNodeDialog({
         isPersonal: enhancedData.isPersonal
       })
       
-      toast.success('Node enhanced successfully!')
+      toast.showSuccess('Node enhanced successfully!')
       onSuccess?.()
       onClose()
     } catch (err) {
-      toast.error('Failed to update node')
+      toast.showError('Failed to update node')
       console.error('Update error:', err)
     }
   }

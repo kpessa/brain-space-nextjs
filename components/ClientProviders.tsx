@@ -1,7 +1,7 @@
 'use client'
 
 import { AuthProvider } from '@/contexts/AuthContext'
-import { XPGainAnimation } from './XPGainAnimation'
+import { XPGainAnimation } from './XPGainAnimationCSS'
 import { useScheduleMode } from '@/hooks/useScheduleMode'
 
 function ScheduleModeProvider({ children }: { children: React.ReactNode }) {

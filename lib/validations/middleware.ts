@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { ZodSchema, ZodError } from 'zod'
+import { ZodSchema, ZodError, ZodIssue } from 'zod'
 
 /**
  * Format Zod validation errors for API responses
  */
 export function formatZodError(error: ZodError): object {
-  const formatted = error.errors.map(err => ({
+  const formatted = error.issues.map((err: ZodIssue) => ({
     path: err.path.join('.'),
     message: err.message,
     type: err.code
@@ -60,7 +60,7 @@ export function validateQuery<T>(
     const query = Object.fromEntries(searchParams.entries())
     
     // Convert array parameters (e.g., tags[]=a&tags[]=b)
-    const processed: any = {}
+    const processed: Record<string, any> = {}
     for (const [key, value] of Object.entries(query)) {
       if (key.endsWith('[]')) {
         const arrayKey = key.slice(0, -2)
@@ -96,7 +96,7 @@ export function validateQuery<T>(
 /**
  * Higher-order function to wrap API handlers with validation
  */
-export function withValidation<TBody = any, TQuery = any>(
+export function withValidation<TBody = unknown, TQuery = unknown>(
   bodySchema?: ZodSchema<TBody>,
   querySchema?: ZodSchema<TQuery>
 ) {
@@ -106,28 +106,32 @@ export function withValidation<TBody = any, TQuery = any>(
       context: {
         body?: TBody
         query?: TQuery
-        params?: any
+        params?: Record<string, string>
       }
     ) => Promise<NextResponse>
   ) {
     return async function (
       request: NextRequest,
-      context?: any
+      context?: { params?: Record<string, string> }
     ): Promise<NextResponse> {
-      const validationContext: any = { params: context?.params }
+      const validationContext: {
+        body?: TBody
+        query?: TQuery
+        params?: Record<string, string>
+      } = { params: context?.params }
       
       // Validate body if schema provided
       if (bodySchema && ['POST', 'PUT', 'PATCH'].includes(request.method)) {
         const { data, error } = await validateBody(request, bodySchema)
         if (error) return error
-        validationContext.body = data
+        validationContext.body = data || undefined
       }
       
       // Validate query if schema provided
       if (querySchema) {
         const { data, error } = validateQuery(request, querySchema)
         if (error) return error
-        validationContext.query = data
+        validationContext.query = data || undefined
       }
       
       // Call the handler with validated data

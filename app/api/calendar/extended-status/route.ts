@@ -155,24 +155,36 @@ function analyzeCommitments(
   const dailyMeetingCounts: Record<string, number> = {}
   
   // Initialize months
-  const currentDate = new Date(startDate)
-  while (currentDate <= endDate) {
-    const monthKey = format(currentDate, 'yyyy-MM')
-    const monthStart = startOfMonth(currentDate)
-    const monthEnd = endOfMonth(currentDate)
-    const daysInMonth = eachDayOfInterval({ 
-      start: monthStart > startDate ? monthStart : startDate,
-      end: monthEnd < endDate ? monthEnd : endDate
-    })
+  let currentDate = dayjs(startDate)
+  const endDayjs = dayjs(endDate)
+  
+  while (currentDate.isSameOrBefore(endDayjs, 'month')) {
+    const monthKey = currentDate.format('YYYY-MM')
+    const monthStart = currentDate.startOf('month')
+    const monthEnd = currentDate.endOf('month')
+    
+    // Calculate days in the month within our date range
+    const rangeStart = monthStart.isAfter(startDate) ? monthStart : dayjs(startDate)
+    const rangeEnd = monthEnd.isBefore(endDate) ? monthEnd : dayjs(endDate)
+    
+    // Count working days in the range
+    let workingDays = 0
+    let current = rangeStart
+    while (current.isSameOrBefore(rangeEnd, 'day')) {
+      if (current.day() !== 0 && current.day() !== 6) { // Not Sunday (0) or Saturday (6)
+        workingDays++
+      }
+      current = current.add(1, 'day')
+    }
     
     byMonth[monthKey] = {
       meetings: 0,
       blockedDays: 0,
       availableDays: 0,
-      workingDays: daysInMonth.filter(d => !isWeekend(d)).length
+      workingDays
     }
     
-    currentDate.setMonth(currentDate.getMonth() + 1)
+    currentDate = currentDate.add(1, 'month')
   }
   
   // Count meetings and blocked days
@@ -183,9 +195,9 @@ function analyzeCommitments(
     const startDateStr = event.start.date || event.start.dateTime?.split('T')[0]
     if (!startDateStr) return
     
-    const eventDate = new Date(startDateStr)
-    const monthKey = format(eventDate, 'yyyy-MM')
-    const dayKey = format(eventDate, 'yyyy-MM-dd')
+    const eventDate = dayjs(startDateStr)
+    const monthKey = eventDate.format('YYYY-MM')
+    const dayKey = eventDate.format('YYYY-MM-DD')
     
     // Count meetings (non-all-day events with attendees or that user accepted)
     const isAllDay = !!event.start.date
@@ -319,9 +331,16 @@ function analyzeFocusTime(events: CalendarEvent[], startDate: Date, endDate: Dat
   let totalMeetings = 0
   let totalWorkDays = 0
   
-  const days = eachDayOfInterval(startDate, endDate)
+  // Generate array of days between start and end
+  const days: dayjs.Dayjs[] = []
+  let currentDay = dayjs(startDate)
+  const endDay = dayjs(endDate)
+  while (currentDay.isSameOrBefore(endDay, 'day')) {
+    days.push(currentDay)
+    currentDay = currentDay.add(1, 'day')
+  }
   
-  days.forEach(day => {
+  days.forEach((day: dayjs.Dayjs) => {
     if (day.day() !== 0 && day.day() !== 6) {
       totalWorkDays++
       const dayMeetings = events.filter(event => {
@@ -379,8 +398,14 @@ export async function POST(request: NextRequest) {
     const endDate = new Date(timeRange.end)
     
     // Calculate working days
-    const allDays = eachDayOfInterval(startDate, endDate)
-    const workingDays = allDays.filter(day => day.day() !== 0 && day.day() !== 6).length
+    const allDays: dayjs.Dayjs[] = []
+    let tempDay = dayjs(startDate)
+    const tempEndDay = dayjs(endDate)
+    while (tempDay.isSameOrBefore(tempEndDay, 'day')) {
+      allDays.push(tempDay)
+      tempDay = tempDay.add(1, 'day')
+    }
+    const workingDays = allDays.filter((day: dayjs.Dayjs) => day.day() !== 0 && day.day() !== 6).length
     
     // Extract existing PTO
     const existingPTO = extractOutOfOfficeEvents(events)

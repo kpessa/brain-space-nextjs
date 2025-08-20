@@ -7,6 +7,7 @@ const createMinimalTodo = (overrides: any = {}) => ({
   status: 'pending' as TodoStatus,
   type: 'task' as TodoType,
   sourceType: 'manual' as TodoSourceType,
+  userId: 'test-user',
   ...overrides,
 })
 
@@ -232,7 +233,10 @@ describe('TodoStore', () => {
         const parentTodo = result.current.addTodo({
           title: 'Parent Todo',
           type: 'task',
-        })
+          userId: 'test-user',
+          status: 'pending',
+          sourceType: 'manual',
+        } as any)
         parentTodoId = parentTodo.id
         
         // Wait 1ms to ensure different timestamp
@@ -241,7 +245,11 @@ describe('TodoStore', () => {
         const child1Todo = result.current.addTodo({
           title: 'Child Todo 1',
           parentId: parentTodo.id,
-        })
+          type: 'task',
+          userId: 'test-user',
+          status: 'pending',
+          sourceType: 'manual',
+        } as any)
         child1TodoId = child1Todo.id
         
         await new Promise(resolve => setTimeout(resolve, 1))
@@ -249,7 +257,11 @@ describe('TodoStore', () => {
         const child2Todo = result.current.addTodo({
           title: 'Child Todo 2', 
           parentId: parentTodo.id,
-        })
+          type: 'task',
+          userId: 'test-user',
+          status: 'pending',
+          sourceType: 'manual',
+        } as any)
         child2TodoId = child2Todo.id
         
         await new Promise(resolve => setTimeout(resolve, 1))
@@ -257,7 +269,11 @@ describe('TodoStore', () => {
         // Add unrelated todo
         const unrelatedTodo = result.current.addTodo({
           title: 'Unrelated Todo',
-        })
+          type: 'task',
+          userId: 'test-user',
+          status: 'pending',
+          sourceType: 'manual',
+        } as any)
         unrelatedTodoId = unrelatedTodo.id
       })
       
@@ -291,7 +307,10 @@ describe('TodoStore', () => {
         const parentTodo = result.current.addTodo({
           title: 'Parent Todo',
           type: 'task',
-        })
+          userId: 'test-user',
+          status: 'pending',
+          sourceType: 'manual',
+        } as any)
         parentTodoId = parentTodo.id
         
         await new Promise(resolve => setTimeout(resolve, 1))
@@ -299,7 +318,11 @@ describe('TodoStore', () => {
         const child1Todo = result.current.addTodo({
           title: 'Child Todo 1',
           parentId: parentTodo.id,
-        })
+          type: 'task',
+          userId: 'test-user',
+          status: 'pending',
+          sourceType: 'manual',
+        } as any)
         child1TodoId = child1Todo.id
         
         await new Promise(resolve => setTimeout(resolve, 1))
@@ -307,7 +330,11 @@ describe('TodoStore', () => {
         const child2Todo = result.current.addTodo({
           title: 'Child Todo 2', 
           parentId: parentTodo.id,
-        })
+          type: 'task',
+          userId: 'test-user',
+          status: 'pending',
+          sourceType: 'manual',
+        } as any)
         child2TodoId = child2Todo.id
         
         await new Promise(resolve => setTimeout(resolve, 1))
@@ -315,7 +342,11 @@ describe('TodoStore', () => {
         // Add unrelated todo
         const unrelatedTodo = result.current.addTodo({
           title: 'Unrelated Todo',
-        })
+          type: 'task',
+          userId: 'test-user',
+          status: 'pending',
+          sourceType: 'manual',
+        } as any)
         unrelatedTodoId = unrelatedTodo.id
       })
       
@@ -363,7 +394,10 @@ describe('TodoStore', () => {
         const pendingTodo = result.current.addTodo({
           title: 'Pending Todo',
           status: 'pending',
-        })
+          type: 'task',
+          userId: 'test-user',
+          sourceType: 'manual',
+        } as any)
         pendingTodoId = pendingTodo.id
       })
       
@@ -387,7 +421,10 @@ describe('TodoStore', () => {
           title: 'Completed Todo',
           status: 'completed',
           completedAt: '2024-01-01T12:00:00Z',
-        })
+          type: 'task',
+          userId: 'test-user',
+          sourceType: 'manual',
+        } as any)
         completedTodoId = completedTodo.id
       })
       
@@ -480,36 +517,36 @@ describe('TodoStore', () => {
       const { result } = renderHook(() => useTodoStore())
       
       act(() => {
-        result.current.addTodo({
+        result.current.addTodo(createMinimalTodo({
           title: 'Work Task',
           type: 'task',
           status: 'pending',
           tags: ['work', 'urgent'],
           description: 'Important work task to complete',
-        })
+        }))
         
-        result.current.addTodo({
+        result.current.addTodo(createMinimalTodo({
           title: 'Personal Goal',
           type: 'quest',
           status: 'in_progress',
           tags: ['personal', 'health'],
           description: 'Exercise routine for better health',
-        })
+        }))
         
-        result.current.addTodo({
+        result.current.addTodo(createMinimalTodo({
           title: 'Daily Habit',
           type: 'habit',
           status: 'completed',
           tags: ['daily', 'personal'],
-        })
+        }))
         
-        result.current.addTodo({
+        result.current.addTodo(createMinimalTodo({
           title: 'Work Meeting',
           type: 'routine_item',
           status: 'pending',
           tags: ['work', 'meeting'],
           description: 'Weekly team meeting',
-        })
+        }))
       })
     })
 
@@ -738,10 +775,10 @@ describe('TodoStore', () => {
       
       act(() => {
         statuses.forEach((status, index) => {
-          result.current.addTodo({
+          result.current.addTodo(createMinimalTodo({
             title: `Todo ${index + 1}`,
             status,
-          })
+          }))
         })
       })
       
@@ -867,17 +904,17 @@ describe('TodoStore', () => {
           position: 1,
         })
         
-        result.current.addTodo({
+        result.current.addTodo(createMinimalTodo({
           title: 'Development phase',
           parentId: parentTodo!.id,
           position: 2,
-        })
+        }))
         
-        result.current.addTodo({
+        result.current.addTodo(createMinimalTodo({
           title: 'Testing phase',
           parentId: parentTodo!.id,
           position: 3,
-        })
+        }))
       })
       
       expect(result.current.todos).toHaveLength(4)
@@ -896,16 +933,16 @@ describe('TodoStore', () => {
       const { result } = renderHook(() => useTodoStore())
       
       act(() => {
-        result.current.addTodo({
+        result.current.addTodo(createMinimalTodo({
           title: 'Important Meeting',
           type: 'routine_item',
           dueDate: '2024-01-15',
           scheduledDate: '2024-01-15',
           scheduledTime: '14:00',
           scheduledDuration: 60,
-          importance: 9,
-          urgency: 8,
-        })
+          priorityImportance: 9,
+          priorityUrgency: 8,
+        }))
       })
       
       const scheduledTodo = result.current.todos[0]
@@ -934,22 +971,22 @@ describe('TodoStore', () => {
       act(() => {
         // Work todos
         for (let i = 1; i <= 5; i++) {
-          result.current.addTodo({
+          result.current.addTodo(createMinimalTodo({
             title: `Work Task ${i}`,
             type: 'task',
             tags: ['work'],
             status: i <= 2 ? 'completed' : 'pending',
-          })
+          }))
         }
         
         // Personal todos
         for (let i = 1; i <= 3; i++) {
-          result.current.addTodo({
+          result.current.addTodo(createMinimalTodo({
             title: `Personal Task ${i}`,
             type: 'habit',
             tags: ['personal'],
             status: i === 1 ? 'completed' : 'pending',
-          })
+          }))
         }
       })
       

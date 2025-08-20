@@ -201,8 +201,8 @@ export {
   Layout,
   Columns,
   Sidebar,
-  type Icon
+  type LucideIcon
 } from 'lucide-react'
 
-// Re-export icon type with alias to avoid conflict
-export type LucideIcon = Icon
+// Re-export icon type
+export type { LucideIcon }

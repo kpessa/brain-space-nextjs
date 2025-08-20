@@ -12,7 +12,7 @@ import { getNodeTypeIcon, getNodeTypeColor, getEisenhowerQuadrant } from '@/type
 import { NodeBreadcrumb } from './NodeBreadcrumb'
 import { ReenhanceNodeDialog } from './ReenhanceNodeDialog'
 import { useToast } from '@/hooks/useToast'
-import { useXPAnimation } from '@/components/XPGainAnimation'
+import { useXPAnimation } from '@/components/XPGainAnimationCSS'
 import { CheckCircle, Circle, Clock, Calendar, CalendarPlus, Tag, GitBranch, GitMerge, Trash2, Edit3, Save, X, MessageSquare, Info, Link, AlertCircle, Sparkles, Repeat } from '@/lib/icons'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -132,13 +132,13 @@ export function NodeDetailModal({
     setSaving(true)
     try {
       await updateNode(currentNode.id, {
-        recurrence: recurrencePattern,
+        recurrence: recurrencePattern || undefined,
         taskType: recurrencePattern ? 'recurring' : 'one-time'
       })
       setShowRecurrenceConfig(false)
-      toast.success('Recurrence pattern updated!')
+      toast.showSuccess('Recurrence pattern updated!')
     } catch (error) {
-      toast.error('Failed to update recurrence pattern')
+      toast.showError('Failed to update recurrence pattern')
     } finally {
       setSaving(false)
     }
@@ -207,13 +207,13 @@ export function NodeDetailModal({
       if (response.ok) {
         const { enhancedText } = await response.json()
         setNewUpdateContent(enhancedText)
-        toast.success('Update enhanced with AI!')
+        toast.showSuccess('Update enhanced with AI!')
       } else {
-        toast.error('Failed to enhance update')
+        toast.showError('Failed to enhance update')
       }
     } catch (error) {
       console.error('Error enhancing update:', error)
-      toast.error('Failed to enhance update')
+      toast.showError('Failed to enhance update')
     } finally {
       setIsEnhancing(false)
     }
@@ -244,19 +244,19 @@ export function NodeDetailModal({
         updateCount: currentNode.updates?.length || 0
       })
       
-      // Show XP animation
-      showXPGain(xpAwarded, e.nativeEvent as MouseEvent)
+      // Show XP animation (use a dummy position since it's a form event)
+      showXPGain(xpAwarded, { clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 } as any)
       
       if (leveledUp) {
-        toast.success('Level Up! 🎉')
+        toast.showSuccess('Level Up! 🎉')
       }
       
       setNewUpdateContent('')
       setIsAddingUpdate(false)
-      toast.success('Update added successfully!')
+      toast.showSuccess('Update added successfully!')
     } catch (error) {
       console.error('Failed to add update:', error)
-      toast.error('Failed to add update')
+      toast.showError('Failed to add update')
     }
   }
   
@@ -864,24 +864,19 @@ export function NodeDetailModal({
                         onClick={async () => {
                           try {
                             // Unlink the nodes
-                            const result = await unlinkNodes(parent.id, currentNode.id)
+                            await unlinkNodes(parent.id, currentNode.id)
                             
                             // Wait for state to update and refresh
                             await forceRefresh()
                             
-                            if (result && result.success) {
-                              // Show detailed success message
-                              const actions = result.actions.join('. ')
-                              toast.success(`Successfully unlinked! ${actions}`)
-                              // Notify parent component
-                              onRelationshipChange?.()
-                            } else {
-                              toast.error('Failed to unlink from parent. Please try again.')
-                            }
+                            // Show success message
+                            toast.showSuccess('Successfully unlinked from parent!')
+                            // Notify parent component
+                            onRelationshipChange?.()
                           } catch (error) {
                             console.error('Failed to unlink parent:', error)
                             const errorMessage = error instanceof Error ? error.message : 'Failed to unlink from parent'
-                            toast.error(errorMessage)
+                            toast.showError(errorMessage)
                           }
                         }}
                         className="text-xs text-red-600 hover:bg-red-50"
@@ -936,24 +931,19 @@ export function NodeDetailModal({
                             onClick={async () => {
                               try {
                                 // Unlink the nodes
-                                const result = await unlinkNodes(currentNode.id, child.id)
+                                await unlinkNodes(currentNode.id, child.id)
                                 
                                 // Wait for state to update and refresh
                                 await forceRefresh()
                                 
-                                if (result && result.success) {
-                                  // Show detailed success message
-                                  const actions = result.actions.join('. ')
-                                  toast.success(`Successfully unlinked! ${actions}`)
-                                  // Notify parent component
-                                  onRelationshipChange?.()
-                                } else {
-                                  toast.error('Failed to unlink child. Please try again.')
-                                }
+                                // Show success message
+                                toast.showSuccess('Successfully unlinked child!')
+                                // Notify parent component
+                                onRelationshipChange?.()
                               } catch (error) {
                                 console.error('Failed to unlink child:', error)
                                 const errorMessage = error instanceof Error ? error.message : 'Failed to unlink child'
-                                toast.error(errorMessage)
+                                toast.showError(errorMessage)
                               }
                             }}
                             className="text-xs text-red-600 hover:bg-red-50"

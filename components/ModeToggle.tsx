@@ -18,8 +18,7 @@ export function ModeToggle() {
   
   // Use safe default during SSR/initial render
   const displayMode = mounted ? currentMode : 'work'
-  
-  
+
   const getModeIcon = (mode: UserMode) => {
     switch (mode) {
       case 'work':

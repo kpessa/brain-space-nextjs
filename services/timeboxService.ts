@@ -62,12 +62,11 @@ export class TimeboxService {
     intervalMinutes?: 30 | 60 | 120
   ): Promise<void> {
     if (!userId) {
-      console.warn('TimeboxService: saveTimeboxData called without userId')
+
       return
     }
 
     console.group('🔍 TIMEBOX SERVICE: saveTimeboxData called')
-    console.log('Parameters:', { userId, date, intervalMinutes })
 
     // Detect interval from current slots if not provided
     let detectedInterval = intervalMinutes
@@ -75,7 +74,7 @@ export class TimeboxService {
       const [startHour, startMinute] = timeSlots[0].startTime.split(':').map(Number)
       const [endHour, endMinute] = timeSlots[0].endTime.split(':').map(Number)
       detectedInterval = ((endHour * 60 + endMinute) - (startHour * 60 + startMinute)) as 30 | 60 | 120
-      console.log('🕒 Detected interval from slots:', detectedInterval, 'minutes')
+
     } else if (!detectedInterval) {
       detectedInterval = 120 // Default fallback
     }
@@ -91,7 +90,6 @@ export class TimeboxService {
           totalTasksToSave += slot.tasks.length
         }
       })
-      
 
       const { db, doc, collection, query, where, getDocs, setDoc, updateDoc, serverTimestamp } = await getFirebase()
       
@@ -141,7 +139,7 @@ export class TimeboxService {
    */
   static async deleteTimeboxData(userId: string, date: string): Promise<void> {
     if (!userId) {
-      console.warn('TimeboxService: deleteTimeboxData called without userId')
+
       return
     }
 

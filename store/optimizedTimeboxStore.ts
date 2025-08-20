@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import dayjs from 'dayjs'
-import type { TimeboxTask, TimeSlot } from './timeboxStore'
+import type { TimeboxTask, TimeSlot } from '@/types/timebox'
 
 interface OptimizedTimeboxState {
   // Use Map for O(1) lookups

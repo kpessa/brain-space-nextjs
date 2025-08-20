@@ -43,7 +43,14 @@
       "Bash(echo $NODE_ENV)",
       "Bash(unset NODE_ENV)",
       "Bash(git restore:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(npx tsx:*)",
+      "WebFetch(domain:lawsofux.com)",
+      "WebFetch(domain:material.io)",
+      "WebFetch(domain:m2.material.io)",
+      "WebFetch(domain:www.nngroup.com)",
+      "WebFetch(domain:inclusive-components.design)",
+      "WebFetch(domain:www.figma.com)"
     ],
     "deny": []
   }

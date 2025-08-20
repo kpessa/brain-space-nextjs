@@ -144,6 +144,9 @@ export interface Node {
   // Google Calendar integration (optional)
   calendarEventId?: string // Google Calendar event ID
   calendarId?: string // Google Calendar ID
+  
+  // Snooze functionality (optional)
+  snoozedUntil?: string // ISO date string for when node becomes visible again
 }
 
 // Helper functions for node operations

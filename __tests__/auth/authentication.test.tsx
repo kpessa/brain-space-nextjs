@@ -12,7 +12,7 @@ jest.mock('firebase/auth', () => ({
 
 jest.mock('@/lib/firebase', () => ({
   auth: {
-    currentUser: null,
+    currentUser: null as any,
   },
 }))
 

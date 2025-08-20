@@ -555,7 +555,7 @@ export default function StatusUpdateClient({ userId }: { userId: string }) {
                     {cat.suggestedPTO && cat.suggestedPTO.length > 0 && (
                       <div className="mt-2 p-2 bg-purple-50 rounded text-xs">
                         <span className="font-medium text-purple-800">Suggested PTO: </span>
-                        {cat.suggestedPTO.map((date, i) => (
+                        {cat.suggestedPTO.map((date: string, i: number) => (
                           <span key={i} className="text-purple-700">
                             {dayjs(date).format('MMM D')}
                             {i < cat.suggestedPTO!.length - 1 ? ', ' : ''}

@@ -1,19 +1,22 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
 import { useNodesStore } from '@/store/nodeStore'
-import { Plus, AlertCircle, Star, Clock, Calendar } from '@/lib/icons'
+import { useUserPreferencesStore } from '@/store/userPreferencesStore'
+import { ModeToggle } from '@/components/ModeToggle'
+import { AlertCircle, Star, Clock, Calendar, Maximize2, Minimize2 } from '@/lib/icons'
 import { InputDialog } from '@/components/ui/InputDialog'
+import { Button } from '@/components/ui/Button'
 import { NodeContextMenu } from '@/components/matrix/NodeContextMenu'
+import { QuadrantCard } from '@/components/matrix/QuadrantCard'
+import { MatrixQuadrantRenderer } from '@/components/matrix/MatrixQuadrantRenderer'
+import { useMatrixState } from '@/hooks/useMatrixState'
+import { useMatrixOrganization } from '@/hooks/useMatrixOrganization'
+import { useMatrixHandlers } from '@/hooks/useMatrixHandlers'
 
 // Dynamic import for drag and drop to avoid SSR issues
 const DragDropContext = dynamic(() => import('@hello-pangea/dnd').then(mod => ({ default: mod.DragDropContext })), { ssr: false })
-const Droppable = dynamic(() => import('@hello-pangea/dnd').then(mod => ({ default: mod.Droppable })), { ssr: false })
-const Draggable = dynamic(() => import('@hello-pangea/dnd').then(mod => ({ default: mod.Draggable })), { ssr: false })
-import type { DropResult } from '@hello-pangea/dnd'
 
 interface Quadrant {
   id: string
@@ -59,144 +62,72 @@ const quadrants: Quadrant[] = [
   },
 ]
 
+
 export default function MatrixClient({ userId }: { userId: string }) {
-  const { nodes, isLoading: loading, error, loadNodes, updateNode, createNode, deleteNode } = useNodesStore()
-  const [quadrantNodes, setQuadrantNodes] = useState<Record<string, any[]>>({
-    'urgent-important': [],
-    'not-urgent-important': [],
-    'urgent-not-important': [],
-    'not-urgent-not-important': [],
-  })
-  const [showAddDialog, setShowAddDialog] = useState(false)
-  const [selectedQuadrant, setSelectedQuadrant] = useState<string>('')
+  const { nodes, isLoading: loading, error, loadNodes, updateNode, createNode, deleteNode, snoozeNode, unsnoozeNode, createChildNode } = useNodesStore()
+  const { currentMode, hidePersonalInWorkMode, hideWorkInPersonalMode } = useUserPreferencesStore()
   
-  // Context menu state
-  const [contextMenu, setContextMenu] = useState<{
-    isOpen: boolean
-    position: { x: number; y: number }
-    node: any | null
-  }>({
-    isOpen: false,
-    position: { x: 0, y: 0 },
-    node: null
+  // Use custom hooks for state management
+  const {
+    quadrantNodes,
+    setQuadrantNodes,
+    showAddDialog,
+    setShowAddDialog,
+    selectedQuadrant,
+    setSelectedQuadrant,
+    visibleCounts,
+    expandedGroups,
+    expandedFamilies,
+    expandedNodes,
+    isCollapsedView,
+    setIsCollapsedView,
+    contextMenu,
+    setContextMenu,
+    handleLoadMore,
+    toggleGroup,
+    toggleFamily,
+    toggleNode,
+  } = useMatrixState()
+  
+  // Use custom hook for organizing nodes
+  useMatrixOrganization({
+    nodes,
+    currentMode,
+    hidePersonalInWorkMode,
+    hideWorkInPersonalMode,
+    setQuadrantNodes,
+  })
+  
+  // Use custom hook for handlers
+  const {
+    handleDragEnd,
+    handleAddTask,
+    createTestRelationships,
+    handleNodeContextMenu,
+    handleNodeContextMenuClose,
+    handleUpdateNode,
+    handleDeleteNode,
+    handleSnoozeNode,
+    handleUnsnoozeNode,
+  } = useMatrixHandlers({
+    nodes,
+    currentMode,
+    userId,
+    updateNode,
+    createNode,
+    deleteNode,
+    snoozeNode,
+    unsnoozeNode,
+    createChildNode,
+    setShowAddDialog,
+    setSelectedQuadrant,
+    setContextMenu,
   })
 
   useEffect(() => {
     loadNodes(userId)
   }, [userId, loadNodes])
-
-  useEffect(() => {
-    // Organize nodes into quadrants based on urgency and importance
-    const organized: Record<string, any[]> = {
-      'urgent-important': [],
-      'not-urgent-important': [],
-      'urgent-not-important': [],
-      'not-urgent-not-important': [],
-    }
-
-    nodes.forEach(node => {
-      // Skip completed tasks - they shouldn't appear in the matrix
-      if (node.completed || node.status === 'completed') {
-        return
-      }
-      
-      const urgency = node.urgency || 5
-      const importance = node.importance || 5
-      
-      if (urgency >= 7 && importance >= 7) {
-        organized['urgent-important'].push(node)
-      } else if (urgency < 7 && importance >= 7) {
-        organized['not-urgent-important'].push(node)
-      } else if (urgency >= 7 && importance < 7) {
-        organized['urgent-not-important'].push(node)
-      } else {
-        organized['not-urgent-not-important'].push(node)
-      }
-    })
-
-    setQuadrantNodes(organized)
-  }, [nodes])
-
-  const handleDragEnd = async (result: DropResult) => {
-    if (!result.destination) return
-
-    const sourceQuadrant = result.source.droppableId
-    const destQuadrant = result.destination.droppableId
-    const nodeId = result.draggableId
-
-    if (sourceQuadrant === destQuadrant) return
-
-    // Find the node
-    const node = nodes.find(n => n.id === nodeId)
-    if (!node) return
-
-    // Calculate new urgency and importance based on destination quadrant
-    let newUrgency = node.urgency || 5
-    let newImportance = node.importance || 5
-
-    switch (destQuadrant) {
-      case 'urgent-important':
-        newUrgency = 8
-        newImportance = 8
-        break
-      case 'not-urgent-important':
-        newUrgency = 3
-        newImportance = 8
-        break
-      case 'urgent-not-important':
-        newUrgency = 8
-        newImportance = 3
-        break
-      case 'not-urgent-not-important':
-        newUrgency = 3
-        newImportance = 3
-        break
-    }
-
-    // Update the node
-    await updateNode(nodeId, {
-      urgency: newUrgency,
-      importance: newImportance,
-    })
-  }
-
-  const handleAddTask = async (title: string) => {
-    if (!selectedQuadrant) return
-
-    // Set urgency and importance based on quadrant
-    let urgency = 5
-    let importance = 5
-
-    switch (selectedQuadrant) {
-      case 'urgent-important':
-        urgency = 8
-        importance = 8
-        break
-      case 'not-urgent-important':
-        urgency = 3
-        importance = 8
-        break
-      case 'urgent-not-important':
-        urgency = 8
-        importance = 3
-        break
-      case 'not-urgent-not-important':
-        urgency = 3
-        importance = 3
-        break
-    }
-
-    await createNode({
-      userId: userId,
-      title,
-      type: 'task',
-      urgency,
-      importance,
-    })
-
-    setShowAddDialog(false)
-    setSelectedQuadrant('')
-  }
+  
 
   if (loading) {
     return (
@@ -218,112 +149,93 @@ export default function MatrixClient({ userId }: { userId: string }) {
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(100vh-4rem)]">
           <div className="max-w-7xl mx-auto">
-            <header className="mb-8 text-center">
-              <h1 className="text-4xl font-bold text-white mb-2">Eisenhower Matrix</h1>
-              <p className="text-white/80 text-lg">
-                Prioritize your tasks by urgency and importance
-              </p>
+            <header className="mb-8">
+              <div className="text-center mb-4">
+                <h1 className="text-4xl font-bold text-white mb-2">Eisenhower Matrix</h1>
+                <p className="text-white/80 text-lg">
+                  Prioritize your tasks by urgency and importance
+                </p>
+              </div>
+              <div className="flex justify-center gap-2">
+                <ModeToggle />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCollapsedView(!isCollapsedView)}
+                  className="flex items-center gap-2"
+                >
+                  {isCollapsedView ? (
+                    <>
+                      <Maximize2 className="w-4 h-4" />
+                      Expand View
+                    </>
+                  ) : (
+                    <>
+                      <Minimize2 className="w-4 h-4" />
+                      Compact View
+                    </>
+                  )}
+                </Button>
+                {process.env.NODE_ENV === 'development' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={createTestRelationships}
+                    className="flex items-center gap-2 text-blue-600"
+                  >
+                    🔧 Create Test Data
+                  </Button>
+                )}
+              </div>
             </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {quadrants.map((quadrant) => (
-              <Droppable key={quadrant.id} droppableId={quadrant.id}>
-                {(provided, snapshot) => (
-                  <Card
-                    className={`h-full min-h-[300px] transition-all ${
-                      snapshot.isDraggingOver ? 'ring-2 ring-brain-500 shadow-lg' : ''
-                    }`}
-                  >
-                    <CardHeader className={quadrant.bgColor}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className={quadrant.color}>{quadrant.icon}</div>
-                          <div>
-                            <CardTitle className={quadrant.color}>
-                              {quadrant.title}
-                            </CardTitle>
-                            <CardDescription>{quadrant.description}</CardDescription>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedQuadrant(quadrant.id)
-                            setShowAddDialog(true)
-                          }}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className="p-4 space-y-2"
-                    >
-                      {quadrantNodes[quadrant.id].map((node, index) => (
-                        <Draggable key={node.id} draggableId={node.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={`p-3 bg-white rounded-lg shadow-sm border transition-all cursor-move ${
-                                snapshot.isDragging
-                                  ? 'shadow-lg ring-2 ring-brain-500 opacity-90'
-                                  : 'hover:shadow-md'
-                              } ${contextMenu.node?.id === node.id ? 'ring-2 ring-brain-400' : ''}`}
-                              onContextMenu={(e) => {
-                                e.preventDefault()
-                                setContextMenu({
-                                  isOpen: true,
-                                  position: { x: e.clientX, y: e.clientY },
-                                  node: node
-                                })
-                              }}
-                            >
-                              <h4 className="font-medium text-gray-900">{node.title}</h4>
-                              {node.description && (
-                                <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                                  {node.description}
-                                </p>
-                              )}
-                              {node.tags && node.tags.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-2">
-                                  {node.tags.slice(0, 3).map((tag: string, i: number) => (
-                                    <span
-                                      key={i}
-                                      className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded"
-                                    >
-                                      {tag}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                      {quadrantNodes[quadrant.id].length === 0 && (
-                        <div className="text-center py-8 text-gray-400">
-                          <p className="text-sm">No tasks yet</p>
-                          <p className="text-xs mt-1">Drop tasks here or click + to add</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-              </Droppable>
-            ))}
+            {quadrants.map((quadrant) => {
+              const allNodes = quadrantNodes[quadrant.id]
+              const visibleCount = visibleCounts[quadrant.id]
+              const visibleNodes = allNodes.slice(0, visibleCount)
+              const remainingCount = allNodes.length - visibleCount
+              const isDoFirst = quadrant.id === 'urgent-important'
+              
+              return (
+                <QuadrantCard
+                  key={quadrant.id}
+                  quadrant={quadrant}
+                  totalNodes={allNodes.length}
+                  visibleCount={visibleCount}
+                  remainingCount={remainingCount}
+                  onAddClick={() => {
+                    setSelectedQuadrant(quadrant.id)
+                    setShowAddDialog(true)
+                  }}
+                  onLoadMore={() => handleLoadMore(quadrant.id)}
+                >
+                  <MatrixQuadrantRenderer
+                    quadrantId={quadrant.id}
+                    allNodes={allNodes}
+                    visibleNodes={visibleNodes}
+                    nodes={nodes}
+                    isDoFirst={isDoFirst}
+                    isCollapsedView={isCollapsedView}
+                    expandedGroups={expandedGroups}
+                    expandedFamilies={expandedFamilies}
+                    expandedNodes={expandedNodes}
+                    contextMenuNodeId={contextMenu.node?.id}
+                    onToggleGroup={toggleGroup}
+                    onToggleFamily={toggleFamily}
+                    onToggleNode={toggleNode}
+                    onNodeContextMenu={handleNodeContextMenu}
+                  />
+                </QuadrantCard>
+              )
+            })}
           </div>
 
           <InputDialog
             isOpen={showAddDialog}
             title="Add New Task"
             placeholder="Enter task title..."
-            onSubmit={handleAddTask}
+            onSubmit={(title) => handleAddTask(title, selectedQuadrant)}
             onCancel={() => {
               setShowAddDialog(false)
               setSelectedQuadrant('')
@@ -334,15 +246,11 @@ export default function MatrixClient({ userId }: { userId: string }) {
             isOpen={contextMenu.isOpen}
             position={contextMenu.position}
             node={contextMenu.node}
-            onClose={() => setContextMenu({ isOpen: false, position: { x: 0, y: 0 }, node: null })}
-            onUpdateNode={async (nodeId, updates) => {
-              await updateNode(nodeId, updates)
-              setContextMenu({ isOpen: false, position: { x: 0, y: 0 }, node: null })
-            }}
-            onDeleteNode={async (nodeId) => {
-              await deleteNode(nodeId)
-              setContextMenu({ isOpen: false, position: { x: 0, y: 0 }, node: null })
-            }}
+            onClose={handleNodeContextMenuClose}
+            onUpdateNode={handleUpdateNode}
+            onDeleteNode={handleDeleteNode}
+            onSnoozeNode={handleSnoozeNode}
+            onUnsnoozeNode={handleUnsnoozeNode}
           />
           </div>
         </div>

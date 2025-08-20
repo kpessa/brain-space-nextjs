@@ -17,26 +17,32 @@ export function generateCSRFToken(): string {
  * Get or create CSRF token from cookies
  */
 export async function getCSRFToken(): Promise<string> {
-  const cookieStore = await cookies()
-  const existingToken = cookieStore.get(CSRF_TOKEN_NAME)
-  
-  if (existingToken?.value) {
-    return existingToken.value
+  try {
+    const cookieStore = await cookies()
+    const existingToken = cookieStore.get(CSRF_TOKEN_NAME)
+    
+    if (existingToken?.value) {
+      return existingToken.value
+    }
+    
+    // Generate new token
+    const newToken = generateCSRFToken()
+    
+    // Set cookie with secure options
+    cookieStore.set(CSRF_TOKEN_NAME, newToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 24, // 24 hours
+      path: '/'
+    })
+    
+    return newToken
+  } catch (error) {
+    console.error('Error getting CSRF token:', error)
+    // If cookies are not available, just return a new token
+    return generateCSRFToken()
   }
-  
-  // Generate new token
-  const newToken = generateCSRFToken()
-  
-  // Set cookie with secure options
-  cookieStore.set(CSRF_TOKEN_NAME, newToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 60 * 60 * 24, // 24 hours
-    path: '/'
-  })
-  
-  return newToken
 }
 
 /**

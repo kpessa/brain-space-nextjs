@@ -74,7 +74,7 @@ export function triggerHaptic(
     }
   } catch (error) {
     // Silently fail - haptic feedback is enhancement only
-    console.debug('Haptic feedback not available:', error)
+
   }
 }
 

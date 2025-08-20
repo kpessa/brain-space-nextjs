@@ -14,7 +14,14 @@ import dynamic from 'next/dynamic'
 
 const NodeRelationshipModal = dynamic(() => import('@/components/nodes/NodeRelationshipModal').then(mod => ({ default: mod.NodeRelationshipModal })), { ssr: false })
 const NodeHierarchyView = dynamic(() => import('@/components/nodes/NodeHierarchyView').then(mod => ({ default: mod.NodeHierarchyView })), { ssr: false })
-const NodeGraphView = dynamic(() => import('@/components/nodes/NodeGraphView').then(mod => ({ default: mod.NodeGraphView })), { ssr: false })
+const NodeGraphView = dynamic(() => import('@/components/nodes/LazyNodeGraphView').then(mod => ({ default: mod.LazyNodeGraphView })), { 
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full bg-gray-50 dark:bg-gray-900 rounded-lg animate-pulse flex items-center justify-center">
+      <p className="text-sm text-gray-400">Loading graph...</p>
+    </div>
+  )
+})
 const NodeUpdateModal = dynamic(() => import('@/components/nodes/NodeUpdateModal').then(mod => ({ default: mod.NodeUpdateModal })), { ssr: false })
 const NodeDetailModal = dynamic(() => import('@/components/nodes/NodeDetailModal').then(mod => ({ default: mod.NodeDetailModal })), { ssr: false })
 const UpdateExportModal = dynamic(() => import('@/components/nodes/UpdateExportModal').then(mod => ({ default: mod.UpdateExportModal })), { ssr: false })
@@ -52,13 +59,16 @@ import {
   Repeat,
   Edit,
   Calendar,
-  CalendarPlus
+  CalendarPlus,
+  Clock
 } from '@/lib/icons'
 import dayjs from '@/lib/dayjs'
 const StandupSummaryDialog = dynamic(() => import('@/components/StandupSummaryDialog'), { ssr: false })
 const CalendarEventModal = dynamic(() => import('@/components/CalendarEventModal').then(mod => ({ default: mod.CalendarEventModal })), { ssr: false })
 const BulkScheduleImportModal = dynamic(() => import('@/components/BulkScheduleImportModal').then(mod => ({ default: mod.BulkScheduleImportModal })), { ssr: false })
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { isSnoozed, formatSnoozeUntil } from '@/lib/snooze'
+import { SnoozeInput } from '@/components/nodes/SnoozeInput'
 
 interface NodeCreateModalProps {
   isOpen: boolean
@@ -324,11 +334,14 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
   const getNodeChildren = useNodesStore(state => state.getNodeChildren)
   const getNodeParent = useNodesStore(state => state.getNodeParent)
   const toggleNodePin = useNodesStore(state => state.toggleNodePin)
+  const snoozeNode = useNodesStore(state => state.snoozeNode)
+  const unsnoozeNode = useNodesStore(state => state.unsnoozeNode)
   const [showDetails, setShowDetails] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
   const [showRecurrenceDialog, setShowRecurrenceDialog] = useState(false)
   const [showCalendarModal, setShowCalendarModal] = useState(false)
+  const [showSnoozeInput, setShowSnoozeInput] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   
   const parent = getNodeParent(node.id)
@@ -355,6 +368,17 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
   const handlePinToggle = async (e: React.MouseEvent) => {
     e.stopPropagation()
     await toggleNodePin(node.id)
+  }
+  
+  const handleSnooze = async (until: Date) => {
+    await snoozeNode(node.id, until)
+    setShowSnoozeInput(false)
+    setShowDropdown(false)
+  }
+  
+  const handleUnsnooze = async () => {
+    await unsnoozeNode(node.id)
+    setShowDropdown(false)
   }
 
   const handleSaveRecurrence = async (
@@ -431,7 +455,7 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
   }
 
   return (
-    <Card className={`hover:shadow-md transition-shadow cursor-pointer overflow-hidden ${isSelected ? 'ring-2 ring-brain-500' : ''} ${node.isPinned ? 'bg-yellow-50 border-yellow-300' : ''} ${(node as any).isOptimistic ? 'opacity-70 animate-pulse' : ''}`}>
+    <Card className={`hover:shadow-md transition-shadow cursor-pointer overflow-hidden ${isSelected ? 'ring-2 ring-brain-500' : ''} ${node.isPinned ? 'bg-yellow-50 border-yellow-300' : ''} ${isSnoozed(node) ? 'opacity-60 bg-gray-50' : ''} ${(node as any).isOptimistic ? 'opacity-70 animate-pulse' : ''}`}>
       <CardContent className="p-3" onClick={() => !selectMode && onNodeClick?.(node)}>
         {/* Optimistic update indicator */}
         {(node as any).isOptimistic && (
@@ -494,6 +518,9 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
             {node.isPinned && (
               <Pin className={`w-3 h-3 fill-yellow-500 text-yellow-500`} />
             )}
+            {isSnoozed(node) && (
+              <Clock className={`w-3 h-3 text-gray-500`} title={`Snoozed until ${formatSnoozeUntil(node.snoozedUntil!)}`} />
+            )}
             <div className="relative" ref={dropdownRef}>
               <Button 
                 variant="ghost" 
@@ -506,6 +533,15 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
               >
                 <MoreHorizontal className="w-3 h-3" />
               </Button>
+              
+              {showSnoozeInput && (
+                <div className="absolute right-0 mt-2 z-50">
+                  <SnoozeInput
+                    onSnooze={handleSnooze}
+                    onCancel={() => setShowSnoozeInput(false)}
+                  />
+                </div>
+              )}
               
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-48 bg-card dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-gray-700 z-50">
@@ -521,6 +557,30 @@ function NodeCard({ node, onCreateChild, onCreateParent, onNodeClick, isSelected
                       <Pin className="w-4 h-4 mr-2" />
                       {node.isPinned ? 'Unpin' : 'Pin'}
                     </button>
+                    {isSnoozed(node) ? (
+                      <button
+                        className="flex items-center w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent dark:hover:bg-gray-700"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleUnsnooze()
+                        }}
+                      >
+                        <Clock className="w-4 h-4 mr-2" />
+                        Unsnooze ({formatSnoozeUntil(node.snoozedUntil!)})
+                      </button>
+                    ) : (
+                      <button
+                        className="flex items-center w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent dark:hover:bg-gray-700"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setShowSnoozeInput(true)
+                          setShowDropdown(false)
+                        }}
+                      >
+                        <Clock className="w-4 h-4 mr-2" />
+                        Snooze
+                      </button>
+                    )}
                     <button
                       className="flex items-center w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent dark:hover:bg-gray-700"
                       onClick={(e) => {
@@ -813,6 +873,7 @@ export default function NodesClient({ userId }: { userId: string }) {
   const [selectMode, setSelectMode] = useState(false)
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set())
   const [showCompleted, setShowCompleted] = useState(false)
+  const [showSnoozed, setShowSnoozed] = useState(false)
   const [relationshipModal, setRelationshipModal] = useState<{
     isOpen: boolean
     sourceNode: Node | null
@@ -831,6 +892,7 @@ export default function NodesClient({ userId }: { userId: string }) {
   const isLoading = useNodesStore(state => state.isLoading)
   const loadNodes = useNodesStore(state => state.loadNodes)
   const deleteNode = useNodesStore(state => state.deleteNode)
+  const getActiveSnoozedCount = useNodesStore(state => state.getActiveSnoozedCount)
   const { currentMode, hidePersonalInWorkMode, hideWorkInPersonalMode } = useUserPreferencesStore()
 
   // Load nodes on mount - loadNodes is excluded from deps to prevent infinite loop
@@ -841,6 +903,15 @@ export default function NodesClient({ userId }: { userId: string }) {
 
   // Filter nodes based on search and filters
   const filteredNodes = nodes.filter(node => {
+    // Check if node is snoozed
+    if (node.snoozedUntil) {
+      const now = new Date()
+      const snoozeEnd = new Date(node.snoozedUntil)
+      if (now < snoozeEnd && !showSnoozed) {
+        return false // Node is snoozed and we're not showing snoozed nodes
+      }
+    }
+    
     // First check if node should be shown based on mode
     if (!shouldShowNode(node.tags, node.isPersonal, currentMode, hidePersonalInWorkMode, hideWorkInPersonalMode)) {
       return false
@@ -1303,6 +1374,20 @@ export default function NodesClient({ userId }: { userId: string }) {
                   />
                   <label htmlFor="showCompleted" className="text-sm font-medium text-gray-700 select-none cursor-pointer">
                     Show completed
+                  </label>
+                </div>
+                
+                {/* Show Snoozed Toggle */}
+                <div className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg bg-white">
+                  <input
+                    type="checkbox"
+                    id="showSnoozed"
+                    checked={showSnoozed}
+                    onChange={(e) => setShowSnoozed(e.target.checked)}
+                    className="rounded border-gray-300 text-brain-600 focus:ring-brain-500"
+                  />
+                  <label htmlFor="showSnoozed" className="text-sm font-medium text-gray-700 select-none cursor-pointer">
+                    Show snoozed ({getActiveSnoozedCount()})
                   </label>
                 </div>
               </div>

@@ -38,14 +38,13 @@ const nodeTypeOptions: Array<NodeType | 'all'> = [
   'task',
   'project',
   'idea',
-  'note',
   'goal',
-  'event',
-  'decision',
   'question',
-  'learning',
-  'person',
-  'resource'
+  'problem',
+  'insight',
+  'thought',
+  'concern',
+  'option'
 ]
 
 export const NodePool = memo(function NodePool({

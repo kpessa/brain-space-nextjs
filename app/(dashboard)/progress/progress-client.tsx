@@ -45,8 +45,8 @@ export default function ProgressClient({ userId }: { userId: string }) {
   }))
   
   const nodeActivities: Activity[] = nodes.slice(0, 2).map(node => ({
-    date: node.createdAt,
-    activity: `Created ${node.type}: ${node.title}`,
+    date: node.createdAt || new Date().toISOString(),
+    activity: `Created ${node.type || 'item'}: ${node.title || 'Untitled'}`,
     xp: 25,
     type: 'node'
   }))

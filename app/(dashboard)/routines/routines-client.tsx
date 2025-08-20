@@ -23,7 +23,7 @@ export default function RoutinesClient({ userId }: { userId: string }) {
     completeMorning,
   } = useRoutineStore()
   
-  // const [showStartJourney] = useState(false) // Currently unused
+  const [showStartJourney, setShowStartJourney] = useState(false)
   const [showEveningModal, setShowEveningModal] = useState(false)
   const [showMorningModal, setShowMorningModal] = useState(false)
   
