@@ -30,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={inter.className}>
+    <html lang="en" className={inter.className} suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -42,7 +42,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="180x180" href="/android-chrome-192x192.png" />
         <link rel="apple-touch-icon" sizes="167x167" href="/android-chrome-192x192.png" />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <AppWrapper>
           {children}
           <ToastProvider />

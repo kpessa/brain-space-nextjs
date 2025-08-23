@@ -23,7 +23,7 @@ interface ToastState {
   showInfo: (title: string, message?: string) => string
 }
 
-const generateId = () => `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+const generateId = () => crypto.randomUUID()
 
 export function useToast(): ToastState {
   const [toasts, setToasts] = useState<Toast[]>([])

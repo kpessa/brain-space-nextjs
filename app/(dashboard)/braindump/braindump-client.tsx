@@ -12,7 +12,7 @@ const BrainDumpFlow = dynamic(() => import('@/components/LazyBrainDumpFlow').the
   loading: () => <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brain-600"></div></div>
 })
 import { useBrainDumpStore, type BrainDumpNode, type BrainDumpEdge } from '@/store/braindumpStore'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import { createAIService } from '@/services/ai'
 import type { NodeType } from '@/types/node'
 
@@ -51,7 +51,7 @@ export default function BraindumpClient({ userId }: { userId: string }) {
   const [showInput, setShowInput] = useState(true)
   const [convertLoading, setConvertLoading] = useState(false)
   
-  const { entries, createEntry, updateEntry, currentEntry, setCurrentEntry, loadEntries } = useBrainDumpStore()
+  const { brainDumpEntries: entries, createEntry, updateEntry, currentBrainDumpEntry: currentEntry, setCurrentBrainDumpEntry: setCurrentEntry, loadBrainDumpEntries: loadEntries } = useBrainDumpStore()
   const { createNode, updateNode, getNodeById } = useNodesStore()
   
   // Load entries on mount

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { useUnifiedTodos, type UnifiedTodo } from '@/services/todoAggregator'
 import { useJournalStore } from '@/store/journalStore'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import { useBrainDumpStore } from '@/store/braindumpStore'
 import { useRoutineStore } from '@/store/routineStore'
 import { 
@@ -56,8 +56,8 @@ export default function TodosClient({ userId }: { userId: string }) {
   // Load data from all stores
   const { loadEntriesFromFirestore: loadJournal } = useJournalStore()
   const { loadNodes } = useNodesStore()
-  const { loadEntries: loadBrainDumps } = useBrainDumpStore()
-  const { loadEntries: loadRoutines } = useRoutineStore()
+  const { loadBrainDumpEntries: loadBrainDumps } = useBrainDumpStore()
+  const { loadRoutineEntries: loadRoutines } = useRoutineStore()
   
   const [filter, setFilter] = useState<FilterType>('all')
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all')

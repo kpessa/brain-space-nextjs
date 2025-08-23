@@ -1,7 +1,7 @@
 'use client'
 
 import { ChevronRight, Home } from '@/lib/icons'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import type { Node } from '@/types/node'
 
 interface NodeBreadcrumbProps {

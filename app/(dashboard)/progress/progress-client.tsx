@@ -4,20 +4,20 @@ import { useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Trophy, Star, Target, Calendar, TrendingUp, Award, Crown, Zap } from 'lucide-react'
 import { useJournalStore } from '@/store/journalStore'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import { useXPStore } from '@/store/xpStore'
 import { LEVELS } from '@/types/xp'
 
 export default function ProgressClient({ userId }: { userId: string }) {
   const { entries, userProgress: journalProgress, loadEntriesFromFirestore } = useJournalStore()
   const { nodes, loadNodes } = useNodesStore()
-  const { userProgress: xpProgress, loadProgress, getNextLevelProgress, getRecentEvents } = useXPStore()
+  const { userProgress: xpProgress, loadXPProgress, getNextLevelProgress, getRecentEvents } = useXPStore()
   
   useEffect(() => {
     loadEntriesFromFirestore(userId)
     loadNodes(userId)
-    loadProgress(userId)
-  }, [userId, loadEntriesFromFirestore, loadNodes, loadProgress])
+    loadXPProgress(userId)
+  }, [userId, loadEntriesFromFirestore, loadNodes, loadXPProgress])
   
   const currentLevel = LEVELS.find(l => l.level === xpProgress.level) || LEVELS[0]
   const nextLevel = LEVELS[xpProgress.level] || null

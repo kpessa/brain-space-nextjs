@@ -31,7 +31,7 @@ import {
 import { CategoryNode } from './flow/nodes/CategoryNode'
 import { ThoughtNode } from './flow/nodes/ThoughtNode'
 import { useBrainDumpStore, type BrainDumpNode, type BrainDumpEdge } from '@/store/braindumpStore'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import { useRouter } from 'next/navigation'
 import type { NodeType } from '@/types/node'
 

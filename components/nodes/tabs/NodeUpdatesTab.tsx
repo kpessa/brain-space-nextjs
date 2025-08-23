@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import { useXPStore } from '@/store/xpStore'
 import { useToast } from '@/hooks/useToast'
 import { useXPAnimation } from '@/components/XPGainAnimationCSS'

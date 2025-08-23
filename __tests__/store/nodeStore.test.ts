@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import type { Node, NodeType, NodeUpdate } from '@/types/node'
 import type { RecurringCompletion } from '@/types/recurrence'
 

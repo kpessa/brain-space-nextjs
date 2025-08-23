@@ -226,12 +226,21 @@ export async function POST(request: NextRequest) {
     }
     
     // Get calendar events
-    const outOfOffice: any[] = []
-    const appointments: any[] = []
-    const workTravel: any[] = []
+    interface CalendarEvent {
+      id?: string
+      summary?: string
+      start?: { dateTime?: string; date?: string }
+      end?: { dateTime?: string; date?: string }
+      location?: string
+      description?: string
+    }
+    
+    const outOfOffice: CalendarEvent[] = []
+    const appointments: CalendarEvent[] = []
+    const workTravel: CalendarEvent[] = []
     const suggestedPTO: string[] = []
-    const criticalEvents: any[] = [] // Keep for backward compatibility
-    let eventCategorizations: any[] = [] // Store for returning to client
+    const criticalEvents: CalendarEvent[] = [] // Keep for backward compatibility
+    let eventCategorizations: unknown[] = [] // Store for returning to client
     
     try {
       // Check if Google Calendar is authorized
@@ -262,7 +271,11 @@ export async function POST(request: NextRequest) {
             const { categorizations } = await categorizeResponse.json()
             eventCategorizations = categorizations // Store for client
             
-            categorizations.forEach((cat: any) => {
+            categorizations.forEach((cat: {
+              eventId: string
+              category: string
+              event: CalendarEvent
+            }) => {
               // Check if there's a manual override for this event
               const manualCategory = manualCategorizations?.[cat.eventId]
               const finalCategory = manualCategory || cat.category

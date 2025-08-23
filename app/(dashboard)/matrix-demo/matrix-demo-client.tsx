@@ -424,8 +424,8 @@ export default function MatrixDemoClient() {
                   totalNodes={nodesInQuadrant.length}
                   visibleCount={nodesInQuadrant.length}
                   remainingCount={0}
-                  onAddClick={() => console.log('Add clicked')}
-                  onLoadMore={() => console.log('Load more')}
+                  onAddClick={() => {}}
+                  onLoadMore={() => {}}
                 >
                   {renderQuadrantNodes(quadrant.id, nodesInQuadrant)}
                 </QuadrantCard>

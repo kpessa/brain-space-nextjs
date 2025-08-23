@@ -20,19 +20,9 @@ export function useMatrixOrganization({
 }: UseMatrixOrganizationProps) {
   
   useEffect(() => {
-    console.group('🔍 Matrix Debug: Organizing nodes')
-
     // Debug: Check for nodes with parent/children relationships
     const nodesWithParent = nodes.filter(n => n.parent)
     const nodesWithChildren = nodes.filter(n => n.children && n.children.length > 0)
-    
-    if (nodesWithParent.length > 0 || nodesWithChildren.length > 0) {
-
-      console.log('  Parents:', nodesWithChildren.length, nodesWithChildren.map(n => n.title))
-      console.log('  Children:', nodesWithParent.length, nodesWithParent.map(n => `${n.title} -> ${n.parent}`))
-    } else {
-
-    }
     
     // Organize nodes into quadrants based on urgency and importance
     const organized: Record<string, any[]> = {
@@ -74,11 +64,9 @@ export function useMatrixOrganization({
     
     // Debug urgent-important quadrant specifically
     if (organized['urgent-important'].length > 0) {
-
       const uiNodesWithRelationships = organized['urgent-important'].filter(n => 
         n.parent || (n.children && n.children.length > 0)
       )
-
     }
 
     // Sort nodes within each quadrant by priority (highest first)
@@ -95,13 +83,8 @@ export function useMatrixOrganization({
       const quadrantNodes = organized[quadrant]
       if (quadrantNodes.length > 0) {
         const withRelationships = quadrantNodes.filter(n => n.parent || (n.children && n.children.length > 0))
-        if (withRelationships.length > 0) {
-
-        }
       }
     })
-    
-    console.groupEnd()
 
     setQuadrantNodes(organized)
   }, [nodes, currentMode, hidePersonalInWorkMode, hideWorkInPersonalMode, setQuadrantNodes])

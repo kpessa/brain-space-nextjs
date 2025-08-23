@@ -1,5 +1,5 @@
 import { useJournalStore } from '@/store/journalStore'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import { useBrainDumpStore } from '@/store/braindumpStore'
 import { useRoutineStore } from '@/store/routineStore'
 import { shouldTaskOccurOnDate, isRecurringTaskCompletedForDate } from '@/lib/recurringTasks'
@@ -122,14 +122,11 @@ export function useUnifiedTodos() {
       })
 
     // Extract todos from brain dump nodes
-    brainDumpEntries.forEach(entry => {
-      entry.nodes
-        .filter(node => 
-          node.data.type === 'task' || 
-          node.data.category === 'tasks' ||
-          node.data.nodeType === 'task'
-        )
-        .forEach(node => {
+    brainDumpEntries?.forEach(entry => {
+      entry.nodes?.forEach(node => {
+        if (node.data.type === 'task' || 
+            node.data.category === 'tasks' ||
+            node.data.nodeType === 'task') {
           const priority = getPriorityFromUrgencyImportance(
             node.data.urgency,
             node.data.importance
@@ -149,7 +146,8 @@ export function useUnifiedTodos() {
             tags: node.data.tags || node.data.keywords,
             createdAt: entry.createdAt,
           })
-        })
+        }
+      })
     })
 
     // Extract todos from current routine entry

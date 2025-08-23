@@ -326,8 +326,8 @@ export default function MatrixDeepDemoClient() {
           totalNodes={nodes.length}
           visibleCount={nodes.length}
           remainingCount={0}
-          onAddClick={() => console.log('Add')}
-          onLoadMore={() => console.log('Load more')}
+          onAddClick={() => {}}
+          onLoadMore={() => {}}
         >
           {renderDeepFamily()}
         </QuadrantCard>

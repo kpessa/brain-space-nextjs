@@ -16,8 +16,8 @@ export default function RoutinesClient({ userId }: { userId: string }) {
     currentEntry,
     entries,
     isLoading,
-    initializeProgress,
-    loadEntries,
+    initializeRoutineProgress,
+    loadRoutineEntries,
     advanceDay,
     completeEvening,
     completeMorning,
@@ -42,10 +42,10 @@ export default function RoutinesClient({ userId }: { userId: string }) {
   const [distractionsToMinimize, setDistractionsToMinimize] = useState<{ distraction: string; limit: string }[]>([])
   
   useEffect(() => {
-    initializeProgress(userId).then(() => {
-      loadEntries(userId)
+    initializeRoutineProgress(userId).then(() => {
+      loadRoutineEntries(userId)
     })
-  }, [userId, initializeProgress, loadEntries])
+  }, [userId, initializeRoutineProgress, loadRoutineEntries])
   
   const progressPercentage = progress ? (progress.currentDay / 66) * 100 : 0
   const completionRate = progress && progress.totalDaysCompleted > 0 

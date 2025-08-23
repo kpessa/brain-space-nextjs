@@ -41,17 +41,7 @@ export const MatrixNodeCard = memo(function MatrixNodeCard({
   onToggleExpand,
   childCount = 0
 }: MatrixNodeCardProps) {
-  // Debug: Only log if this node has relationships
-  if (isParent || isChild || node.parent || (node.children && node.children.length > 0)) {
-    console.log(`🃏 ${node.title}:`, {
-      isParent,
-      isChild,
-      indentLevel,
-      hasParentProp: !!node.parent,
-      hasChildrenProp: !!(node.children && node.children.length > 0),
-      familyColor: !!familyColor
-    })
-  }
+  // Check node relationship properties
   
   // Determine if this node is a parent (has children)
   const nodeIsParent = isParent || (allNodes.length > 0 && hasChildren(node.id, allNodes))

@@ -1,10 +1,48 @@
 import { auth as firebaseAuth, db } from '@/lib/firebase'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 
+interface GapiAuth2 {
+  getAuthInstance: () => any
+  init: (config: any) => Promise<void>
+}
+
+interface GapiCalendar {
+  events: {
+    list: (params: any) => Promise<any>
+    insert: (params: any) => Promise<any>
+    update: (params: any) => Promise<any>
+    delete: (params: any) => Promise<any>
+  }
+  calendars: {
+    list: () => Promise<any>
+  }
+}
+
+interface Gapi {
+  load: (api: string, callback: () => void) => void
+  client: {
+    init: (config: any) => Promise<void>
+    calendar: GapiCalendar
+  }
+  auth2: GapiAuth2
+}
+
+interface GoogleIdentityServices {
+  oauth2: {
+    initTokenClient: (config: any) => any
+  }
+  accounts: {
+    id: {
+      initialize: (config: any) => void
+      renderButton: (element: HTMLElement, config: any) => void
+    }
+  }
+}
+
 declare global {
   interface Window {
-    gapi: any
-    google: any
+    gapi: Gapi
+    google: GoogleIdentityServices
   }
 }
 
@@ -49,7 +87,7 @@ interface Calendar {
 
 export class GoogleCalendarService {
   private static instance: GoogleCalendarService
-  private tokenClient: any
+  private tokenClient: ReturnType<GoogleIdentityServices['oauth2']['initTokenClient']> | null = null
   private gapiInited = false
   private gisInited = false
   private calendars: Calendar[] = []

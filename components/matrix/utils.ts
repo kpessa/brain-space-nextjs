@@ -14,12 +14,14 @@ export const getPriorityLevel = (score: number): { level: string; colorClass: st
   }
 }
 
+import type { Node } from '@/types/node'
+
 // Group nodes in Do First quadrant by priority levels
-export const groupDoFirstNodes = (nodes: any[]) => {
+export const groupDoFirstNodes = (nodes: Node[]) => {
   const groups = {
-    critical: [] as any[],
-    today: [] as any[],
-    thisWeek: [] as any[]
+    critical: [] as Node[],
+    today: [] as Node[],
+    thisWeek: [] as Node[]
   }
   
   nodes.forEach(node => {
@@ -61,7 +63,7 @@ export const getFamilyColor = (parentId: string): typeof FAMILY_COLORS[0] => {
 }
 
 // Check if a node has children in the provided nodes array
-export const hasChildren = (nodeId: string, allNodes: any[]): boolean => {
+export const hasChildren = (nodeId: string, allNodes: Node[]): boolean => {
   // Check both: nodes that reference this as parent, OR this node has a children array
   const node = allNodes.find(n => n.id === nodeId)
   const hasChildrenArray = node && node.children && node.children.length > 0
@@ -70,7 +72,7 @@ export const hasChildren = (nodeId: string, allNodes: any[]): boolean => {
 }
 
 // Get all children of a node
-export const getNodeChildren = (nodeId: string, allNodes: any[]): any[] => {
+export const getNodeChildren = (nodeId: string, allNodes: Node[]): Node[] => {
   const node = allNodes.find(n => n.id === nodeId)
   const childrenFromArray = node?.children || []
   const childrenFromParentRef = allNodes.filter(n => n.parent === nodeId)
@@ -87,19 +89,19 @@ export const getNodeChildren = (nodeId: string, allNodes: any[]): any[] => {
 }
 
 // Get the parent node
-export const getParentNode = (node: any, allNodes: any[]): any | null => {
+export const getParentNode = (node: Node, allNodes: Node[]): Node | null => {
   if (!node.parent) return null
   return allNodes.find(n => n.id === node.parent) || null
 }
 
 // Get all siblings (including self)
-export const getNodeSiblings = (node: any, allNodes: any[]): any[] => {
+export const getNodeSiblings = (node: Node, allNodes: Node[]): Node[] => {
   if (!node.parent) return [node]
   return allNodes.filter(n => n.parent === node.parent)
 }
 
 // Get the depth of a node in its family tree
-export const getNodeDepth = (node: any, allNodes: any[]): number => {
+export const getNodeDepth = (node: Node, allNodes: Node[]): number => {
   let depth = 0
   let currentNode = node
   const visited = new Set<string>()
@@ -117,8 +119,8 @@ export const getNodeDepth = (node: any, allNodes: any[]): number => {
 }
 
 // Get all descendants of a node (children, grandchildren, etc.)
-export const getAllDescendants = (nodeId: string, allNodes: any[], maxDepth: number = 10): any[] => {
-  const descendants: any[] = []
+export const getAllDescendants = (nodeId: string, allNodes: Node[], maxDepth: number = 10): Node[] => {
+  const descendants: Node[] = []
   const visited = new Set<string>()
   
   const collectDescendants = (id: string, currentDepth: number = 0) => {
@@ -150,7 +152,7 @@ export const getAllDescendants = (nodeId: string, allNodes: any[], maxDepth: num
 }
 
 // Sort family members by hierarchy (parent first, then children by depth)
-export const sortFamilyByHierarchy = (family: any[], allNodes: any[]): any[] => {
+export const sortFamilyByHierarchy = (family: Node[], allNodes: Node[]): Node[] => {
   return family.sort((a, b) => {
     const depthA = getNodeDepth(a, allNodes)
     const depthB = getNodeDepth(b, allNodes)
@@ -164,29 +166,24 @@ export const sortFamilyByHierarchy = (family: any[], allNodes: any[]): any[] => 
 }
 
 // Group nodes by their parent relationships for a quadrant
-export const groupNodesByFamily = (nodes: any[], allNodes: any[]): Map<string, any[]> => {
-  console.group('👪 Family Grouping')
+export const groupNodesByFamily = (nodes: Node[], allNodes: Node[]): Map<string, Node[]> => {
   
   // Check nodes in THIS quadrant only
   const nodesInQuadrant = nodes.filter(n => n.parent || (n.children && n.children.length > 0))
   
   if (nodesInQuadrant.length > 0) {
-
     // Debug: Check if parent IDs actually exist
     const nodesWithParents = nodes.filter(n => n.parent)
     if (nodesWithParents.length > 0) {
-
       nodesWithParents.forEach(n => {
         const parentExists = allNodes.find(p => p.id === n.parent)
         const parentInQuadrant = nodes.find(p => p.id === n.parent)
-
       })
     }
     
     // Debug: Check if children IDs actually exist
     const nodesWithChildren = nodes.filter(n => n.children && n.children.length > 0)
     if (nodesWithChildren.length > 0) {
-
       nodesWithChildren.forEach(n => {
         const childrenInAllNodes = n.children.filter((childId: string) => 
           allNodes.find(c => c.id === childId)
@@ -199,12 +196,9 @@ export const groupNodesByFamily = (nodes: any[], allNodes: any[]): Map<string, a
           const childNames = childrenInQuadrant.map((id: string) => 
             nodes.find(c => c.id === id)?.title || id
           )
-          console.log(`    Children in quadrant: ${childNames.join(', ')}`)
         }
       })
     }
-  } else {
-
   }
   
   const families = new Map<string, any[]>()
@@ -264,11 +258,9 @@ export const groupNodesByFamily = (nodes: any[], allNodes: any[]): Map<string, a
     const sortedFamily = sortFamilyByHierarchy(familyMembers, allNodes)
     
     if (sortedFamily.length > 1) {
-      console.log(`  🏠 Family ${root.title}: ${sortedFamily.length} members (max depth: ${Math.max(...sortedFamily.map(n => getNodeDepth(n, allNodes)))})`)
       families.set(root.id, sortedFamily)
     } else if (hasChildren(root.id, allNodes)) {
       // Single parent whose children are in other quadrants
-      console.log(`  👤 Parent ${root.title} (children in other quadrants)`)
       families.set(root.id, [root])
     } else {
       // Standalone node
@@ -280,27 +272,20 @@ export const groupNodesByFamily = (nodes: any[], allNodes: any[]): Map<string, a
   const unprocessedNodes = nodes.filter(node => !processed.has(node.id))
   
   if (unprocessedNodes.length > 0) {
-    console.log(`⚠️ ${unprocessedNodes.length} unprocessed nodes:`, unprocessedNodes.map(n => n.title))
     unprocessedNodes.forEach(node => {
       families.set(`unprocessed-${node.id}`, [node])
     })
   }
   
   const standaloneCount = Array.from(families.keys()).filter(key => key.startsWith('standalone-')).length
-  if (standaloneCount > 0) {
-
-  }
   
   if (families.size > 0) {
-
     families.forEach((familyNodes, familyId) => {
       if (!familyId.startsWith('standalone-') && !familyId.startsWith('unprocessed-')) {
         const depths = familyNodes.map(n => `${n.title}(L${getNodeDepth(n, allNodes)})`)
-        console.log(`  Family: ${depths.join(' → ')}`)
       }
     })
   }
-  console.groupEnd()
   
   return families
 }

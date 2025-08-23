@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import { useUserPreferencesStore, shouldShowNode } from '@/store/userPreferencesStore'
 import type { Node, NodeType } from '@/types/node'
 

@@ -1,18 +1,25 @@
 import { DropResult } from '@hello-pangea/dnd'
+import type { Node } from '@/types/node'
+
+interface ContextMenuState {
+  isOpen: boolean
+  position: { x: number; y: number }
+  node: Node | null
+}
 
 interface UseMatrixHandlersProps {
-  nodes: any[]
+  nodes: Node[]
   currentMode: 'work' | 'personal'
   userId: string
-  updateNode: (id: string, updates: any) => Promise<void>
-  createNode: (node: any) => Promise<string | undefined>
+  updateNode: (id: string, updates: Partial<Node>) => Promise<void>
+  createNode: (node: Partial<Node>) => Promise<string | undefined>
   deleteNode: (id: string) => Promise<void>
   snoozeNode: (id: string, until: Date) => Promise<void>
   unsnoozeNode: (id: string) => Promise<void>
-  createChildNode: (parentId: string, node: any) => Promise<string | undefined>
+  createChildNode: (parentId: string, node: Partial<Node>) => Promise<string | undefined>
   setShowAddDialog: (show: boolean) => void
   setSelectedQuadrant: (quadrant: string) => void
-  setContextMenu: (state: any) => void
+  setContextMenu: (state: ContextMenuState) => void
 }
 
 export function useMatrixHandlers({
@@ -154,7 +161,7 @@ export function useMatrixHandlers({
     setContextMenu({ isOpen: false, position: { x: 0, y: 0 }, node: null })
   }
   
-  const handleNodeContextMenu = (e: React.MouseEvent, node: any) => {
+  const handleNodeContextMenu = (e: React.MouseEvent, node: Node) => {
     e.preventDefault()
     setContextMenu({
       isOpen: true,
@@ -163,7 +170,7 @@ export function useMatrixHandlers({
     })
   }
   
-  const handleUpdateNode = async (nodeId: string, updates: any) => {
+  const handleUpdateNode = async (nodeId: string, updates: Partial<Node>) => {
     await updateNode(nodeId, updates)
     handleNodeContextMenuClose()
   }

@@ -1,7 +1,9 @@
 // Enhanced utilities for deeply nested relationships
 
+import type { Node } from '@/types/node'
+
 // Get the depth of a node in its family tree
-export const getNodeDepth = (node: any, allNodes: any[]): number => {
+export const getNodeDepth = (node: Node, allNodes: Node[]): number => {
   let depth = 0
   let currentNode = node
   
@@ -16,7 +18,7 @@ export const getNodeDepth = (node: any, allNodes: any[]): number => {
 }
 
 // Get the root ancestor of a node
-export const getRootAncestor = (node: any, allNodes: any[]): any => {
+export const getRootAncestor = (node: Node, allNodes: Node[]): Node => {
   let currentNode = node
   let visited = new Set<string>()
   
@@ -33,8 +35,8 @@ export const getRootAncestor = (node: any, allNodes: any[]): any => {
 }
 
 // Get all descendants of a node (children, grandchildren, etc.)
-export const getAllDescendants = (nodeId: string, allNodes: any[]): any[] => {
-  const descendants: any[] = []
+export const getAllDescendants = (nodeId: string, allNodes: Node[]): Node[] => {
+  const descendants: Node[] = []
   const visited = new Set<string>()
   
   const collectDescendants = (id: string) => {
@@ -66,8 +68,8 @@ export const getAllDescendants = (nodeId: string, allNodes: any[]): any[] => {
 }
 
 // Build a complete family tree starting from root nodes
-export const buildFamilyTree = (nodes: any[], allNodes: any[]): Map<string, any[]> => {
-  const families = new Map<string, any[]>()
+export const buildFamilyTree = (nodes: Node[], allNodes: Node[]): Map<string, Node[]> => {
+  const families = new Map<string, Node[]>()
   const processed = new Set<string>()
   
   // First, find all root nodes (no parent)
@@ -103,7 +105,7 @@ export const buildFamilyTree = (nodes: any[], allNodes: any[]): Map<string, any[
 }
 
 // Group nodes by complete family trees (supports deep nesting)
-export const groupNodesByDeepFamily = (nodes: any[], allNodes: any[]): Map<string, any[]> => {
+export const groupNodesByDeepFamily = (nodes: Node[], allNodes: Node[]): Map<string, Node[]> => {
   console.group('🌳 Deep Family Grouping')
   
   const families = buildFamilyTree(nodes, allNodes)
@@ -125,7 +127,7 @@ export const groupNodesByDeepFamily = (nodes: any[], allNodes: any[]): Map<strin
 }
 
 // Sort family members by hierarchy (parent first, then children by depth)
-export const sortFamilyByHierarchy = (family: any[], allNodes: any[]): any[] => {
+export const sortFamilyByHierarchy = (family: Node[], allNodes: Node[]): Node[] => {
   return family.sort((a, b) => {
     const depthA = getNodeDepth(a, allNodes)
     const depthB = getNodeDepth(b, allNodes)
@@ -139,7 +141,7 @@ export const sortFamilyByHierarchy = (family: any[], allNodes: any[]): any[] => 
 }
 
 // Get the appropriate indentation level for a node
-export const getIndentLevel = (node: any, rootId: string, allNodes: any[]): number => {
+export const getIndentLevel = (node: Node, rootId: string, allNodes: Node[]): number => {
   if (node.id === rootId) return 0
   
   let level = 0

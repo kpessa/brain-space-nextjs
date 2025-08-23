@@ -38,7 +38,7 @@ interface CalendarClientProps {
 
 export default function CalendarClient({ userId }: CalendarClientProps) {
   const router = useRouter()
-  const { selectedCalendarIds, setIsAuthenticated } = useCalendarStore()
+  const { selectedCalendarIds, setCalendarAuthenticated } = useCalendarStore()
   const [isClient, setIsClient] = useState(false)
   const [currentDate, setCurrentDate] = useState(() => {
     // Use a stable date during SSR to prevent hydration mismatch
@@ -87,8 +87,8 @@ export default function CalendarClient({ userId }: CalendarClientProps) {
 
   // Update calendar store when connection status changes
   useEffect(() => {
-    setIsAuthenticated(isConnected)
-  }, [isConnected, setIsAuthenticated])
+    setCalendarAuthenticated(isConnected)
+  }, [isConnected, setCalendarAuthenticated])
 
   const handleAuthorize = () => {
     connect()

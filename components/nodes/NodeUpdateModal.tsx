@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import { useXPStore } from '@/store/xpStore'
 import { XPEventType } from '@/types/xp'
 import type { Node, NodeUpdate } from '@/types/node'

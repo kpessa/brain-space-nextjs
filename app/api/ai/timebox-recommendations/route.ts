@@ -1,20 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // Dynamic imports for optional dependencies
-let OpenAI: any
-let GoogleGenerativeAI: any
+type OpenAIType = typeof import('openai').OpenAI
+type GoogleGenerativeAIType = typeof import('@google/generative-ai').GoogleGenerativeAI
+
+let OpenAI: OpenAIType | null = null
+let GoogleGenerativeAI: GoogleGenerativeAIType | null = null
 
 try {
-  OpenAI = require('openai')
+  const openaiModule = require('openai')
+  OpenAI = openaiModule.OpenAI
 } catch (e) {
-
+  // OpenAI not available
 }
 
 try {
   const googleAI = require('@google/generative-ai')
   GoogleGenerativeAI = googleAI.GoogleGenerativeAI
 } catch (e) {
-
+  // Google AI not available
 }
 
 // Types
@@ -122,7 +126,7 @@ class MockAIProvider {
 
 // OpenAI Provider
 class OpenAIProvider {
-  private client: any
+  private client: InstanceType<OpenAIType>
 
   constructor() {
     if (!OpenAI) {
@@ -191,7 +195,7 @@ class OpenAIProvider {
 
 // Google AI Provider
 class GoogleAIProvider {
-  private client: any
+  private client: InstanceType<GoogleGenerativeAIType>
 
   constructor() {
     if (!GoogleGenerativeAI) {
@@ -309,9 +313,10 @@ IMPORTANT:
         }
         
         // Validate each recommendation has required fields
-        parsed.recommendations.forEach((rec: any, index: number) => {
-          if (!rec.slotId || !rec.taskId) {
-
+        parsed.recommendations.forEach((rec: unknown, index: number) => {
+          const recommendation = rec as Record<string, unknown>
+          if (!recommendation.slotId || !recommendation.taskId) {
+            console.warn(`Invalid recommendation at index ${index}:`, rec)
           }
         })
         

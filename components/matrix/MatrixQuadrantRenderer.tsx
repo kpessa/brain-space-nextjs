@@ -85,15 +85,6 @@ export function MatrixQuadrantRenderer({
   }
   
   // Regular rendering with family grouping
-  console.log(`🔍 Processing quadrant ${quadrantId}:`, {
-    allNodesInQuadrant: allNodes.length,
-    visibleNodes: visibleNodes.length,
-    firstFewNodes: allNodes.slice(0, 3).map(n => ({
-      title: n.title,
-      parent: n.parent,
-      children: n.children
-    }))
-  })
   
   // Use allNodes for grouping to detect all relationships, not just visible ones
   const families = groupNodesByFamily(allNodes, nodes)
@@ -113,8 +104,7 @@ export function MatrixQuadrantRenderer({
     const isOrphan = familyId.startsWith('orphan-')
     const familyColor = isFamily || isOrphan ? 
       getFamilyColor(familyId.replace('orphan-', '')) : null
-    
-    
+
     // Check if family is expanded
     const isExpanded = !isFamily || expandedFamilies.has(familyId)
     
@@ -135,15 +125,7 @@ export function MatrixQuadrantRenderer({
       const parentNode = isChild ? getParentNode(node, nodes) : null
       const nodeIsExpanded = expandedNodes.has(node.id)
       
-      // Only log nodes with relationships
-      if (isParent || isChild) {
-        console.log(`    ${' '.repeat(nodeDepth * 2)}${isParent ? '📁' : '📄'} ${node.title} (L${nodeDepth})`, { 
-          depth: nodeDepth, 
-          hasChildren: nodeHasChildren,
-          childCount: nodeChildren.length,
-          expanded: nodeIsExpanded
-        })
-      }
+      // Calculate node relationship properties
       
       // For deep nesting: skip if any ancestor is collapsed
       if (nodeDepth > 0 && isFamily) {
@@ -194,9 +176,6 @@ export function MatrixQuadrantRenderer({
   const relationshipElements = elements.filter(el => 
     el.props?.isParent || el.props?.isChild
   ).length
-  if (relationshipElements > 0) {
-
-  }
   
   return <>{elements}</>
 }

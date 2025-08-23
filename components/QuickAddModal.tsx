@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import { createAIService } from '@/services/ai'
 import type { Node, NodeType, Recurrence } from '@/types/node'
 import dayjs from 'dayjs'

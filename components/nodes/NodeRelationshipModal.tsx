@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import { createAIService } from '@/services/ai'
 import type { Node, NodeType } from '@/types/node'
 import { Zap, GitBranch, GitMerge } from '@/lib/icons'

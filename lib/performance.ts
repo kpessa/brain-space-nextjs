@@ -25,7 +25,10 @@ class PerformanceMonitor {
       try {
         const lcpObserver = new PerformanceObserver((entryList) => {
           const entries = entryList.getEntries()
-          const lastEntry = entries[entries.length - 1] as any
+          const lastEntry = entries[entries.length - 1] as PerformanceEntry & {
+            renderTime?: number
+            loadTime?: number
+          }
           this.metrics.LCP = lastEntry.renderTime || lastEntry.loadTime
           this.report()
         })
@@ -38,9 +41,11 @@ class PerformanceMonitor {
       try {
         const fidObserver = new PerformanceObserver((entryList) => {
           const entries = entryList.getEntries()
-          entries.forEach((entry: any) => {
+          entries.forEach((entry: PerformanceEntry & {
+            processingStart?: number
+          }) => {
             if (entry.name === 'first-input') {
-              this.metrics.FID = entry.processingStart - entry.startTime
+              this.metrics.FID = (entry.processingStart || 0) - entry.startTime
               this.report()
             }
           })
@@ -53,13 +58,17 @@ class PerformanceMonitor {
       // Observe Cumulative Layout Shift
       try {
         let clsValue = 0
-        const clsEntries: any[] = []
+        const clsEntries: (PerformanceEntry & { value?: number; hadRecentInput?: boolean })[] = []
 
         const clsObserver = new PerformanceObserver((entryList) => {
           for (const entry of entryList.getEntries()) {
-            if (!(entry as any).hadRecentInput) {
-              clsEntries.push(entry)
-              clsValue += (entry as any).value
+            const layoutShiftEntry = entry as PerformanceEntry & {
+              value?: number
+              hadRecentInput?: boolean
+            }
+            if (!layoutShiftEntry.hadRecentInput) {
+              clsEntries.push(layoutShiftEntry)
+              clsValue += layoutShiftEntry.value || 0
             }
           }
           this.metrics.CLS = clsValue
@@ -74,11 +83,16 @@ class PerformanceMonitor {
       try {
         const inpObserver = new PerformanceObserver((entryList) => {
           const entries = entryList.getEntries()
-          entries.forEach((entry: any) => {
+          entries.forEach((entry: PerformanceEntry & {
+            interactionId?: number
+            processingStart?: number
+            processingEnd?: number
+            duration?: number
+          }) => {
             if (entry.interactionId) {
-              const inputDelay = entry.processingStart - entry.startTime
-              const processingTime = entry.processingEnd - entry.processingStart
-              const presentationDelay = entry.startTime + entry.duration - entry.processingEnd
+              const inputDelay = (entry.processingStart || 0) - entry.startTime
+              const processingTime = (entry.processingEnd || 0) - (entry.processingStart || 0)
+              const presentationDelay = entry.startTime + (entry.duration || 0) - (entry.processingEnd || 0)
               const inp = inputDelay + processingTime + presentationDelay
               
               if (!this.metrics.INP || inp > this.metrics.INP) {
@@ -238,8 +252,9 @@ export function reportPerformanceMetrics(metrics: PerformanceMetrics) {
   // In production, send to analytics service
   if (process.env.NODE_ENV === 'production') {
     // Example: Send to Google Analytics
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'web_vitals', {
+    if (typeof window !== 'undefined' && 'gtag' in window && typeof (window as any).gtag === 'function') {
+      const gtag = (window as any).gtag as (command: string, action: string, params: Record<string, unknown>) => void
+      gtag('event', 'web_vitals', {
         event_category: 'Performance',
         fcp: metrics.FCP,
         lcp: metrics.LCP,
@@ -258,6 +273,5 @@ export function reportPerformanceMetrics(metrics: PerformanceMetrics) {
     // })
   } else {
     // In development, log to console
-    console.log('Performance Metrics:', metrics)
   }
 }

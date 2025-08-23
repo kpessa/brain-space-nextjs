@@ -5,9 +5,9 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Sparkles, Brain, Loader2, ChevronRight, CheckCircle, Info } from '@/lib/icons'
-import DOMPurify from 'dompurify'
+import { markdownToSafeHtml } from '@/lib/sanitize'
 import { useTimeboxStore } from '@/store/timeboxStore'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import { useUserPreferencesStore } from '@/store/userPreferencesStore'
 import dayjs from 'dayjs'
 import { cn } from '@/lib/utils'
@@ -26,25 +26,6 @@ interface RecommendationsDialogProps {
   userId: string
   date: string
   trigger?: React.ReactNode
-}
-
-// Simple markdown to HTML converter with XSS protection
-function markdownToHtml(markdown: string): string {
-  const html = markdown
-    .replace(/### (.*?)$/gm, '<h3 class="font-semibold mt-3 mb-1">$1</h3>')
-    .replace(/## (.*?)$/gm, '<h2 class="font-bold mt-4 mb-2">$1</h2>')
-    .replace(/# (.*?)$/gm, '<h1 class="font-bold text-lg mt-4 mb-2">$1</h1>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/\n\n/g, '</p><p class="mb-2">')
-    .replace(/^/, '<p class="mb-2">')
-    .replace(/$/, '</p>')
-  
-  // Sanitize HTML to prevent XSS attacks
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['h1', 'h2', 'h3', 'strong', 'em', 'p'],
-    ALLOWED_ATTR: ['class']
-  })
 }
 
 export default function TimeboxRecommendationsDialog({ 
@@ -309,7 +290,7 @@ export default function TimeboxRecommendationsDialog({
               </CardHeader>
               <CardContent>
                 <div className="prose prose-sm max-w-none text-gray-700">
-                  <div dangerouslySetInnerHTML={{ __html: markdownToHtml(summary) }} />
+                  <div dangerouslySetInnerHTML={{ __html: markdownToSafeHtml(summary) }} />
                 </div>
               </CardContent>
             </Card>

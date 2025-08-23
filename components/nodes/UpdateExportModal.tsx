@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import { useUserPreferencesStore, shouldShowNode, type UserMode } from '@/store/userPreferencesStore'
 import type { Node, NodeUpdate } from '@/types/node'
 import { Download, FileText, Calendar, Filter, Copy, Check, Briefcase, Home, Globe } from '@/lib/icons'

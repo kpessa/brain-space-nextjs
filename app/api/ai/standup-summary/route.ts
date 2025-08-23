@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { adminAuth } from '@/lib/firebase-admin'
+import { getAdminAuth } from '@/lib/firebase-admin'
 import type { Node, NodeUpdate } from '@/types/node'
 
 interface StandupData {
@@ -242,6 +242,7 @@ export async function POST(request: NextRequest) {
 
     // Optional: Verify Firebase auth token
     const authHeader = request.headers.get('authorization')
+    const adminAuth = getAdminAuth()
     if (authHeader && process.env.NODE_ENV === 'production' && adminAuth) {
       try {
         const token = authHeader.replace('Bearer ', '')

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import { useUserPreferencesStore } from '@/store/userPreferencesStore'
 import { ModeToggle } from '@/components/ModeToggle'
 import { AlertCircle, Star, Clock, Calendar, Maximize2, Minimize2 } from '@/lib/icons'

@@ -10,7 +10,7 @@ export class AppError extends Error {
     public message: string,
     public statusCode: number = 500,
     public code?: string,
-    public details?: any
+    public details?: Record<string, unknown>
   ) {
     super(message)
     this.name = 'AppError'
@@ -18,7 +18,7 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: Record<string, unknown>) {
     super(message, 400, 'VALIDATION_ERROR', details)
     this.name = 'ValidationError'
   }
@@ -60,7 +60,7 @@ export class RateLimitError extends AppError {
 }
 
 export class ExternalServiceError extends AppError {
-  constructor(service: string, originalError?: any) {
+  constructor(service: string, originalError?: unknown) {
     super(
       `External service error: ${service}`,
       503,
@@ -97,7 +97,10 @@ export function handleApiError(error: unknown): NextResponse {
 
   // Handle Firebase errors
   if (error && typeof error === 'object' && 'code' in error) {
-    const firebaseError = error as any
+    const firebaseError = error as {
+      code?: string
+      message?: string
+    }
     
     // Map Firebase error codes to HTTP status codes
     const firebaseErrorMap: Record<string, number> = {
@@ -150,7 +153,7 @@ export function handleApiError(error: unknown): NextResponse {
 /**
  * Async wrapper for API route handlers with error handling
  */
-export function withErrorHandler<T extends any[], R>(
+export function withErrorHandler<T extends unknown[], R>(
   handler: (...args: T) => Promise<NextResponse | R>
 ): (...args: T) => Promise<NextResponse> {
   return async (...args: T): Promise<NextResponse> => {

@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import { useUserPreferencesStore, TAG_CATEGORIES } from '@/store/userPreferencesStore'
 import type { Node } from '@/types/node'
 import { Plus, Minus, RefreshCw, Briefcase, Home, X, Check } from '@/lib/icons'

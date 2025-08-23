@@ -14,7 +14,7 @@ import {
   useTimeSlotsWithCalendarEvents,
   useTimeboxStats
 } from '@/hooks/useTimeboxSelectors'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import { useUserPreferencesStore } from '@/store/userPreferencesStore'
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
 import dayjs from '@/lib/dayjs'
@@ -116,7 +116,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   // Initialize time slots with correct interval
   useEffect(() => {
     initializeTimeSlots(effectiveInterval)
-  }, [effectiveInterval, initializeTimeSlots])
+  }, [effectiveInterval])
   
   // Load data on mount and date change
   useEffect(() => {
@@ -124,14 +124,14 @@ export default function TimeboxClient({ userId }: { userId: string }) {
       loadNodes(userId)
       loadTimeboxData(userId, selectedDate, effectiveInterval)
     }
-  }, [userId, selectedDate, effectiveInterval, loadNodes, loadTimeboxData])
+  }, [userId, selectedDate, effectiveInterval])
   
   // Load calendar events when sync is enabled
   useEffect(() => {
     if (calendarSyncEnabled && isConnected) {
       loadCalendarEvents()
     }
-  }, [calendarSyncEnabled, isConnected, loadCalendarEvents])
+  }, [calendarSyncEnabled, isConnected])
   
   // Find current time slot for highlighting
   useEffect(() => {

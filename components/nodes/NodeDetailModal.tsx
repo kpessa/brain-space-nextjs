@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 import { useToast } from '@/hooks/useToast'
 import type { Node, Recurrence } from '@/types/node'
 import { getNodeTypeIcon } from '@/types/node'

@@ -13,25 +13,8 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 }
 
-// Log config for debugging (without sensitive data)
-if (typeof window !== 'undefined') {
-
-  // Suppress expected errors that don't affect functionality
-  const originalError = console.error
-  console.error = (...args) => {
-    const errorString = args[0]?.toString?.() || ''
-    if (
-      errorString.includes('Failed to load resource') ||
-      errorString.includes('Fetch API cannot load') ||
-      errorString.includes('firestore.googleapis.com') ||
-      errorString.includes('__/firebase/init.json') // Firebase looking for hosted config
-    ) {
-      // Suppress these errors - they're expected when not using Firebase Hosting
-      return
-    }
-    originalError.apply(console, args)
-  }
-}
+// Note: Firebase may log some expected errors when not using Firebase Hosting
+// These can be safely ignored (e.g., looking for __/firebase/init.json)
 
 let app: FirebaseApp
 let auth: Auth

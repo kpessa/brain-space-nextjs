@@ -3,19 +3,43 @@ import dayjs from '@/lib/dayjs'
 import { DayCell } from './DayCell'
 import { SpanningEventsSection } from './SpanningEventsSection'
 
+interface CalendarEvent {
+  id?: string
+  title?: string
+  start?: Date | string
+  end?: Date | string
+  allDay?: boolean
+  resource?: unknown
+  [key: string]: unknown
+}
+
+interface EventSpanInfo {
+  span: number
+  left: number
+  isFirst: boolean
+  isLast: boolean
+}
+
+interface SlotInfo {
+  start: Date
+  end: Date
+  action: string
+  slots: Date[]
+}
+
 interface WeekRowProps {
   week: Date[]
   currentDate: Date
   currentWeekStart: dayjs.Dayjs
-  events: any[]
-  eventPropGetter?: (event: any) => any
-  onSelectEvent: (event: any) => void
-  onSelectSlot: (slotInfo: any) => void
-  getEventsForDay: (day: Date) => any[]
-  isAllDayEvent: (event: any) => boolean
-  getTimedEventsForDay: (day: Date) => any[]
-  getAllDayEventsForDay: (day: Date) => any[]
-  getEventSpanInfo: (event: any, day: Date, week: Date[]) => any
+  events: CalendarEvent[]
+  eventPropGetter?: (event: CalendarEvent) => Record<string, unknown>
+  onSelectEvent: (event: CalendarEvent) => void
+  onSelectSlot: (slotInfo: SlotInfo) => void
+  getEventsForDay: (day: Date) => CalendarEvent[]
+  isAllDayEvent: (event: CalendarEvent) => boolean
+  getTimedEventsForDay: (day: Date) => CalendarEvent[]
+  getAllDayEventsForDay: (day: Date) => CalendarEvent[]
+  getEventSpanInfo: (event: CalendarEvent, day: Date, week: Date[]) => EventSpanInfo
 }
 
 export const WeekRow: React.FC<WeekRowProps> = React.memo(

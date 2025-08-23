@@ -1,0 +1,170 @@
+
+> brain-space-nextjs@0.1.0 dev
+> cross-env NODE_ENV=development next dev
+
+   ▲ Next.js 15.4.5
+   - Local:        http://localhost:3000
+   - Network:      http://10.255.255.254:3000
+   - Environments: .env.local, .env.development
+
+ ✓ Starting...
+ ✓ Ready in 2.7s
+ ✓ Compiled /middleware in 400ms (155 modules)
+[Edge Auth] Public path accessed {
+  "pathname": "/api/auth/session"
+}
+ ○ Compiling /api/auth/session ...
+ ✓ Compiled /api/auth/session in 2.4s (344 modules)
+🔥 Firebase Admin SDK: {
+  success: true,
+  mode: 'production',
+  details: 'Initialized with environment variables',
+  error: undefined
+}
+ GET /api/auth/session 401 in 3091ms
+ ✓ Compiled in 510ms (186 modules)
+[Edge Auth] Token expired 
+[Edge Auth] Page request with invalid token {
+  "pathname": "/matrix",
+  "reason": "Token decode failed"
+}
+[Edge Auth] Public path accessed {
+  "pathname": "/login"
+}
+ ○ Compiling /login ...
+ ✓ Compiled /login in 16.6s (5849 modules)
+🔥 Firebase Admin SDK: {
+  success: true,
+  mode: 'production',
+  details: 'Already initialized',
+  error: undefined
+}
+ GET /login?redirect=%2Fmatrix 200 in 17424ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 6.3s (5827 modules)
+ GET /_next/static/chunks/main-app.js?v=1755979281054 404 in 5849ms
+ GET /_next/static/chunks/vendors-_app-pages-browser_node_modules_pnpm_next_15_4_5__babel_core_7_28_0__opentelemetry_ap-f2dbf9.js?v=1755979281054 404 in 5864ms
+[Edge Auth] Public path accessed {
+  "pathname": "/manifest.json"
+}
+[Edge Auth] Page request without token {
+  "pathname": "/android-chrome-192x192.png"
+}
+[Edge Auth] Public path accessed {
+  "pathname": "/login"
+}
+🔥 Firebase Admin SDK: {
+  success: true,
+  mode: 'production',
+  details: 'Already initialized',
+  error: undefined
+}
+ GET /login?redirect=%2Fandroid-chrome-192x192.png 200 in 135ms
+[Edge Auth] Public path accessed {
+  "pathname": "/manifest.json"
+}
+[Edge Auth] Page request without token {
+  "pathname": "/.well-known/appspecific/com.chrome.devtools.json"
+}
+[Edge Auth] Public path accessed {
+  "pathname": "/login"
+}
+ GET /login?redirect=%2F.well-known%2Fappspecific%2Fcom.chrome.devtools.json 200 in 90ms
+[Edge Auth] Page request without token {
+  "pathname": "/"
+}
+[Edge Auth] Public path accessed {
+  "pathname": "/login"
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 3.9s (6248 modules)
+ GET /login 404 in 4270ms
+[Edge Auth] Page request without token {
+  "pathname": "/.well-known/appspecific/com.chrome.devtools.json"
+}
+[Edge Auth] Public path accessed {
+  "pathname": "/login"
+}
+🔥 Firebase Admin SDK: {
+  success: true,
+  mode: 'production',
+  details: 'Already initialized',
+  error: undefined
+}
+ GET /login?redirect=%2F.well-known%2Fappspecific%2Fcom.chrome.devtools.json 200 in 402ms
+[Edge Auth] Public path accessed {
+  "pathname": "/login"
+}
+ GET /login 200 in 83ms
+[Edge Auth] Page request without token {
+  "pathname": "/.well-known/appspecific/com.chrome.devtools.json"
+}
+ GET /_next/static/css/styles.css?v=1755979394043 404 in 95ms
+[Edge Auth] Public path accessed {
+  "pathname": "/login"
+}
+ GET /_next/static/chunks/vendors-_app-pages-browser_node_modules_pnpm_next_15_4_5__babel_core_7_28_0__opentelemetry_ap-f2dbf9.js?v=1755979394043 404 in 227ms
+ GET /_next/static/chunks/vendors-_app-pages-browser_node_modules_pnpm_dayjs_1_11_13_node_modules_dayjs_dayjs_min_js-_a-b7643d.js 404 in 289ms
+ GET /_next/static/chunks/vendors-_app-pages-browser_node_modules_pnpm_next_15_4_5__babel_core_7_28_0__opentelemetry_ap-7b998f.js 404 in 298ms
+ GET /_next/static/chunks/styles.js 404 in 302ms
+ GET /_next/static/chunks/main-app.js?v=1755979394043 404 in 303ms
+ GET /_next/static/chunks/app/layout.js 404 in 162ms
+ GET /_next/static/chunks/app/error.js 404 in 271ms
+ GET /_next/static/chunks/vendors-_app-pages-browser_node_modules_pnpm_next_15_4_5__babel_core_7_28_0__opentelemetry_ap-8162f5.js 404 in 275ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 280ms
+ GET /_next/static/chunks/vendors-_app-pages-browser_node_modules_pnpm_next_15_4_5__babel_core_7_28_0__opentelemetry_ap-85dc6b.js 404 in 284ms
+ GET /login?redirect=%2F.well-known%2Fappspecific%2Fcom.chrome.devtools.json 200 in 635ms
+ GET /_next/static/chunks/app/not-found.js 404 in 67ms
+ GET /_next/static/chunks/app/(auth)/login/page.js 404 in 153ms
+ GET /_next/static/chunks/vendors-_app-pages-browser_node_modules_pnpm_lucide-react_0_525_0_react_18_3_1_node_modules_l-fdbe6f.js 404 in 155ms
+[Edge Auth] Public path accessed {
+  "pathname": "/manifest.json"
+}
+[Edge Auth] Page request without token {
+  "pathname": "/android-chrome-192x192.png"
+}
+[Edge Auth] Public path accessed {
+  "pathname": "/login"
+}
+ GET /_next/static/css/styles.css?v=1755979395156 404 in 48ms
+ GET /login?redirect=%2Fandroid-chrome-192x192.png 200 in 111ms
+[Edge Auth] Page request without token {
+  "pathname": "/"
+}
+[Edge Auth] Public path accessed {
+  "pathname": "/login"
+}
+ GET /login 200 in 52ms
+[Edge Auth] Page request without token {
+  "pathname": "/.well-known/appspecific/com.chrome.devtools.json"
+}
+[Edge Auth] Public path accessed {
+  "pathname": "/login"
+}
+ GET /_next/static/css/styles.css?v=1755979399759 404 in 54ms
+ GET /_next/static/chunks/vendors-_app-pages-browser_node_modules_pnpm_next_15_4_5__babel_core_7_28_0__opentelemetry_ap-f2dbf9.js?v=1755979399759 404 in 266ms
+ GET /_next/static/chunks/vendors-_app-pages-browser_node_modules_pnpm_dayjs_1_11_13_node_modules_dayjs_dayjs_min_js-_a-b7643d.js 404 in 256ms
+ GET /_next/static/chunks/vendors-_app-pages-browser_node_modules_pnpm_next_15_4_5__babel_core_7_28_0__opentelemetry_ap-7b998f.js 404 in 261ms
+ GET /_next/static/chunks/styles.js 404 in 265ms
+ GET /_next/static/chunks/main-app.js?v=1755979399759 404 in 271ms
+ GET /login?redirect=%2F.well-known%2Fappspecific%2Fcom.chrome.devtools.json 200 in 334ms
+ GET /_next/static/chunks/vendors-_app-pages-browser_node_modules_pnpm_next_15_4_5__babel_core_7_28_0__opentelemetry_ap-85dc6b.js 404 in 208ms
+ GET /_next/static/chunks/app/layout.js 404 in 210ms
+ GET /_next/static/chunks/app/error.js 404 in 207ms
+ GET /_next/static/chunks/vendors-_app-pages-browser_node_modules_pnpm_next_15_4_5__babel_core_7_28_0__opentelemetry_ap-8162f5.js 404 in 208ms
+ GET /_next/static/chunks/app/not-found.js 404 in 208ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 210ms
+ GET /_next/static/chunks/app/(auth)/login/page.js 404 in 73ms
+ GET /_next/static/chunks/vendors-_app-pages-browser_node_modules_pnpm_lucide-react_0_525_0_react_18_3_1_node_modules_l-fdbe6f.js 404 in 76ms
+[Edge Auth] Public path accessed {
+  "pathname": "/manifest.json"
+}
+[Edge Auth] Page request without token {
+  "pathname": "/android-chrome-192x192.png"
+}
+[Edge Auth] Public path accessed {
+  "pathname": "/login"
+}
+ GET /login?redirect=%2Fandroid-chrome-192x192.png 200 in 102ms
+ GET /_next/static/css/styles.css?v=1755979400570 404 in 40ms
+[?25h

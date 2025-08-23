@@ -85,7 +85,7 @@ export function useTimeboxDragDrop(userId: string, selectedDate: string | null) 
         // Add new task to slot with unique ID
         const taskWithId = {
           ...taskToAdd,
-          id: taskToAdd.id || `task-${taskToAdd.nodeId}-${Date.now()}`,
+          id: taskToAdd.id || crypto.randomUUID(),
           userId: userId,
           timeboxDate: selectedDate,
           isPersonal: taskToAdd.isPersonal,

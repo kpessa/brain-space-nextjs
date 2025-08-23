@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { setAuthCookie, clearAuthCookie, verifyAuth } from '@/lib/auth-helpers'
-import { adminAuth } from '@/lib/firebase-admin'
+import { 
+  getAdminAuth, 
+  isFirebaseAdminInitialized, 
+  getFirebaseAdminStatus 
+} from '@/lib/firebase-admin'
 import { withCSRFProtection } from '@/lib/csrf'
 
 export const dynamic = 'force-dynamic'
@@ -23,27 +27,30 @@ export async function POST(request: NextRequest) {
     // Token received for session creation
 
     // Check if Firebase Admin is available
-    if (!adminAuth) {
-
-      // In development without admin SDK, we might want to allow setting the cookie
-      // but in production this should fail
+    if (!isFirebaseAdminInitialized()) {
+      const adminStatus = getFirebaseAdminStatus()
+      
+      // In production, Firebase Admin SDK is required
       if (process.env.NODE_ENV === 'production') {
+        console.error('[Session API] Firebase Admin not initialized in production:', adminStatus)
         return NextResponse.json(
           { 
             error: 'Authentication service unavailable',
-            details: 'Firebase Admin SDK not initialized. Please check server configuration.',
+            details: `Firebase Admin SDK initialization failed: ${adminStatus.error}`,
+            adminStatus: adminStatus.mode,
           },
           { status: 503 }
         )
       }
       
       // Development fallback - set cookie without full verification
-
+      console.warn('[Session API] Development mode - Firebase Admin not initialized:', adminStatus)
       await setAuthCookie(token)
       
       return NextResponse.json({
         success: true,
-        warning: 'Token not fully verified (development mode)',
+        warning: 'Development mode - token not fully verified',
+        adminStatus: adminStatus.mode,
         user: {
           uid: 'dev-user',
           email: 'dev@example.com',
@@ -53,29 +60,34 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the token is valid before setting cookie
-    const { user, error } = await verifyAuth(`Bearer ${token}`)
+    const authResult = await verifyAuth(`Bearer ${token}`)
     
-    if (error || !user) {
-      console.error('[Session API] Token verification failed:', error)
+    if (authResult.error || !authResult.user) {
+      console.error('[Session API] Token verification failed:', {
+        error: authResult.error,
+        mode: authResult.mode
+      })
       return NextResponse.json(
         { 
-          error: error || 'Invalid token',
+          error: authResult.error || 'Invalid token',
           details: 'Token verification failed. Please try signing in again.',
+          mode: authResult.mode,
         },
         { status: 401 }
       )
     }
 
     // Set secure HTTP-only cookie
-
     await setAuthCookie(token)
 
     return NextResponse.json({
       success: true,
+      mode: authResult.mode,
+      warning: authResult.warning,
       user: {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.name,
+        uid: authResult.user.uid,
+        email: authResult.user.email,
+        displayName: authResult.user.name,
       }
     })
   } catch (error) {
@@ -117,14 +129,17 @@ export async function GET() {
 
   try {
     // Check if Firebase Admin is available
-    if (!adminAuth) {
-
+    if (!isFirebaseAdminInitialized()) {
+      const adminStatus = getFirebaseAdminStatus()
+      
       if (process.env.NODE_ENV === 'production') {
+        console.error('[Session API] Firebase Admin not initialized in production:', adminStatus)
         return NextResponse.json(
           { 
             authenticated: false,
             error: 'Authentication service unavailable',
-            details: 'Firebase Admin SDK not initialized',
+            details: `Firebase Admin SDK initialization failed: ${adminStatus.error}`,
+            adminStatus: adminStatus.mode,
           },
           { status: 503 }
         )
@@ -134,19 +149,21 @@ export async function GET() {
       return NextResponse.json(
         { 
           authenticated: false,
-          error: 'Development mode - no Firebase Admin',
+          error: 'Development mode - Firebase Admin not initialized',
+          adminStatus: adminStatus.mode,
         },
         { status: 401 }
       )
     }
 
-    const { user, error } = await verifyAuth()
+    const authResult = await verifyAuth()
 
-    if (error || !user) {
+    if (authResult.error || !authResult.user) {
       return NextResponse.json(
         { 
           authenticated: false, 
-          error: error || 'No valid session',
+          error: authResult.error || 'No valid session',
+          mode: authResult.mode,
         },
         { status: 401 }
       )
@@ -154,10 +171,12 @@ export async function GET() {
 
     return NextResponse.json({
       authenticated: true,
+      mode: authResult.mode,
+      warning: authResult.warning,
       user: {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.name,
+        uid: authResult.user.uid,
+        email: authResult.user.email,
+        displayName: authResult.user.name,
       }
     })
   } catch (error) {

@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { decodeAuthToken, isPublicPath, getAuthRedirectUrl, AUTH_COOKIE_NAME } from './lib/auth-helpers-edge'
+import { 
+  validateAuthToken, 
+  isPublicPath, 
+  isPublicApiRoute,
+  getAuthRedirectUrl, 
+  getSecurityHeaders,
+  logAuthEvent,
+  AUTH_COOKIE_NAME 
+} from './lib/auth-helpers-edge'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -7,60 +15,108 @@ export async function middleware(request: NextRequest) {
   // Clone the request headers
   const requestHeaders = new Headers(request.headers)
   
-  // Create response with COOP headers for Firebase Auth
+  // Create response with security headers
   const response = NextResponse.next({
     request: {
       headers: requestHeaders,
     },
   })
   
-  // Set COOP headers for Firebase Auth compatibility
-  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups')
-  response.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none')
+  // Apply security headers
+  const securityHeaders = getSecurityHeaders()
+  Object.entries(securityHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value)
+  })
   
   // Skip auth check for public paths
   if (isPublicPath(pathname)) {
+    logAuthEvent('Public path accessed', { pathname })
     return response
   }
   
   // Special handling for API routes
   if (pathname.startsWith('/api/')) {
     // Some API routes are public (like auth endpoints)
-    if (pathname.startsWith('/api/auth/')) {
+    if (isPublicApiRoute(pathname)) {
+      logAuthEvent('Public API route accessed', { pathname })
       return response
     }
     
-    // For other API routes, we'll check auth in the route handlers
-    // This allows for more flexible auth handling per endpoint
-    return response
+    // For protected API routes, we'll still check auth in route handlers
+    // but we can add some basic validation here
+    const token = request.cookies.get(AUTH_COOKIE_NAME)?.value
+    
+    if (!token) {
+      logAuthEvent('API request without token', { pathname })
+      // Let the API route handle the missing token error
+      return response
+    }
+    
+    // Basic token validation for API routes
+    const tokenValidation = validateAuthToken(token)
+    if (!tokenValidation.valid) {
+      logAuthEvent('API request with invalid token', { 
+        pathname, 
+        reason: tokenValidation.reason 
+      })
+      // Let the API route handle the invalid token error
+      return response
+    }
+    
+    // Add user info to headers for API routes
+    if (tokenValidation.decoded) {
+      requestHeaders.set('x-user-id', tokenValidation.decoded.uid)
+      requestHeaders.set('x-user-email', tokenValidation.decoded.email || '')
+    }
+    
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
   }
   
   // For protected pages, verify authentication
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value
-  console.log('[Middleware] Checking auth for:', pathname, 'Token:', token ? 'Present' : 'Missing')
   
   if (!token) {
+    logAuthEvent('Page request without token', { pathname })
     // No token, redirect to login
-    console.log('[Middleware] No token found, redirecting to login')
     return NextResponse.redirect(new URL(getAuthRedirectUrl(pathname), request.url))
   }
   
-  // Decode the token (basic validation in Edge runtime)
-  const decoded = decodeAuthToken(token)
+  // Enhanced token validation for pages
+  const tokenValidation = validateAuthToken(token)
   
-  if (!decoded) {
+  if (!tokenValidation.valid || !tokenValidation.decoded) {
+    logAuthEvent('Page request with invalid token', { 
+      pathname, 
+      reason: tokenValidation.reason 
+    })
+    
     // Invalid or expired token, clear it and redirect to login
     const redirectResponse = NextResponse.redirect(
       new URL(getAuthRedirectUrl(pathname), request.url)
     )
     redirectResponse.cookies.delete(AUTH_COOKIE_NAME)
+    
+    // Apply security headers to redirect response
+    Object.entries(securityHeaders).forEach(([key, value]) => {
+      redirectResponse.headers.set(key, value)
+    })
+    
     return redirectResponse
   }
   
   // Valid auth, proceed with request
   // Add user info to headers for server components
-  requestHeaders.set('x-user-id', decoded.uid)
-  requestHeaders.set('x-user-email', decoded.email || '')
+  requestHeaders.set('x-user-id', tokenValidation.decoded.uid)
+  requestHeaders.set('x-user-email', tokenValidation.decoded.email || '')
+  
+  logAuthEvent('Authenticated page access', { 
+    pathname, 
+    userId: tokenValidation.decoded.uid 
+  })
   
   return NextResponse.next({
     request: {

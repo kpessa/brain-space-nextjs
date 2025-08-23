@@ -6,7 +6,7 @@ import { GitBranch, GitMerge, Circle, CheckCircle } from '@/lib/icons'
 import { Button } from '@/components/ui/Button'
 import type { Node } from '@/types/node'
 import { getNodeTypeIcon, getNodeTypeColor, getEisenhowerQuadrant } from '@/types/node'
-import { useNodesStore } from '@/store/nodeStore'
+import { useNodesStore } from '@/store/nodes'
 
 interface GraphNodeProps {
   data: {

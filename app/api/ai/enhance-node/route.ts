@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { adminAuth } from '@/lib/firebase-admin'
+import { getAdminAuth } from '@/lib/firebase-admin'
 import type { NodeType } from '@/types/node'
 
 // This runs on the server, so we can safely use API keys
@@ -184,6 +184,7 @@ export async function POST(request: NextRequest) {
 
     // Optional: Verify Firebase auth token
     const authHeader = request.headers.get('authorization')
+    const adminAuth = getAdminAuth()
     if (authHeader && process.env.NODE_ENV === 'production' && adminAuth) {
       try {
         const token = authHeader.replace('Bearer ', '')

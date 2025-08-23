@@ -6,7 +6,7 @@ interface ErrorContext {
   userEmail?: string
   route?: string
   action?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 interface ErrorReport {
@@ -187,7 +187,7 @@ export function useErrorTracking(componentName: string, userId?: string) {
     }
   }, [componentName, userId])
 
-  const trackError = useCallback((error: Error, metadata?: Record<string, any>) => {
+  const trackError = useCallback((error: Error, metadata?: Record<string, unknown>) => {
     const tracker = getErrorTracker()
     tracker.captureError(error, {
       route: componentName,
@@ -196,7 +196,7 @@ export function useErrorTracking(componentName: string, userId?: string) {
     })
   }, [componentName, userId])
 
-  const trackWarning = useCallback((message: string, metadata?: Record<string, any>) => {
+  const trackWarning = useCallback((message: string, metadata?: Record<string, unknown>) => {
     const tracker = getErrorTracker()
     tracker.captureWarning(message, {
       route: componentName,
@@ -205,7 +205,7 @@ export function useErrorTracking(componentName: string, userId?: string) {
     })
   }, [componentName, userId])
 
-  const trackInfo = useCallback((message: string, metadata?: Record<string, any>) => {
+  const trackInfo = useCallback((message: string, metadata?: Record<string, unknown>) => {
     const tracker = getErrorTracker()
     tracker.captureInfo(message, {
       route: componentName,
@@ -222,7 +222,7 @@ export function useErrorTracking(componentName: string, userId?: string) {
 }
 
 // Error boundary integration
-export function reportErrorBoundaryError(error: Error, errorInfo: any) {
+export function reportErrorBoundaryError(error: Error, errorInfo: { componentStack?: string }) {
   const tracker = getErrorTracker()
   tracker.captureError(error, {
     metadata: {

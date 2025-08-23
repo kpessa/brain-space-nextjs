@@ -1,5 +1,10 @@
 import { cookies } from 'next/headers'
-import { adminAuth } from './firebase-admin'
+import { 
+  getAdminAuth, 
+  isFirebaseAdminInitialized, 
+  verifyFirebaseToken,
+  getFirebaseAdminStatus 
+} from './firebase-admin'
 import { DecodedIdToken } from 'firebase-admin/auth'
 
 export const AUTH_COOKIE_NAME = 'firebase-auth-token'
@@ -8,10 +13,12 @@ export const AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 5 // 5 days
 export interface AuthResult {
   user: DecodedIdToken | null
   error: string | null
+  warning?: string
+  mode?: 'production' | 'development' | 'disabled'
 }
 
 /**
- * Verify Firebase ID token from cookies or Authorization header
+ * Verify Firebase ID token from cookies or Authorization header with enhanced security
  */
 export async function verifyAuth(
   authHeader?: string | null
@@ -34,64 +41,115 @@ export async function verifyAuth(
       return { user: null, error: 'No auth token found' }
     }
 
-    // Check if Firebase Admin is initialized
-    if (!adminAuth) {
-      // In development without Firebase Admin SDK, decode the token manually
-      // This is less secure but allows development without service account credentials
-      if (process.env.NODE_ENV === 'development') {
-        try {
-          // Basic JWT decode for development
-          const parts = token.split('.')
-          if (parts.length !== 3) {
-            return { user: null, error: 'Invalid token format' }
-          }
-          
-          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString())
-          
-          // Check if token is expired
-          const now = Date.now() / 1000
-          if (payload.exp && payload.exp < now) {
-            return { user: null, error: 'Token expired' }
-          }
-          
-          // Return a minimal decoded token for development
-          return {
-            user: {
-              uid: payload.sub || payload.user_id,
-              email: payload.email,
-              name: payload.name,
-              email_verified: payload.email_verified,
-              auth_time: payload.auth_time,
-              iat: payload.iat,
-              exp: payload.exp,
-              firebase: payload.firebase || {},
-            } as DecodedIdToken,
-            error: null
-          }
-        } catch (error) {
-          return { user: null, error: 'Failed to decode token' }
+    // Check Firebase Admin SDK status
+    const adminStatus = getFirebaseAdminStatus()
+    
+    if (!isFirebaseAdminInitialized()) {
+      // Production requires Firebase Admin SDK
+      if (process.env.NODE_ENV === 'production') {
+        console.error('Firebase Admin SDK not initialized in production:', adminStatus)
+        return { 
+          user: null, 
+          error: 'Authentication service unavailable',
+          mode: adminStatus.mode
         }
       }
       
-      return { user: null, error: 'Firebase Admin SDK not initialized' }
+      // Development fallback with warning
+      if (process.env.NODE_ENV === 'development') {
+        try {
+          const developmentUser = await developmentTokenDecode(token)
+          return {
+            user: developmentUser,
+            error: null,
+            warning: 'Development mode - token not fully verified',
+            mode: 'development'
+          }
+        } catch (error) {
+          return { 
+            user: null, 
+            error: error instanceof Error ? error.message : 'Failed to decode token',
+            mode: 'development'
+          }
+        }
+      }
+      
+      return { 
+        user: null, 
+        error: 'Firebase Admin SDK not initialized',
+        mode: adminStatus.mode
+      }
     }
     
-    // Verify the token with Firebase Admin
-    const decodedToken = await adminAuth.verifyIdToken(token)
+    // Use secure Firebase Admin verification
+    try {
+      const decodedToken = await verifyFirebaseToken(token)
+      return { 
+        user: decodedToken, 
+        error: null,
+        mode: 'production'
+      }
+    } catch (error) {
+      // Handle specific Firebase auth errors
+      const errorMessage = error instanceof Error ? error.message : 'Token verification failed'
+      
+      // Log security events in production
+      if (process.env.NODE_ENV === 'production') {
+        console.warn('Token verification failed:', {
+          error: errorMessage,
+          timestamp: new Date().toISOString(),
+          // Don't log the token itself for security
+        })
+      }
+      
+      return { 
+        user: null, 
+        error: errorMessage,
+        mode: 'production'
+      }
+    }
+  } catch (error) {
+    console.error('Unexpected auth verification error:', error)
+    return { 
+      user: null, 
+      error: error instanceof Error ? error.message : 'Authentication failed'
+    }
+  }
+}
+
+/**
+ * Development-only token decode (NOT FOR PRODUCTION)
+ * This provides basic JWT parsing without signature verification
+ */
+async function developmentTokenDecode(token: string): Promise<DecodedIdToken> {
+  try {
+    // Basic JWT decode for development
+    const parts = token.split('.')
+    if (parts.length !== 3) {
+      throw new Error('Invalid token format')
+    }
+    
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString())
     
     // Check if token is expired
     const now = Date.now() / 1000
-    if (decodedToken.exp < now) {
-      return { user: null, error: 'Token expired' }
+    if (payload.exp && payload.exp < now) {
+      throw new Error('Token expired')
     }
-
-    return { user: decodedToken, error: null }
+    
+    // Return a minimal decoded token for development
+    return {
+      uid: payload.sub || payload.user_id || 'dev-user',
+      email: payload.email || 'dev@example.com',
+      name: payload.name || 'Development User',
+      email_verified: payload.email_verified ?? true,
+      auth_time: payload.auth_time || Math.floor(Date.now() / 1000),
+      iat: payload.iat || Math.floor(Date.now() / 1000),
+      exp: payload.exp || Math.floor(Date.now() / 1000) + 3600,
+      firebase: payload.firebase || { identities: {}, sign_in_provider: 'custom' },
+    } as DecodedIdToken
   } catch (error) {
-    console.error('Auth verification error:', error)
-    return { 
-      user: null, 
-      error: error instanceof Error ? error.message : 'Invalid token' 
-    }
+    throw new Error('Failed to decode development token')
   }
 }
 

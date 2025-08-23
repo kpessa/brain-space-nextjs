@@ -4,19 +4,33 @@ import { Button } from '@/components/ui/Button'
 import { ChevronDown, ChevronUp, ChevronRight, CheckCircle, X, Calendar, Zap, MapPin } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { type TimeboxTask } from '@/store/timeboxStore'
+import type { Node } from '@/types/node'
 import { getPriorityColor, timeBlockColors, blockReasonIcons } from './TimeboxConstants'
 import { getNodeTypeIcon } from '@/types/node'
 import dayjs from '@/lib/dayjs'
 
+interface TimeSlot {
+  id: string
+  startTime: string
+  endTime: string
+  duration: number
+  tasks: TimeboxTask[]
+  isBlocked?: boolean
+  blockReason?: string
+  isPast?: boolean
+  isCurrentTimeSlot?: boolean
+  calendarEvents?: unknown[]
+}
+
 interface TimeSlotsListProps {
-  displaySlots: any[]
+  displaySlots: TimeSlot[]
   isClient: boolean
   selectedDate: string
   currentTimeSlotId: string | null
   hoveredSlotId: string | null
   expandedTasks: Set<string>
   onToggleTaskExpanded: (taskId: string) => void
-  onUpdateTaskInSlot: (taskId: string, updates: any) => void
+  onUpdateTaskInSlot: (taskId: string, updates: Partial<TimeboxTask>) => void
   onRemoveTaskFromSlot: (taskId: string, slotId: string) => void
   onHandleTaskClick: (task: TimeboxTask) => void
   onUnblockTimeSlot: (slotId: string) => void
@@ -25,7 +39,7 @@ interface TimeSlotsListProps {
   onSetHoveredSlotId: (id: string | null) => void
   onHandleDragStart: (e: React.DragEvent, task: TimeboxTask) => void
   onHandleDragEnd: () => void
-  getTaskChildren: (nodeId?: string) => any[]
+  getTaskChildren: (nodeId?: string) => Node[]
 }
 
 export function TimeSlotsList({

@@ -1,164 +1,154 @@
 'use client'
 
-import { useState } from 'react'
-import { Search, Filter, X } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Card, CardContent } from '@/components/ui/Card'
+import { Search, Grid3x3, TreePine, Share2 } from '@/lib/icons'
 import type { NodeType } from '@/types/node'
 
 interface NodeFiltersProps {
   searchQuery: string
   onSearchChange: (query: string) => void
+  viewMode: 'grid' | 'tree' | 'graph'
+  onViewModeChange: (mode: 'grid' | 'tree' | 'graph') => void
   selectedType: NodeType | 'all'
   onTypeChange: (type: NodeType | 'all') => void
   selectedTag: string
   onTagChange: (tag: string) => void
   showCompleted: boolean
   onShowCompletedChange: (show: boolean) => void
+  showSnoozed: boolean
+  onShowSnoozedChange: (show: boolean) => void
+  snoozedCount: number
   availableTags: string[]
 }
-
-const nodeTypes: (NodeType | 'all')[] = [
-  'all',
-  'goal',
-  'project',
-  'task',
-  'option',
-  'idea',
-  'question',
-  'problem',
-  'insight',
-  'thought',
-  'concern'
-]
 
 export function NodeFilters({
   searchQuery,
   onSearchChange,
+  viewMode,
+  onViewModeChange,
   selectedType,
   onTypeChange,
   selectedTag,
   onTagChange,
   showCompleted,
   onShowCompletedChange,
+  showSnoozed,
+  onShowSnoozedChange,
+  snoozedCount,
   availableTags
 }: NodeFiltersProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
-
-  const hasActiveFilters = selectedType !== 'all' || selectedTag !== 'all' || showCompleted
-
   return (
-    <div className="space-y-4">
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-        <input
-          type="text"
-          placeholder="Search nodes..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brain-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => onSearchChange('')}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-
-      {/* Filter Toggle */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2"
-        >
-          <Filter className="h-4 w-4" />
-          Filters
-          {hasActiveFilters && (
-            <span className="bg-brain-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-              {[selectedType !== 'all', selectedTag !== 'all', showCompleted].filter(Boolean).length}
-            </span>
-          )}
-        </Button>
-        
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              onTypeChange('all')
-              onTagChange('all')
-              onShowCompletedChange(false)
-            }}
-            className="text-xs"
-          >
-            Clear filters
-          </Button>
-        )}
-      </div>
-
-      {/* Expanded Filters */}
-      {isExpanded && (
-        <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          {/* Type Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Node Type
-            </label>
+    <Card className="mb-8">
+      <CardContent className="p-6">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Search nodes..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brain-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+          
+          <div className="flex gap-4">
+            {/* View Mode Toggle */}
+            <div className="flex rounded-lg border border-gray-300">
+              <button
+                onClick={() => onViewModeChange('grid')}
+                className={`px-3 py-2 flex items-center gap-2 rounded-l-lg transition-colors ${
+                  viewMode === 'grid' 
+                    ? 'bg-brain-600 text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Grid3x3 className="w-4 h-4" />
+                <span className="text-sm">Grid</span>
+              </button>
+              <button
+                onClick={() => onViewModeChange('tree')}
+                className={`px-3 py-2 flex items-center gap-2 transition-colors ${
+                  viewMode === 'tree' 
+                    ? 'bg-brain-600 text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <TreePine className="w-4 h-4" />
+                <span className="text-sm">Tree</span>
+              </button>
+              <button
+                onClick={() => onViewModeChange('graph')}
+                className={`px-3 py-2 flex items-center gap-2 rounded-r-lg transition-colors ${
+                  viewMode === 'graph' 
+                    ? 'bg-brain-600 text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Share2 className="w-4 h-4" />
+                <span className="text-sm">Graph</span>
+              </button>
+            </div>
             <select
               value={selectedType}
               onChange={(e) => onTypeChange(e.target.value as NodeType | 'all')}
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brain-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brain-500 focus:border-transparent"
             >
-              {nodeTypes.map(type => (
-                <option key={type} value={type}>
-                  {type === 'all' ? 'All Types' : type.charAt(0).toUpperCase() + type.slice(1)}
-                </option>
-              ))}
+              <option value="all">All Types</option>
+              <option value="goal">Goals</option>
+              <option value="project">Projects</option>
+              <option value="task">Tasks</option>
+              <option value="idea">Ideas</option>
+              <option value="question">Questions</option>
+              <option value="problem">Problems</option>
+              <option value="insight">Insights</option>
+              <option value="thought">Thoughts</option>
+              <option value="concern">Concerns</option>
             </select>
-          </div>
-
-          {/* Tag Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Tag
-            </label>
+            
             <select
               value={selectedTag}
               onChange={(e) => onTagChange(e.target.value)}
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brain-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brain-500 focus:border-transparent"
             >
               <option value="all">All Tags</option>
               {availableTags.map(tag => (
-                <option key={tag} value={tag}>{tag}</option>
+                <option key={tag} value={tag}>#{tag}</option>
               ))}
             </select>
-          </div>
-
-          {/* Show Completed Toggle */}
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Show Completed
-            </label>
-            <button
-              onClick={() => onShowCompletedChange(!showCompleted)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                showCompleted ? 'bg-brain-500' : 'bg-gray-300 dark:bg-gray-600'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  showCompleted ? 'translate-x-6' : 'translate-x-1'
-                }`}
+            
+            {/* Show Completed Toggle */}
+            <div className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg bg-white">
+              <input
+                type="checkbox"
+                id="showCompleted"
+                checked={showCompleted}
+                onChange={(e) => onShowCompletedChange(e.target.checked)}
+                className="rounded border-gray-300 text-brain-600 focus:ring-brain-500"
               />
-            </button>
+              <label htmlFor="showCompleted" className="text-sm font-medium text-gray-700 select-none cursor-pointer">
+                Show completed
+              </label>
+            </div>
+            
+            {/* Show Snoozed Toggle */}
+            <div className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg bg-white">
+              <input
+                type="checkbox"
+                id="showSnoozed"
+                checked={showSnoozed}
+                onChange={(e) => onShowSnoozedChange(e.target.checked)}
+                className="rounded border-gray-300 text-brain-600 focus:ring-brain-500"
+              />
+              <label htmlFor="showSnoozed" className="text-sm font-medium text-gray-700 select-none cursor-pointer">
+                Show snoozed ({snoozedCount})
+              </label>
+            </div>
           </div>
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   )
 }
