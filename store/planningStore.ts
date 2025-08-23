@@ -112,8 +112,6 @@ const formatTimeDisplay = (hour: number, minute: number): string => {
 
 // Helper function to generate time slots
 const generateTimeSlots = (intervalMinutes: 30 | 60 | 120 = 120): TimeSlot[] => {
-  console.log('⏰ generateTimeSlots: Starting generation', { intervalMinutes, timestamp: new Date().toISOString() })
-  
   const slots: TimeSlot[] = []
   const startHour = 6 // 6am
   const endHour = 22 // 10pm
@@ -168,10 +166,6 @@ const generateTimeSlots = (intervalMinutes: 30 | 60 | 120 = 120): TimeSlot[] => 
     }
   }
   
-  console.log('✅ generateTimeSlots: Generation completed', { 
-    slotsCount: slots.length, 
-    timestamp: new Date().toISOString() 
-  })
   return slots
 }
 
@@ -197,32 +191,18 @@ export const usePlanningStore = create<PlanningState>((set, get) => ({
   showPastSlots: false,
 
   setSelectedDate: (date) => {
-    console.log('📅 setSelectedDate: Setting date', { date, timestamp: new Date().toISOString() })
     set({ selectedDate: date })
   },
   
   setDraggedTask: (task) => {
-    console.log('🎯 setDraggedTask: Setting dragged task', { 
-      taskId: task?.id, 
-      timestamp: new Date().toISOString() 
-    })
     set({ draggedTask: task })
   },
   
   setHoveredSlotId: (slotId) => {
-    console.log('🎯 setHoveredSlotId: Setting hovered slot', { 
-      slotId, 
-      timestamp: new Date().toISOString() 
-    })
     set({ hoveredSlotId: slotId })
   },
   
   addTaskToSlot: async (task, slotId) => {
-    console.log('➕ addTaskToSlot: Adding task to slot', { 
-      taskId: task.id, 
-      slotId, 
-      timestamp: new Date().toISOString() 
-    })
     
     const state = get()
     
@@ -261,31 +241,22 @@ export const usePlanningStore = create<PlanningState>((set, get) => ({
     
     // Save to Firebase
     try {
-      console.log('💾 updateTaskInSlot: Saving to Firebase', { timestamp: new Date().toISOString() })
       await TimeboxService.saveTimeboxData(
         task.userId || 'demo-user',
         state.selectedDate,
         updatedTimeSlots
       )
-      console.log('✅ updateTaskInSlot: Firebase save completed', { timestamp: new Date().toISOString() })
     } catch (error) {
-      console.error('❌ updateTaskInSlot: Firebase save error', { error, timestamp: new Date().toISOString() })
       set({ error: (error as Error).message })
     }
   },
   
   removeTaskFromSlot: async (taskId, slotId) => {
-    console.log('🗑️ removeTaskFromSlot: Removing task from slot', { 
-      taskId, 
-      slotId, 
-      timestamp: new Date().toISOString() 
-    })
     
     const state = get()
     const slot = state.timeSlotsMap.get(slotId) || state.timeSlots.find(s => s.id === slotId)
     
     if (!slot) {
-      console.log('❌ removeTaskFromSlot: Slot not found', { slotId, timestamp: new Date().toISOString() })
       return
     }
     
@@ -316,46 +287,28 @@ export const usePlanningStore = create<PlanningState>((set, get) => ({
     const task = state.tasksMap.get(taskId)
     if (task) {
       try {
-        console.log('💾 removeTaskFromSlot: Saving to Firebase', { timestamp: new Date().toISOString() })
         await TimeboxService.saveTimeboxData(
           task.userId || 'demo-user',
           state.selectedDate,
           updatedTimeSlots
         )
-        console.log('✅ removeTaskFromSlot: Firebase save completed', { timestamp: new Date().toISOString() })
       } catch (error) {
-        console.error('❌ removeTaskFromSlot: Firebase save error', { error, timestamp: new Date().toISOString() })
         set({ error: (error as Error).message })
       }
     }
   },
   
   updateTaskInSlot: async (taskId, updates) => {
-    console.log('✏️ updateTaskInSlot: Updating task in slot', { 
-      taskId, 
-      updates, 
-      timestamp: new Date().toISOString() 
-    })
     
     const state = get()
     const task = state.tasksMap.get(taskId)
     
     if (!task || !task.slotId) {
-      console.log('❌ updateTaskInSlot: Task not found or no slotId', { 
-        taskId, 
-        taskExists: !!task, 
-        hasSlotId: !!task?.slotId, 
-        timestamp: new Date().toISOString() 
-      })
       return
     }
     
     const slot = state.timeSlotsMap.get(task.slotId)
     if (!slot) {
-      console.log('❌ updateTaskInSlot: Slot not found', { 
-        slotId: task.slotId, 
-        timestamp: new Date().toISOString() 
-      })
       return
     }
     
@@ -389,15 +342,12 @@ export const usePlanningStore = create<PlanningState>((set, get) => ({
     
     // Save to Firebase
     try {
-      console.log('💾 updateTaskInSlot: Saving to Firebase', { timestamp: new Date().toISOString() })
       await TimeboxService.saveTimeboxData(
         task.userId || 'demo-user',
         state.selectedDate,
         updatedTimeSlots
       )
-      console.log('✅ updateTaskInSlot: Firebase save completed', { timestamp: new Date().toISOString() })
     } catch (error) {
-      console.error('❌ updateTaskInSlot: Firebase save error', { error, timestamp: new Date().toISOString() })
       set({ error: (error as Error).message })
     }
   },
@@ -451,15 +401,12 @@ export const usePlanningStore = create<PlanningState>((set, get) => ({
     
     // Save to Firebase
     try {
-      console.log('💾 moveTaskBetweenSlots: Saving to Firebase', { timestamp: new Date().toISOString() })
       await TimeboxService.saveTimeboxData(
         task.userId || 'demo-user',
         state.selectedDate,
         updatedTimeSlots
       )
-      console.log('✅ moveTaskBetweenSlots: Firebase save completed', { timestamp: new Date().toISOString() })
     } catch (error) {
-      console.error('❌ moveTaskBetweenSlots: Firebase save error', { error, timestamp: new Date().toISOString() })
       set({ error: (error as Error).message })
     }
   },
@@ -597,89 +544,77 @@ export const usePlanningStore = create<PlanningState>((set, get) => ({
   },
   
   loadTimeboxData: async (userId, date, intervalMinutes = 120) => {
-    console.log('📥 loadTimeboxData: Starting data load', { 
-      userId, 
-      date, 
-      intervalMinutes, 
-      timestamp: new Date().toISOString() 
-    })
-    
     set({ isLoading: true, error: null })
     
     try {
-      console.log('🔄 loadTimeboxData: Calling TimeboxService.loadTimeboxData')
       const data = await TimeboxService.loadTimeboxData(userId, date)
-      console.log('✅ loadTimeboxData: Service call completed', { 
-        hasData: !!data, 
-        timestamp: new Date().toISOString() 
-      })
       
       if (data) {
-        console.log('📊 loadTimeboxData: Processing loaded data')
+        // Initialize time slots first to get the slot structure
+        get().initializeTimeSlots(intervalMinutes)
+        const state = get()
+        
+        // Create maps for optimized operations
         const slotsMap = new Map<string, TimeSlot>()
         const tasksMap = new Map<string, TimeboxTask>()
         
-        // Convert slots data to TimeSlot format
-        const timeSlots: TimeSlot[] = []
-        
-        // Build tasks map from slots
-        timeSlots.forEach((slot: TimeSlot) => {
-          slot.tasks.forEach((task: TimeboxTask) => {
-            tasksMap.set(task.id, { ...task, slotId: slot.id })
+        // Convert the loaded slots data to TimeSlot format
+        state.timeSlots.forEach((slot: TimeSlot) => {
+          const loadedTasks = data.slots[slot.id] || []
+          
+          // Create tasks with slotId reference
+          const tasksWithSlotId = loadedTasks.map((task: TimeboxTask) => ({
+            ...task,
+            slotId: slot.id
+          }))
+          
+          // Update the slot with loaded tasks
+          const updatedSlot = {
+            ...slot,
+            tasks: tasksWithSlotId
+          }
+          
+          slotsMap.set(slot.id, updatedSlot)
+          
+          // Add tasks to tasks map
+          tasksWithSlotId.forEach((task: TimeboxTask) => {
+            tasksMap.set(task.id, task)
           })
         })
         
         set({
           selectedDate: date,
-          timeSlots,
+          timeSlots: mapToArray(slotsMap),
           timeSlotsMap: slotsMap,
           tasksMap,
           timeInterval: intervalMinutes
         })
-        
-        console.log('✅ loadTimeboxData: Data loaded successfully', { 
-          timeSlotsCount: timeSlots.length, 
-          tasksCount: tasksMap.size,
-          timestamp: new Date().toISOString() 
-        })
       } else {
-        console.log('📝 loadTimeboxData: No data found, initializing empty slots')
         // Initialize empty slots
         get().initializeTimeSlots(intervalMinutes)
         set({ selectedDate: date })
       }
     } catch (error) {
-      console.error('❌ loadTimeboxData: Error loading data', { error, timestamp: new Date().toISOString() })
       set({ error: (error as Error).message })
       // Initialize empty slots on error
       get().initializeTimeSlots(intervalMinutes)
       set({ selectedDate: date })
     } finally {
       set({ isLoading: false })
-      console.log('🏁 loadTimeboxData: Loading completed', { timestamp: new Date().toISOString() })
     }
   },
   
   saveTimeboxData: async (userId, intervalMinutes = 120) => {
-    console.log('💾 saveTimeboxData: Starting save', { 
-      userId, 
-      intervalMinutes, 
-      timestamp: new Date().toISOString() 
-    })
-    
     const { selectedDate, timeSlots } = get()
     
     try {
-      console.log('🔄 saveTimeboxData: Calling TimeboxService.saveTimeboxData')
       await TimeboxService.saveTimeboxData(
         userId,
         selectedDate,
         timeSlots,
         intervalMinutes
       )
-      console.log('✅ saveTimeboxData: Save completed successfully', { timestamp: new Date().toISOString() })
     } catch (error) {
-      console.error('❌ saveTimeboxData: Error saving data', { error, timestamp: new Date().toISOString() })
       set({ error: (error as Error).message })
       throw error
     }
