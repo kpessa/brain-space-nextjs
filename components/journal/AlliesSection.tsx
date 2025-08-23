@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Plus, X, Users, User, Wrench, BookOpen, Lightbulb } from '@/lib/icons'
+import { Plus, X, Users, User, Wrench, BookOpen, Lightbulb, List, LayoutGrid } from '@/lib/icons'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/utils'
@@ -24,7 +24,16 @@ export function AlliesSection({ allies, onChange }: AlliesSectionProps) {
   const [isAddingNew, setIsAddingNew] = useState(false)
   const [tempValue, setTempValue] = useState('')
   const [allyTypes, setAllyTypes] = useState<Record<number, AllyType>>({})
+  const [viewMode, setViewMode] = useState<'list' | 'compact'>('compact')
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Load view preference from local storage
+  useEffect(() => {
+    const savedView = localStorage.getItem('allies-view-mode')
+    if (savedView === 'compact' || savedView === 'list') {
+      setViewMode(savedView)
+    }
+  }, [])
 
   // Focus input when editing starts
   useEffect(() => {
@@ -162,15 +171,58 @@ export function AlliesSection({ allies, onChange }: AlliesSectionProps) {
     setAllyTypes({ ...allyTypes, [index]: nextType })
   }
 
+  const toggleViewMode = () => {
+    const newMode = viewMode === 'list' ? 'compact' : 'list'
+    setViewMode(newMode)
+    localStorage.setItem('allies-view-mode', newMode)
+  }
+
+  const getCompactTypeColor = (type: AllyType) => {
+    switch (type) {
+      case 'person':
+        return "bg-blue-100 hover:bg-blue-200 border-blue-300"
+      case 'tool':
+        return "bg-purple-100 hover:bg-purple-200 border-purple-300"
+      case 'knowledge':
+        return "bg-green-100 hover:bg-green-200 border-green-300"
+      default:
+        return "bg-orange-100 hover:bg-orange-200 border-orange-300"
+    }
+  }
+
   return (
     <div className="space-y-3">
+      {/* View mode toggle */}
+      {allies.length > 0 && (
+        <div className="flex justify-end">
+          <button
+            onClick={toggleViewMode}
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            title={viewMode === 'list' ? 'Switch to compact view' : 'Switch to list view'}
+          >
+            {viewMode === 'list' ? (
+              <>
+                <LayoutGrid className="w-4 h-4" />
+                <span>Compact View</span>
+              </>
+            ) : (
+              <>
+                <List className="w-4 h-4" />
+                <span>List View</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
       {/* Existing ally items */}
-      {allies.map((ally, index) => {
-        const type = allyTypes[index] || detectAllyType(ally)
-        
-        return (
-          <div key={index} className="group">
-            {editingIndex === index ? (
+      {viewMode === 'list' ? (
+        // List View (existing implementation)
+        allies.map((ally, index) => {
+          const type = allyTypes[index] || detectAllyType(ally)
+          
+          return (
+            <div key={index} className="group">
+              {editingIndex === index ? (
               <div className="space-y-2">
                 <Input
                   ref={inputRef}
@@ -226,10 +278,72 @@ export function AlliesSection({ allies, onChange }: AlliesSectionProps) {
                   <X className="w-4 h-4 text-gray-500" />
                 </button>
               </div>
-            )}
-          </div>
-        )
-      })}
+              )}
+            </div>
+          )
+        })
+      ) : (
+        // Compact View (new chip-style implementation)
+        <div className="flex flex-wrap gap-2">
+          {allies.map((ally, index) => {
+            const type = allyTypes[index] || detectAllyType(ally)
+            
+            if (editingIndex === index) {
+              return (
+                <div key={index} className="flex-1 min-w-[200px] max-w-[300px]">
+                  <Input
+                    ref={inputRef}
+                    value={tempValue}
+                    onChange={(e) => setTempValue(e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, index)}
+                    onBlur={() => handleSave(index)}
+                    placeholder="Edit ally..."
+                    className="h-8 text-sm"
+                  />
+                </div>
+              )
+            }
+            
+            return (
+              <div
+                key={index}
+                className={cn(
+                  "group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all",
+                  "cursor-pointer select-none",
+                  getCompactTypeColor(type)
+                )}
+              >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    cycleType(index)
+                  }}
+                  className="flex-shrink-0"
+                  title="Click to change type"
+                >
+                  {getTypeIcon(type)}
+                </button>
+                <span 
+                  className="text-sm font-medium"
+                  onClick={() => handleEditStart(index)}
+                >
+                  {ally}
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleRemove(index)
+                  }}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 -mr-1"
+                  aria-label="Remove ally"
+                >
+                  <X className="w-3 h-3 text-gray-600 hover:text-gray-900" />
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Add new ally */}
       {isAddingNew ? (

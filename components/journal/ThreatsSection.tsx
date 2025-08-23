@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Plus, X, Shield, AlertTriangle, AlertCircle } from '@/lib/icons'
+import { Plus, X, Shield, AlertTriangle, AlertCircle, List, LayoutGrid } from '@/lib/icons'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/utils'
@@ -26,7 +26,16 @@ export function ThreatsSection({ threats, onChange }: ThreatsSectionProps) {
   const [isAddingNew, setIsAddingNew] = useState(false)
   const [tempValue, setTempValue] = useState('')
   const [mitigatedItems, setMitigatedItems] = useState<Set<number>>(new Set())
+  const [viewMode, setViewMode] = useState<'list' | 'compact'>('compact')
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Load view preference from local storage
+  useEffect(() => {
+    const savedView = localStorage.getItem('threats-view-mode')
+    if (savedView === 'compact' || savedView === 'list') {
+      setViewMode(savedView)
+    }
+  }, [])
 
   // Focus input when editing starts
   useEffect(() => {
@@ -134,10 +143,54 @@ export function ThreatsSection({ threats, onChange }: ThreatsSectionProps) {
     }
   }
 
+  const toggleViewMode = () => {
+    const newMode = viewMode === 'list' ? 'compact' : 'list'
+    setViewMode(newMode)
+    localStorage.setItem('threats-view-mode', newMode)
+  }
+
+  const getCompactSeverityColor = (severity: ThreatSeverity, isMitigated: boolean) => {
+    if (isMitigated) {
+      return "bg-green-100 hover:bg-green-200 border-green-300"
+    }
+    switch (severity) {
+      case 'high':
+        return "bg-red-100 hover:bg-red-200 border-red-300"
+      case 'medium':
+        return "bg-orange-100 hover:bg-orange-200 border-orange-300"
+      default:
+        return "bg-yellow-100 hover:bg-yellow-200 border-yellow-300"
+    }
+  }
+
   return (
     <div className="space-y-3">
+      {/* View mode toggle */}
+      {threats.length > 0 && (
+        <div className="flex justify-end">
+          <button
+            onClick={toggleViewMode}
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            title={viewMode === 'list' ? 'Switch to compact view' : 'Switch to list view'}
+          >
+            {viewMode === 'list' ? (
+              <>
+                <LayoutGrid className="w-4 h-4" />
+                <span>Compact View</span>
+              </>
+            ) : (
+              <>
+                <List className="w-4 h-4" />
+                <span>List View</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
       {/* Existing threat items */}
-      {threats.map((threat, index) => {
+      {viewMode === 'list' ? (
+        // List View (existing implementation)
+        threats.map((threat, index) => {
         const severity = getSeverity(threat)
         const isMitigated = mitigatedItems.has(index)
         
@@ -215,7 +268,77 @@ export function ThreatsSection({ threats, onChange }: ThreatsSectionProps) {
             )}
           </div>
         )
-      })}
+      })
+      ) : (
+        // Compact View (new chip-style implementation)
+        <div className="flex flex-wrap gap-2">
+          {threats.map((threat, index) => {
+            const severity = getSeverity(threat)
+            const isMitigated = mitigatedItems.has(index)
+            
+            if (editingIndex === index) {
+              return (
+                <div key={index} className="flex-1 min-w-[200px] max-w-[300px]">
+                  <Input
+                    ref={inputRef}
+                    value={tempValue}
+                    onChange={(e) => setTempValue(e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, index)}
+                    onBlur={() => handleSave(index)}
+                    placeholder="Edit threat..."
+                    className="h-8 text-sm"
+                  />
+                </div>
+              )
+            }
+            
+            return (
+              <div
+                key={index}
+                className={cn(
+                  "group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all",
+                  "cursor-pointer select-none",
+                  getCompactSeverityColor(severity, isMitigated)
+                )}
+              >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggleMitigated(index)
+                  }}
+                  className="flex-shrink-0"
+                  title={isMitigated ? "Mark as active threat" : "Mark as mitigated"}
+                >
+                  {isMitigated ? (
+                    <Shield className="w-4 h-4 text-green-600" />
+                  ) : (
+                    getSeverityIcon(severity)
+                  )}
+                </button>
+                <span 
+                  className={cn(
+                    "text-sm font-medium",
+                    isMitigated && "line-through text-gray-500"
+                  )}
+                  onClick={() => !isMitigated && handleEditStart(index)}
+                >
+                  {threat}
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleRemove(index)
+                  }}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 -mr-1"
+                  aria-label="Remove threat"
+                >
+                  <X className="w-3 h-3 text-gray-600 hover:text-gray-900" />
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Add new threat */}
       {isAddingNew ? (
