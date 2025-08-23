@@ -13,13 +13,15 @@ interface NodeRelationshipModalProps {
   onClose: () => void
   sourceNode: Node
   relationshipType: 'child' | 'parent'
+  onSuccess?: () => void
 }
 
 export function NodeRelationshipModal({ 
   isOpen, 
   onClose, 
   sourceNode, 
-  relationshipType 
+  relationshipType,
+  onSuccess
 }: NodeRelationshipModalProps) {
   const [text, setText] = useState('')
   const [shouldUseAI, setShouldUseAI] = useState(true)
@@ -89,6 +91,8 @@ export function NodeRelationshipModal({
         onClose()
         // Reload nodes to ensure the new relationships appear
         await loadNodes(sourceNode.userId)
+        // Call onSuccess callback if provided
+        onSuccess?.()
       } else {
         throw new Error(`Failed to create ${relationshipType} node`)
       }

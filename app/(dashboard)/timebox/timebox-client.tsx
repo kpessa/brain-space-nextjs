@@ -41,6 +41,8 @@ import { type Node, type NodeType } from '@/types/node'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export default function TimeboxClient({ userId }: { userId: string }) {
+  console.log('🔄 TimeboxClient: Component rendering', { userId, timestamp: new Date().toISOString() })
+
   // Use optimized selectors
   const selectedDate = useSelectedDate()
   const timeSlots = useTimeSlots()
@@ -48,6 +50,16 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   const calendarSyncEnabled = useCalendarSyncEnabled()
   const displaySlots = useTimeSlotsWithCalendarEvents()
   const stats = useTimeboxStats()
+  
+  console.log('📊 TimeboxClient: Selector values', {
+    selectedDate,
+    timeSlotsCount: timeSlots?.length,
+    displaySlotsCount: displaySlots?.length,
+    hoveredSlotId,
+    calendarSyncEnabled,
+    stats,
+    timestamp: new Date().toISOString()
+  })
   
   // Actions
   const {
@@ -67,11 +79,18 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     getEffectiveTimeboxInterval, 
     setTimeboxInterval, 
     currentMode, 
-    updateSettings,
+    updateUserSettings,
     hidePersonalInWorkMode,
     hideWorkInPersonalMode
   } = useUserPreferencesStore()
   const { isConnected } = useGoogleCalendar()
+  
+  console.log('🏪 TimeboxClient: Store state', {
+    nodesCount: nodes?.length,
+    currentMode,
+    isConnected,
+    timestamp: new Date().toISOString()
+  })
   
   // Local state
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set())
@@ -89,7 +108,18 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     type: 'child'
   })
   
-  const effectiveInterval = getEffectiveTimeboxInterval()
+  const effectiveInterval = useUserPreferencesStore((state) => state.getEffectiveTimeboxInterval())
+  
+  console.log('⚙️ TimeboxClient: Local state and interval', {
+    effectiveInterval,
+    expandedTasksCount: expandedTasks.size,
+    showIntervalSettings,
+    currentTimeSlotId,
+    selectedNodeId,
+    showNodeDetail,
+    relationshipModalOpen: relationshipModal.isOpen,
+    timestamp: new Date().toISOString()
+  })
   
   // Custom hooks for extracted functionality
   const { calendarSyncError, setCalendarSyncError, loadCalendarEvents } = useTimeboxCalendar(userId, selectedDate)
@@ -107,35 +137,75 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     clearFilters
   } = useTimeboxFilters(nodes, timeSlots, currentMode, hidePersonalInWorkMode, hideWorkInPersonalMode)
   
+  console.log('🎣 TimeboxClient: Custom hooks state', {
+    calendarSyncError,
+    nodeFilterMode,
+    selectedNodeType,
+    searchQuery,
+    unscheduledNodesCount: unscheduledNodes?.length,
+    availableNodeTypesCount: availableNodeTypes?.length,
+    timestamp: new Date().toISOString()
+  })
+  
   // Prevent hydration mismatch by ensuring client-side rendering
   const [isClient, setIsClient] = useState(false)
   useEffect(() => {
+    console.log('🌐 TimeboxClient: Setting isClient to true')
     setIsClient(true)
   }, [])
   
   // Initialize time slots with correct interval
   useEffect(() => {
-    initializeTimeSlots(effectiveInterval)
-  }, [effectiveInterval])
+    console.log('⏰ TimeboxClient: Initializing time slots', { effectiveInterval, timestamp: new Date().toISOString() })
+    try {
+      initializeTimeSlots(effectiveInterval)
+      console.log('✅ TimeboxClient: Time slots initialized successfully')
+    } catch (error) {
+      console.error('❌ TimeboxClient: Error initializing time slots', error)
+    }
+  }, [effectiveInterval, initializeTimeSlots])
   
   // Load data on mount and date change
   useEffect(() => {
     if (selectedDate) {
-      loadNodes(userId)
-      loadTimeboxData(userId, selectedDate, effectiveInterval)
+      console.log('📥 TimeboxClient: Loading data', { userId, selectedDate, effectiveInterval, timestamp: new Date().toISOString() })
+      
+      const loadData = async () => {
+        try {
+          console.log('🔄 TimeboxClient: Starting loadNodes')
+          await loadNodes(userId)
+          console.log('✅ TimeboxClient: loadNodes completed')
+          
+          console.log('🔄 TimeboxClient: Starting loadTimeboxData')
+          await loadTimeboxData(userId, selectedDate, effectiveInterval)
+          console.log('✅ TimeboxClient: loadTimeboxData completed')
+        } catch (error) {
+          console.error('❌ TimeboxClient: Error loading data', error)
+        }
+      }
+      
+      loadData()
     }
-  }, [userId, selectedDate, effectiveInterval])
+  }, [userId, selectedDate, effectiveInterval, loadNodes, loadTimeboxData])
   
   // Load calendar events when sync is enabled
   useEffect(() => {
     if (calendarSyncEnabled && isConnected) {
-      loadCalendarEvents()
+      console.log('📅 TimeboxClient: Loading calendar events', { timestamp: new Date().toISOString() })
+      try {
+        loadCalendarEvents()
+        console.log('✅ TimeboxClient: Calendar events loaded')
+      } catch (error) {
+        console.error('❌ TimeboxClient: Error loading calendar events', error)
+      }
     }
-  }, [calendarSyncEnabled, isConnected])
+  }, [calendarSyncEnabled, isConnected, loadCalendarEvents])
   
   // Find current time slot for highlighting
   useEffect(() => {
     if (!isClient || !selectedDate) return
+    
+    console.log('🕐 TimeboxClient: Finding current time slot', { timestamp: new Date().toISOString() })
     
     const now = new Date()
     const currentHour = now.getHours()
@@ -151,12 +221,14 @@ export default function TimeboxClient({ userId }: { userId: string }) {
     })
     
     if (currentSlot) {
+      console.log('📍 TimeboxClient: Found current slot', { slotId: currentSlot.id, timestamp: new Date().toISOString() })
       setCurrentTimeSlotId(currentSlot.id)
     }
   }, [timeSlots, selectedDate, isClient])
   
   // Local handlers
   const handleTaskClick = (task: TimeboxTask) => {
+    console.log('🖱️ TimeboxClient: Task clicked', { taskId: task.id, nodeId: task.nodeId, timestamp: new Date().toISOString() })
     if (task.nodeId) {
       setSelectedNodeId(task.nodeId)
       setShowNodeDetail(true)
@@ -164,6 +236,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   }
   
   const toggleTaskExpanded = (taskId: string) => {
+    console.log('📂 TimeboxClient: Toggling task expanded', { taskId, timestamp: new Date().toISOString() })
     setExpandedTasks(prev => {
       const next = new Set(prev)
       if (next.has(taskId)) {
@@ -184,6 +257,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   
   // Handlers for relationship creation
   const handleCreateChild = (parentNode: Node) => {
+    console.log('👶 TimeboxClient: Creating child relationship', { parentNodeId: parentNode.id, timestamp: new Date().toISOString() })
     setRelationshipModal({
       isOpen: true,
       sourceNode: parentNode,
@@ -192,6 +266,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   }
 
   const handleCreateParent = (childNode: Node) => {
+    console.log('👨‍👩‍👧‍👦 TimeboxClient: Creating parent relationship', { childNodeId: childNode.id, timestamp: new Date().toISOString() })
     setRelationshipModal({
       isOpen: true,
       sourceNode: childNode,
@@ -201,42 +276,71 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   
   // Navigation handlers
   const handleGoToPreviousDay = () => {
+    console.log('⬅️ TimeboxClient: Going to previous day', { timestamp: new Date().toISOString() })
     goToPreviousDay(selectedDate)
   }
   
   const handleGoToNextDay = () => {
+    console.log('➡️ TimeboxClient: Going to next day', { timestamp: new Date().toISOString() })
     goToNextDay(selectedDate)
   }
   
   const handleGoToToday = () => {
+    console.log('📅 TimeboxClient: Going to today', { timestamp: new Date().toISOString() })
     goToToday()
   }
   
   const handlePlanTomorrow = () => {
+    console.log('📋 TimeboxClient: Planning tomorrow', { timestamp: new Date().toISOString() })
     const tomorrow = dayjs().add(1, 'day').format('YYYY-MM-DD')
     setSelectedDate(tomorrow)
   }
   
   const handleCopyIncompleteTasks = async () => {
+    console.log('📋 TimeboxClient: Copying incomplete tasks', { timestamp: new Date().toISOString() })
     try {
-      return await copyIncompleteTasks(userId, selectedDate, timeSlots)
+      const result = await copyIncompleteTasks(userId, selectedDate, timeSlots)
+      console.log('✅ TimeboxClient: Copy incomplete tasks completed', { result })
+      return result
     } catch (error) {
+      console.error('❌ TimeboxClient: Error copying incomplete tasks', error)
       setCalendarSyncError('Failed to copy tasks from today')
       return 0
     }
   }
+  
   // Use stats from selector
   const { totalScheduledTasks, completedTasks, occupiedSlots } = stats
   const totalHours = occupiedSlots * (effectiveInterval / 60)
 
+  console.log('📈 TimeboxClient: Stats calculated', {
+    totalScheduledTasks,
+    completedTasks,
+    occupiedSlots,
+    totalHours,
+    timestamp: new Date().toISOString()
+  })
+
   // Show loading state until client-side hydration and selectedDate is initialized
   if (!isClient || !selectedDate) {
+    console.log('⏳ TimeboxClient: Showing loading state', { isClient, selectedDate, timestamp: new Date().toISOString() })
     return (
       <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(100vh-4rem)] flex items-center justify-center">
         <div className="text-white">Loading...</div>
       </div>
     )
   }
+
+  // Transform displaySlots to include duration property
+  const transformedDisplaySlots = displaySlots.map(slot => ({
+    ...slot,
+    duration: effectiveInterval
+  }))
+
+  console.log('🎯 TimeboxClient: Rendering main component', {
+    transformedDisplaySlotsCount: transformedDisplaySlots.length,
+    timestamp: new Date().toISOString()
+  })
 
   return (
     <ErrorBoundary
@@ -309,7 +413,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                   <Button
                     variant={calendarSyncEnabled ? "primary" : "outline"}
                     size="sm"
-                    onClick={() => updateSettings({ calendarSyncEnabled: !calendarSyncEnabled })}
+                    onClick={() => updateUserSettings({ calendarSyncEnabled: !calendarSyncEnabled })}
                     className={calendarSyncEnabled ? "p-2" : "bg-white/10 text-white hover:bg-white/20 border-white/20 p-2"}
                     title="Toggle calendar sync"
                   >
@@ -463,9 +567,11 @@ export default function TimeboxClient({ userId }: { userId: string }) {
                     variant="outline"
                     size="sm"
                     onClick={async () => {
+                      console.log('🔄 TimeboxClient: Starting copy from today operation', { timestamp: new Date().toISOString() })
                       const count = await handleCopyIncompleteTasks()
                       if (count && count > 0) {
-                        loadNodes(userId)
+                        console.log('🔄 TimeboxClient: Reloading nodes after copy', { count, timestamp: new Date().toISOString() })
+                        await loadNodes(userId)
                       }
                     }}
                     className="bg-white/10 text-white hover:bg-white/20 border-white/20 text-xs"
@@ -480,7 +586,10 @@ export default function TimeboxClient({ userId }: { userId: string }) {
             <QuickBlockTemplates 
               currentMode={currentMode}
               timeSlots={timeSlots}
-              onBlockTimeSlot={blockTimeSlot}
+              onBlockTimeSlot={(slotId: string, reason: string, label: string) => {
+                console.log('🚫 TimeboxClient: Blocking time slot', { slotId, reason, label, timestamp: new Date().toISOString() })
+                return blockTimeSlot(slotId, reason as any, label)
+              }}
             />
           </header>
 
@@ -504,20 +613,35 @@ export default function TimeboxClient({ userId }: { userId: string }) {
             
             {/* Time Slots */}
             <TimeSlotsList
-              displaySlots={displaySlots}
+              displaySlots={transformedDisplaySlots}
               isClient={isClient}
               selectedDate={selectedDate}
               currentTimeSlotId={currentTimeSlotId}
               hoveredSlotId={hoveredSlotId}
               expandedTasks={expandedTasks}
               onToggleTaskExpanded={toggleTaskExpanded}
-              onUpdateTaskInSlot={updateTaskInSlot}
-              onRemoveTaskFromSlot={removeTaskFromSlot}
+              onUpdateTaskInSlot={(taskId, updates) => {
+                console.log('✏️ TimeboxClient: Updating task in slot', { taskId, updates, timestamp: new Date().toISOString() })
+                return updateTaskInSlot(taskId, updates)
+              }}
+              onRemoveTaskFromSlot={(taskId, slotId) => {
+                console.log('🗑️ TimeboxClient: Removing task from slot', { taskId, slotId, timestamp: new Date().toISOString() })
+                return removeTaskFromSlot(taskId, slotId)
+              }}
               onHandleTaskClick={handleTaskClick}
-              onUnblockTimeSlot={unblockTimeSlot}
+              onUnblockTimeSlot={(slotId) => {
+                console.log('✅ TimeboxClient: Unblocking time slot', { slotId, timestamp: new Date().toISOString() })
+                return unblockTimeSlot(slotId)
+              }}
               onHandleDragOver={handleDragOver}
-              onHandleDrop={(e, slotId) => handleDrop(e, slotId, timeSlots)}
-              onSetHoveredSlotId={setHoveredSlotId}
+              onHandleDrop={(e, slotId) => {
+                console.log('📥 TimeboxClient: Dropping on slot', { slotId, timestamp: new Date().toISOString() })
+                return handleDrop(e, slotId, timeSlots)
+              }}
+              onSetHoveredSlotId={(slotId) => {
+                console.log('🎯 TimeboxClient: Setting hovered slot', { slotId, timestamp: new Date().toISOString() })
+                setHoveredSlotId(slotId)
+              }}
               onHandleDragStart={handleDragStart}
               onHandleDragEnd={handleDragEnd}
               getTaskChildren={getTaskChildren}
@@ -572,6 +696,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
           <NodeDetailModal
             isOpen={showNodeDetail}
             onClose={() => {
+              console.log('🔒 TimeboxClient: Closing node detail modal', { selectedNodeId, timestamp: new Date().toISOString() })
               setShowNodeDetail(false)
               setSelectedNodeId(null)
               // Refresh to update any changed node titles in timebox
@@ -583,6 +708,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
             onCreateChild={handleCreateChild}
             onCreateParent={handleCreateParent}
             onRelationshipChange={() => {
+              console.log('🔄 TimeboxClient: Relationship changed, reloading nodes', { timestamp: new Date().toISOString() })
               // Refresh nodes if relationships change
               loadNodes(userId)
             }}
@@ -593,11 +719,14 @@ export default function TimeboxClient({ userId }: { userId: string }) {
         {relationshipModal.sourceNode && (
           <NodeRelationshipModal
             isOpen={relationshipModal.isOpen}
-            onClose={() => setRelationshipModal({ ...relationshipModal, isOpen: false })}
+            onClose={() => {
+              console.log('🔒 TimeboxClient: Closing relationship modal', { timestamp: new Date().toISOString() })
+              setRelationshipModal({ ...relationshipModal, isOpen: false })
+            }}
             sourceNode={relationshipModal.sourceNode}
             relationshipType={relationshipModal.type}
-            userId={userId}
             onSuccess={() => {
+              console.log('✅ TimeboxClient: Relationship created successfully', { timestamp: new Date().toISOString() })
               setRelationshipModal({ isOpen: false, sourceNode: null, type: 'child' })
               // Refresh nodes to update relationships
               loadNodes(userId)
