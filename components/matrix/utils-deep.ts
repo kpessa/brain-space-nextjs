@@ -115,11 +115,10 @@ export const groupNodesByDeepFamily = (nodes: any[], allNodes: any[]): Map<strin
         title: n.title,
         depth: getNodeDepth(n, allNodes)
       }))
-      console.log(`Family ${familyId}:`, depths)
+
     }
   })
-  
-  console.log(`Created ${families.size} family groups`)
+
   console.groupEnd()
   
   return families

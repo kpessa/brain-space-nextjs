@@ -4,20 +4,16 @@ import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useNodesStore } from '@/store/nodeStore'
-import { useXPStore } from '@/store/xpStore'
-import { useCalendarStore } from '@/store/calendarStore'
-import { XPEventType } from '@/types/xp'
-import type { Node, NodeType, NodeUpdate, Recurrence } from '@/types/node'
-import { getNodeTypeIcon, getNodeTypeColor, getEisenhowerQuadrant } from '@/types/node'
+import { useToast } from '@/hooks/useToast'
+import type { Node, Recurrence } from '@/types/node'
+import { getNodeTypeIcon } from '@/types/node'
 import { NodeBreadcrumb } from './NodeBreadcrumb'
 import { ReenhanceNodeDialog } from './ReenhanceNodeDialog'
-import { useToast } from '@/hooks/useToast'
-import { useXPAnimation } from '@/components/XPGainAnimationCSS'
-import { CheckCircle, Circle, Clock, Calendar, CalendarPlus, Tag, GitBranch, GitMerge, Trash2, Edit3, Save, X, MessageSquare, Info, Link, AlertCircle, Sparkles, Repeat } from '@/lib/icons'
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-
-dayjs.extend(relativeTime)
+import { NodeDetailsTab } from './tabs/NodeDetailsTab'
+import { NodeUpdatesTab } from './tabs/NodeUpdatesTab'
+import { NodeRelationshipsTab } from './tabs/NodeRelationshipsTab'
+import { NodeRecurrenceConfig } from './NodeRecurrenceConfig'
+import { CheckCircle, Circle, Calendar, CalendarPlus, Trash2, Edit3, Save, X, MessageSquare, Info, Link, Repeat } from '@/lib/icons'
 import { CalendarEventModal } from '@/components/CalendarEventModal'
 
 interface NodeDetailModalProps {
@@ -46,40 +42,23 @@ export function NodeDetailModal({
   const [activeTab, setActiveTab] = useState<TabType>('details')
   const [isEditing, setIsEditing] = useState(false)
   const [editedNode, setEditedNode] = useState(node)
-  const [newTag, setNewTag] = useState('')
   const [saving, setSaving] = useState(false)
   const [showReenhanceDialog, setShowReenhanceDialog] = useState(false)
   const [showRecurrenceConfig, setShowRecurrenceConfig] = useState(false)
-  const [recurrencePattern, setRecurrencePattern] = useState<Recurrence | null>(node.recurrence || null)
-  
-  // Updates state
-  const [newUpdateContent, setNewUpdateContent] = useState('')
-  const [updateType, setUpdateType] = useState<'note' | 'status' | 'progress'>('note')
-  const [isAddingUpdate, setIsAddingUpdate] = useState(false)
-  const [enableAIEnhancement, setEnableAIEnhancement] = useState(true) // Default checked
   const [isEnhancing, setIsEnhancing] = useState(false)
   const [showCalendarModal, setShowCalendarModal] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
   
   const toast = useToast()
-  const { awardXP } = useXPStore()
-  const { showXPGain } = useXPAnimation()
   
   const { 
     updateNode, 
     deleteNode, 
     getNodeChildren, 
     getNodeParent,
-    addNodeUpdate,
-    deleteNodeUpdate,
-    unlinkNodes,
     getNodeById 
   } = useNodesStore()
   
-  const { calendars } = useCalendarStore()
-  
-  const [refreshKey, setRefreshKey] = useState(0)
-  
-  // Get fresh node data from store
   // Always get fresh node data from store
   const [nodeId] = useState(node.id)
   const currentNode = getNodeById(nodeId) || node
@@ -90,9 +69,7 @@ export function NodeDetailModal({
   
   // Force refresh function that re-fetches node data
   const forceRefresh = async () => {
-    // Force a re-render to get fresh data from store
     setRefreshKey(prev => prev + 1)
-    // Small delay to ensure store has updated
     await new Promise(resolve => setTimeout(resolve, 100))
   }
   
@@ -102,11 +79,6 @@ export function NodeDetailModal({
     setIsEditing(false)
     setActiveTab('details')
   }, [currentNode])
-  
-  // Refresh relationships when key changes
-  useEffect(() => {
-    // This will cause parent and children to be re-evaluated
-  }, [refreshKey])
   
   const handleSave = async () => {
     setSaving(true)
@@ -121,14 +93,15 @@ export function NodeDetailModal({
         isPersonal: editedNode.isPersonal,
       })
       setIsEditing(false)
+      toast.showSuccess('Node updated successfully!')
     } catch (error) {
-      // Failed to save
+      toast.showError('Failed to save changes')
     } finally {
       setSaving(false)
     }
   }
   
-  const handleSaveRecurrence = async () => {
+  const handleSaveRecurrence = async (recurrencePattern: Recurrence | null) => {
     setSaving(true)
     try {
       await updateNode(currentNode.id, {
@@ -145,26 +118,19 @@ export function NodeDetailModal({
   }
   
   const handleCancel = () => {
-    setEditedNode(node)
+    setEditedNode(currentNode)
     setIsEditing(false)
   }
   
   const handleDelete = async () => {
-    const hasRelationships = parent || children.length > 0
-    let confirmMessage = 'Are you sure you want to delete this node?'
-    
-    if (hasRelationships) {
-      confirmMessage = 'This node has relationships:\n'
-      if (parent) confirmMessage += '- 1 parent node\n'
-      if (children.length > 0) confirmMessage += `- ${children.length} child node(s)\n`
-      confirmMessage += '\nDeleting will unlink all relationships. This action cannot be undone. Continue?'
-    } else {
-      confirmMessage += ' This action cannot be undone.'
-    }
-    
-    if (window.confirm(confirmMessage)) {
-      await deleteNode(currentNode.id)
-      onClose()
+    if (confirm(`Are you sure you want to delete "${currentNode.title}"?`)) {
+      try {
+        await deleteNode(currentNode.id)
+        toast.showSuccess('Node deleted')
+        onClose()
+      } catch (error) {
+        toast.showError('Failed to delete node')
+      }
     }
   }
   
@@ -172,981 +138,258 @@ export function NodeDetailModal({
     await updateNode(currentNode.id, { completed: !currentNode.completed })
   }
   
-  const handleAddTag = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && newTag.trim()) {
-      const tags = editedNode.tags || []
-      if (!tags.includes(newTag.trim())) {
-        setEditedNode({ ...editedNode, tags: [...tags, newTag.trim()] })
-      }
-      setNewTag('')
-    }
-  }
-  
-  const handleRemoveTag = (tagToRemove: string) => {
-    setEditedNode({
-      ...editedNode,
-      tags: editedNode.tags?.filter(tag => tag !== tagToRemove) || []
-    })
-  }
-  
   const handleEnhanceContent = async () => {
-    if (!newUpdateContent.trim() || isEnhancing) return
+    if (!editedNode.description?.trim() || isEnhancing) return
     
     setIsEnhancing(true)
     try {
-      const response = await fetch('/api/ai/enhance-update', {
+      const response = await fetch('/api/ai/enhance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: newUpdateContent,
-          isWorkNode: !currentNode.isPersonal,
-          updateType,
+          text: editedNode.description,
+          type: 'description',
+          nodeContext: {
+            title: editedNode.title,
+            type: editedNode.type
+          }
         }),
       })
       
       if (response.ok) {
-        const { enhancedText } = await response.json()
-        setNewUpdateContent(enhancedText)
-        toast.showSuccess('Update enhanced with AI!')
+        const { enhanced } = await response.json()
+        setEditedNode({ ...editedNode, description: enhanced })
+        toast.showSuccess('Content enhanced with AI!')
       } else {
-        toast.showError('Failed to enhance update')
+        toast.showError('Failed to enhance content')
       }
     } catch (error) {
-      console.error('Error enhancing update:', error)
-      toast.showError('Failed to enhance update')
+      toast.showError('Failed to enhance content')
     } finally {
       setIsEnhancing(false)
     }
   }
   
-  const handleAddUpdate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newUpdateContent.trim()) return
-    
-    try {
-      await addNodeUpdate(currentNode.id, {
-        content: newUpdateContent.trim(),
-        type: updateType,
-        userId,
-        userName,
-      })
-      
-      // Award XP based on update type
-      const xpEventType = updateType === 'progress' 
-        ? XPEventType.NODE_UPDATE_PROGRESS 
-        : updateType === 'status'
-        ? XPEventType.NODE_UPDATE_STATUS
-        : XPEventType.NODE_UPDATE_ADDED
-        
-      const { xpAwarded, leveledUp } = await awardXP(xpEventType, {
-        nodeId: currentNode.id,
-        nodeTitle: currentNode.title,
-        updateCount: currentNode.updates?.length || 0
-      })
-      
-      // Show XP animation (use a dummy position since it's a form event)
-      showXPGain(xpAwarded, { clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 } as any)
-      
-      if (leveledUp) {
-        toast.showSuccess('Level Up! 🎉')
-      }
-      
-      setNewUpdateContent('')
-      setIsAddingUpdate(false)
-      toast.showSuccess('Update added successfully!')
-    } catch (error) {
-      console.error('Failed to add update:', error)
-      toast.showError('Failed to add update')
-    }
-  }
-  
-  const handleDeleteUpdate = async (updateId: string) => {
-    if (window.confirm('Delete this update?')) {
-      await deleteNodeUpdate(currentNode.id, updateId)
-    }
-  }
-  
-  const getUpdateTypeColor = (type?: NodeUpdate['type']) => {
-    switch (type) {
-      case 'status': return 'bg-blue-100 text-blue-800'
-      case 'progress': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
-  }
-  
-  const sortedUpdates = [...(currentNode.updates || [])]
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-  
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
-      title=""
-      size="xl"
-    >
-      <div className="flex flex-col h-full max-h-[80vh]">
-        {/* Header */}
-        <div className="flex items-start justify-between pb-4 border-b">
-          <div className="flex items-start gap-3 flex-1">
-            <button
-              onClick={handleCompletionToggle}
-              className="flex-shrink-0 mt-1"
-            >
-              {currentNode.completed ? (
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              ) : (
-                <Circle className="w-6 h-6 text-gray-400" />
-              )}
-            </button>
-            
-            <div className="flex-1">
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editedNode.title || ''}
-                  onChange={(e) => setEditedNode({ ...editedNode, title: e.target.value })}
-                  className="w-full text-xl font-semibold border-b-2 border-brain-500 focus:outline-none"
-                  placeholder="Node title"
-                  autoFocus
-                />
-              ) : (
-                <h2 className={`text-xl font-semibold ${currentNode.completed ? 'line-through text-gray-500' : ''}`}>
-                  <span className="mr-2">{getNodeTypeIcon(currentNode.type)}</span>
-                  {currentNode.title || 'Untitled Node'}
-                </h2>
-              )}
-              
-              {/* Breadcrumb */}
-              {parent && !isEditing && (
-                <div className="mt-1">
-                  <NodeBreadcrumb node={currentNode} />
-                </div>
-              )}
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {isEditing ? (
-                <>
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    onClick={handleSave}
-                    disabled={saving}
-                  >
-                    <Save className="w-4 h-4 mr-1" />
-                    {saving ? 'Saving...' : 'Save'}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleCancel}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setShowCalendarModal(true)}
-                    title={currentNode.calendarEventId ? "View calendar event" : "Add to calendar"}
-                  >
-                    {currentNode.calendarEventId ? (
-                      <Calendar className="w-4 h-4" />
-                    ) : (
-                      <CalendarPlus className="w-4 h-4" />
-                    )}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setShowRecurrenceConfig(true)}
-                    title={currentNode.recurrence ? "Edit recurrence" : "Make recurring"}
-                    className={currentNode.recurrence ? "text-purple-600 border-purple-600" : ""}
-                  >
-                    <Repeat className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setShowReenhanceDialog(true)}
-                    title="Re-enhance this node with AI"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    onClick={handleDelete}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        {/* Tabs */}
-        <div className="flex border-b mt-4">
-          <button
-            onClick={() => setActiveTab('details')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'details'
-                ? 'border-brain-600 text-brain-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <Info className="w-4 h-4 inline mr-1" />
-            Details
-          </button>
-          <button
-            onClick={() => setActiveTab('updates')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors relative ${
-              activeTab === 'updates'
-                ? 'border-brain-600 text-brain-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4 inline mr-1" />
-            Updates
-            {currentNode.updates && currentNode.updates.length > 0 && (
-              <span className="ml-2 bg-brain-600 text-white text-xs rounded-full px-2 py-0.5">
-                {currentNode.updates.length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('relationships')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'relationships'
-                ? 'border-brain-600 text-brain-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <Link className="w-4 h-4 inline mr-1" />
-            Relationships
-          </button>
-        </div>
-        
-        {/* Tab Content */}
-        <div className="flex-1 overflow-y-auto pt-4">
-          {activeTab === 'details' && (
-            <div className="space-y-6">
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
-                {isEditing ? (
-                  <textarea
-                    value={editedNode.description || ''}
-                    onChange={(e) => setEditedNode({ ...editedNode, description: e.target.value })}
-                    className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-brain-500 focus:border-transparent"
-                    placeholder="Add a description..."
-                  />
+    <>
+      <Modal 
+        isOpen={isOpen} 
+        onClose={onClose} 
+        title=""
+        size="xl"
+      >
+        <div className="flex flex-col h-full max-h-[80vh]">
+          {/* Header */}
+          <div className="flex items-start justify-between pb-4 border-b">
+            <div className="flex items-start gap-3 flex-1">
+              <button
+                onClick={handleCompletionToggle}
+                className="flex-shrink-0 mt-1"
+              >
+                {currentNode.completed ? (
+                  <CheckCircle className="w-6 h-6 text-green-600" />
                 ) : (
-                  <p className="text-gray-800 whitespace-pre-wrap">
-                    {currentNode.description || <span className="text-gray-400 italic">No description</span>}
-                  </p>
+                  <Circle className="w-6 h-6 text-gray-400" />
                 )}
-              </div>
+              </button>
               
-              {/* Type and Priority */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Type
-                  </label>
-                  {isEditing ? (
-                    <select
-                      value={editedNode.type || 'thought'}
-                      onChange={(e) => setEditedNode({ ...editedNode, type: e.target.value as NodeType })}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brain-500"
-                    >
-                      <option value="goal">Goal</option>
-                      <option value="project">Project</option>
-                      <option value="task">Task</option>
-                      <option value="idea">Idea</option>
-                      <option value="question">Question</option>
-                      <option value="problem">Problem</option>
-                      <option value="insight">Insight</option>
-                      <option value="thought">Thought</option>
-                      <option value="concern">Concern</option>
-                      <option value="option">Option</option>
-                    </select>
-                  ) : (
-                    <span className={`inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium ${getNodeTypeColor(currentNode.type)} bg-opacity-10`}>
-                      {getNodeTypeIcon(currentNode.type)} {currentNode.type}
-                    </span>
-                  )}
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Priority
-                  </label>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium ${
-                    getEisenhowerQuadrant(currentNode.urgency, currentNode.importance) === 'do-first' ? 'bg-red-100 text-red-800' :
-                    getEisenhowerQuadrant(currentNode.urgency, currentNode.importance) === 'schedule' ? 'bg-blue-100 text-blue-800' :
-                    getEisenhowerQuadrant(currentNode.urgency, currentNode.importance) === 'delegate' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {getEisenhowerQuadrant(currentNode.urgency, currentNode.importance).replace('-', ' ')}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Work/Personal Mode */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mode
-                </label>
+              <div className="flex-1">
                 {isEditing ? (
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setEditedNode({ ...editedNode, isPersonal: false })}
-                      className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-                        !editedNode.isPersonal 
-                          ? 'bg-blue-100 text-blue-800 border-2 border-blue-300' 
-                          : 'bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200'
-                      }`}
-                    >
-                      💼 Work
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditedNode({ ...editedNode, isPersonal: true })}
-                      className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-                        editedNode.isPersonal 
-                          ? 'bg-purple-100 text-purple-800 border-2 border-purple-300' 
-                          : 'bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200'
-                      }`}
-                    >
-                      🏠 Personal
-                    </button>
-                  </div>
-                ) : (
-                  <span className={`inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium ${
-                    currentNode.isPersonal 
-                      ? 'bg-purple-100 text-purple-800' 
-                      : 'bg-blue-100 text-blue-800'
-                  }`}>
-                    {currentNode.isPersonal ? '🏠 Personal' : '💼 Work'}
-                  </span>
-                )}
-              </div>
-              
-              {/* Urgency and Importance */}
-              {isEditing && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Urgency: {editedNode.urgency || 5}
-                    </label>
-                    <input
-                      type="range"
-                      min="1"
-                      max="10"
-                      value={editedNode.urgency || 5}
-                      onChange={(e) => setEditedNode({ ...editedNode, urgency: parseInt(e.target.value) })}
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Importance: {editedNode.importance || 5}
-                    </label>
-                    <input
-                      type="range"
-                      min="1"
-                      max="10"
-                      value={editedNode.importance || 5}
-                      onChange={(e) => setEditedNode({ ...editedNode, importance: parseInt(e.target.value) })}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-              )}
-              
-              {/* Tags */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Tag className="w-4 h-4 inline mr-1" />
-                  Tags
-                </label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {(isEditing ? editedNode.tags : currentNode.tags)?.map((tag) => (
-                    <span
-                      key={tag}
-                      className="inline-flex items-center px-2 py-1 rounded-md text-sm bg-gray-100 text-gray-700"
-                    >
-                      #{tag}
-                      {isEditing && (
-                        <button
-                          onClick={() => handleRemoveTag(tag)}
-                          className="ml-1 text-gray-500 hover:text-red-600"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      )}
-                    </span>
-                  ))}
-                </div>
-                {isEditing && (
                   <input
                     type="text"
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    onKeyDown={handleAddTag}
-                    placeholder="Add tag and press Enter"
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brain-500"
+                    value={editedNode.title || ''}
+                    onChange={(e) => setEditedNode({ ...editedNode, title: e.target.value })}
+                    className="w-full text-xl font-semibold border-b-2 border-brain-500 focus:outline-none"
+                    placeholder="Node title"
+                    autoFocus
                   />
+                ) : (
+                  <h2 className={`text-xl font-semibold ${currentNode.completed ? 'line-through text-gray-500' : ''}`}>
+                    <span className="mr-2">{getNodeTypeIcon(currentNode.type)}</span>
+                    {currentNode.title || 'Untitled Node'}
+                  </h2>
+                )}
+                
+                {/* Breadcrumb */}
+                {parent && !isEditing && (
+                  <div className="mt-1">
+                    <NodeBreadcrumb node={currentNode} />
+                  </div>
                 )}
               </div>
               
-              {/* Due Date */}
-              {currentNode.dueDate && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Calendar className="w-4 h-4 inline mr-1" />
-                    Due Date
-                  </label>
-                  <div className="text-gray-800">
-                    {currentNode.dueDate.type === 'exact' 
-                      ? dayjs(currentNode.dueDate.date).format('MMMM D, YYYY')
-                      : `${currentNode.dueDate.offset} ${currentNode.dueDate.unit} from creation`
-                    }
-                  </div>
-                </div>
-              )}
-              
-              {/* Recurrence */}
-              {currentNode.recurrence && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Repeat className="w-4 h-4 inline mr-1" />
-                    Recurrence Pattern
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-purple-100 text-purple-800">
-                      {currentNode.recurrence.frequency}
-                      {currentNode.recurrence.frequency === 'weekly' && currentNode.recurrence.daysOfWeek?.length ? 
-                        ` on ${currentNode.recurrence.daysOfWeek.join(', ')}` : ''}
-                      {currentNode.recurrence.timesPerInterval && currentNode.recurrence.timesPerInterval > 1 ?
-                        ` (${currentNode.recurrence.timesPerInterval}x)` : ''}
-                    </span>
-                    {currentNode.currentStreak && currentNode.currentStreak > 0 && (
-                      <span className="text-sm text-gray-600">
-                        Current streak: {currentNode.currentStreak} days
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-              
-              {/* Calendar Event */}
-              {currentNode.calendarEventId && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <CalendarPlus className="w-4 h-4 inline mr-1" />
-                    Calendar Event
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-green-100 text-green-800">
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      Event Created
-                    </span>
-                    {currentNode.calendarId && currentNode.calendarId !== 'primary' && (
-                      <span className="text-sm text-gray-600">
-                        in {calendars.find(cal => cal.id === currentNode.calendarId)?.summary || currentNode.calendarId}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-              
-              {/* Metadata */}
-              <div className="pt-4 border-t space-y-2 text-sm text-gray-600">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  <span>Created: {currentNode.createdAt ? dayjs(currentNode.createdAt).format('MMM D, YYYY h:mm A') : 'Unknown'}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>Updated: {currentNode.updatedAt ? dayjs(currentNode.updatedAt).format('MMM D, YYYY h:mm A') : 'Unknown'}</span>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {activeTab === 'updates' && (
-            <div className="space-y-4">
-              {/* Add Update Form */}
-              {isAddingUpdate ? (
-                <form onSubmit={handleAddUpdate} className="space-y-4 p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Update Type
-                    </label>
-                    <div className="flex gap-2">
-                      {(['note', 'status', 'progress'] as const).map((type) => (
-                        <button
-                          key={type}
-                          type="button"
-                          onClick={() => setUpdateType(type)}
-                          className={`px-3 py-1 text-sm rounded-lg capitalize transition-colors ${
-                            updateType === type
-                              ? getUpdateTypeColor(type)
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          {type}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Update Content
-                      </label>
-                      <label className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={enableAIEnhancement}
-                          onChange={(e) => setEnableAIEnhancement(e.target.checked)}
-                          className="rounded text-brain-600"
-                        />
-                        <span className="flex items-center gap-1">
-                          <Sparkles className="w-4 h-4 text-yellow-500" />
-                          AI Enhancement
-                        </span>
-                      </label>
-                    </div>
-                    <div className="relative">
-                      <textarea
-                        value={newUpdateContent}
-                        onChange={(e) => setNewUpdateContent(e.target.value)}
-                        className="w-full h-20 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-brain-500"
-                        placeholder="What's the update?"
-                        autoFocus
-                      />
-                      {enableAIEnhancement && newUpdateContent.trim() && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={handleEnhanceContent}
-                          disabled={isEnhancing}
-                          className="absolute bottom-2 right-2"
-                        >
-                          {isEnhancing ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-1" />
-                              Enhancing...
-                            </>
-                          ) : (
-                            <>
-                              <Sparkles className="w-4 h-4 mr-1" />
-                              Enhance
-                            </>
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2">
+              <div className="flex items-center gap-2">
+                {isEditing ? (
+                  <>
                     <Button
-                      type="submit"
+                      size="sm"
                       variant="primary"
-                      disabled={!newUpdateContent.trim()}
-                      size="sm"
+                      onClick={handleSave}
+                      disabled={saving}
                     >
-                      Add Update
+                      <Save className="w-4 h-4 mr-1" />
+                      {saving ? 'Saving...' : 'Save'}
                     </Button>
                     <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setIsAddingUpdate(false)
-                        setNewUpdateContent('')
-                      }}
                       size="sm"
+                      variant="outline"
+                      onClick={handleCancel}
                     >
-                      Cancel
+                      <X className="w-4 h-4" />
                     </Button>
-                  </div>
-                </form>
-              ) : (
-                <Button
-                  onClick={() => setIsAddingUpdate(true)}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  Add Update
-                </Button>
-              )}
-              
-              {/* Updates List */}
-              {sortedUpdates.length > 0 ? (
-                sortedUpdates.map((update) => (
-                  <div
-                    key={update.id}
-                    className="p-4 rounded-lg border border-gray-200 bg-white"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <span className={`px-2 py-1 text-xs rounded-md ${getUpdateTypeColor(update.type)}`}>
-                        {update.type || 'note'}
-                      </span>
-                      
-                      {update.userId === userId && (
-                        <button
-                          onClick={() => handleDeleteUpdate(update.id)}
-                          className="text-gray-400 hover:text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowCalendarModal(true)}
+                      title={currentNode.calendarEventId ? "View calendar event" : "Add to calendar"}
+                    >
+                      {currentNode.calendarEventId ? (
+                        <Calendar className="w-4 h-4" />
+                      ) : (
+                        <CalendarPlus className="w-4 h-4" />
                       )}
-                    </div>
-                    
-                    <p className="text-gray-800 whitespace-pre-wrap mb-2">{update.content}</p>
-                    
-                    <div className="text-xs text-gray-500">
-                      <span>{update.userName || 'Unknown'}</span>
-                      <span className="mx-1">•</span>
-                      <span>{dayjs(update.timestamp).fromNow()}</span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <MessageSquare className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                  <p>No updates yet</p>
-                </div>
-              )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowRecurrenceConfig(true)}
+                      title={currentNode.recurrence ? "Edit recurrence" : "Make recurring"}
+                      className={currentNode.recurrence ? "text-purple-600 border-purple-600" : ""}
+                    >
+                      <Repeat className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleDelete}
+                      className="text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
-          )}
+          </div>
           
-          {activeTab === 'relationships' && (
-            <div className="space-y-6">
-              {/* Parent */}
-              <div key={`parent-${refreshKey}`}>
-                <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <GitMerge className="w-4 h-4" />
-                  Parent Node
-                </h3>
-                {parent ? (
-                  <div className="p-3 bg-purple-50 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{getNodeTypeIcon(parent.type)}</span>
-                        <span className="font-medium">{parent.title || 'Untitled'}</span>
-                        <span className={`px-2 py-0.5 text-xs rounded ${getNodeTypeColor(parent.type)} bg-opacity-10`}>
-                          {parent.type}
-                        </span>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={async () => {
-                          try {
-                            // Unlink the nodes
-                            await unlinkNodes(parent.id, currentNode.id)
-                            
-                            // Wait for state to update and refresh
-                            await forceRefresh()
-                            
-                            // Show success message
-                            toast.showSuccess('Successfully unlinked from parent!')
-                            // Notify parent component
-                            onRelationshipChange?.()
-                          } catch (error) {
-                            console.error('Failed to unlink parent:', error)
-                            const errorMessage = error instanceof Error ? error.message : 'Failed to unlink from parent'
-                            toast.showError(errorMessage)
-                          }
-                        }}
-                        className="text-xs text-red-600 hover:bg-red-50"
-                      >
-                        <X className="w-3 h-3 mr-1" />
-                        Unlink
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-3 bg-gray-50 rounded-lg text-gray-500">
-                    No parent node
-                  </div>
-                )}
-                {!parent && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      onClose()
-                      onCreateParent?.(currentNode)
-                    }}
-                    className="mt-2"
-                  >
-                    <GitMerge className="w-4 h-4 mr-1" />
-                    Add Parent
-                  </Button>
-                )}
-              </div>
-              
-              {/* Children */}
-              <div key={`children-${refreshKey}`}>
-                <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <GitBranch className="w-4 h-4" />
-                  Child Nodes ({children.length})
-                </h3>
-                {children.length > 0 ? (
-                  <div className="space-y-2">
-                    {children.map((child) => (
-                      <div key={child.id} className="p-3 bg-blue-50 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg">{getNodeTypeIcon(child.type)}</span>
-                            <span className="font-medium">{child.title || 'Untitled'}</span>
-                            <span className={`px-2 py-0.5 text-xs rounded ${getNodeTypeColor(child.type)} bg-opacity-10`}>
-                              {child.type}
-                            </span>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={async () => {
-                              try {
-                                // Unlink the nodes
-                                await unlinkNodes(currentNode.id, child.id)
-                                
-                                // Wait for state to update and refresh
-                                await forceRefresh()
-                                
-                                // Show success message
-                                toast.showSuccess('Successfully unlinked child!')
-                                // Notify parent component
-                                onRelationshipChange?.()
-                              } catch (error) {
-                                console.error('Failed to unlink child:', error)
-                                const errorMessage = error instanceof Error ? error.message : 'Failed to unlink child'
-                                toast.showError(errorMessage)
-                              }
-                            }}
-                            className="text-xs text-red-600 hover:bg-red-50"
-                          >
-                            <X className="w-3 h-3 mr-1" />
-                            Unlink
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-3 bg-gray-50 rounded-lg text-gray-500">
-                    No child nodes
-                  </div>
-                )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    onClose()
-                    onCreateChild?.(currentNode)
-                  }}
-                  className="mt-2"
-                >
-                  <GitBranch className="w-4 h-4 mr-1" />
-                  Add Child
-                </Button>
-              </div>
-              
-              {/* Relationship Info */}
-              <div className="pt-4 border-t">
-                <div className="flex items-start gap-2 text-sm text-gray-600">
-                  <AlertCircle className="w-4 h-4 mt-0.5" />
-                  <p>
-                    Nodes can have parent-child relationships to organize your thoughts hierarchically. 
-                    A node can have one parent and multiple children.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Tabs */}
+          <div className="flex border-b">
+            <button
+              onClick={() => setActiveTab('details')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'details'
+                  ? 'border-brain-600 text-brain-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Info className="w-4 h-4 inline mr-1" />
+              Details
+            </button>
+            <button
+              onClick={() => setActiveTab('updates')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors relative ${
+                activeTab === 'updates'
+                  ? 'border-brain-600 text-brain-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <MessageSquare className="w-4 h-4 inline mr-1" />
+              Updates
+              {currentNode.updates && currentNode.updates.length > 0 && (
+                <span className="ml-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-brain-700 bg-brain-100 rounded-full">
+                  {currentNode.updates.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('relationships')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'relationships'
+                  ? 'border-brain-600 text-brain-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Link className="w-4 h-4 inline mr-1" />
+              Relationships
+            </button>
+          </div>
+          
+          {/* Tab Content */}
+          <div className="flex-1 overflow-y-auto pt-4">
+            {activeTab === 'details' && (
+              <NodeDetailsTab
+                node={currentNode}
+                isEditing={isEditing}
+                editedNode={editedNode}
+                setEditedNode={setEditedNode}
+                onEnhanceContent={handleEnhanceContent}
+                isEnhancing={isEnhancing}
+                userId={userId}
+              />
+            )}
+            
+            {activeTab === 'updates' && (
+              <NodeUpdatesTab
+                node={currentNode}
+                userId={userId}
+                userName={userName}
+              />
+            )}
+            
+            {activeTab === 'relationships' && (
+              <NodeRelationshipsTab
+                node={currentNode}
+                parent={parent}
+                children={children}
+                onCreateChild={onCreateChild}
+                onCreateParent={onCreateParent}
+                onRelationshipChange={() => {
+                  forceRefresh()
+                  onRelationshipChange?.()
+                }}
+                refreshKey={refreshKey}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      </Modal>
       
-      {/* Re-enhance Dialog */}
-      <ReenhanceNodeDialog
-        isOpen={showReenhanceDialog}
-        onClose={() => setShowReenhanceDialog(false)}
-        node={currentNode}
-        onSuccess={forceRefresh}
-      />
+      {/* Modals */}
+      {showReenhanceDialog && (
+        <ReenhanceNodeDialog
+          isOpen={showReenhanceDialog}
+          onClose={() => setShowReenhanceDialog(false)}
+          node={currentNode}
+        />
+      )}
       
-      {/* Calendar Event Modal */}
+      {showRecurrenceConfig && (
+        <NodeRecurrenceConfig
+          isOpen={showRecurrenceConfig}
+          onClose={() => setShowRecurrenceConfig(false)}
+          recurrence={currentNode.recurrence || null}
+          onSave={handleSaveRecurrence}
+          saving={saving}
+        />
+      )}
+      
       {showCalendarModal && (
         <CalendarEventModal
           isOpen={showCalendarModal}
           onClose={() => setShowCalendarModal(false)}
           node={currentNode}
-          onEventCreated={async (eventId, calendarId) => {
-            // Update node with calendar event info
-            await updateNode(currentNode.id, {
-              calendarEventId: eventId,
-              calendarId: calendarId
-            })
-            setShowCalendarModal(false)
-            forceRefresh()
-          }}
         />
       )}
-      
-      {/* Recurrence Configuration Modal */}
-      {showRecurrenceConfig && (
-        <Modal
-          isOpen={showRecurrenceConfig}
-          onClose={() => {
-            setShowRecurrenceConfig(false)
-            setRecurrencePattern(currentNode.recurrence || null)
-          }}
-          title="Configure Recurrence"
-          size="md"
-        >
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Recurrence Pattern
-              </label>
-              <div className="grid grid-cols-4 gap-2">
-                {(['daily', 'weekly', 'monthly', 'custom'] as const).map((freq) => (
-                  <button
-                    key={freq}
-                    type="button"
-                    onClick={() => setRecurrencePattern({ 
-                      ...recurrencePattern,
-                      frequency: freq 
-                    } as Recurrence)}
-                    className={`px-3 py-2 text-sm rounded-lg capitalize transition-colors ${
-                      recurrencePattern?.frequency === freq
-                        ? 'bg-brain-600 text-white'
-                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    {freq}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {recurrencePattern?.frequency === 'weekly' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Days of Week
-                </label>
-                <div className="grid grid-cols-7 gap-1">
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
-                    <button
-                      key={day}
-                      type="button"
-                      onClick={() => {
-                        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-                        const currentDays = recurrencePattern.daysOfWeek || []
-                        const dayName = days[idx]
-                        setRecurrencePattern({
-                          ...recurrencePattern,
-                          daysOfWeek: currentDays.includes(dayName as any)
-                            ? currentDays.filter(d => d !== dayName)
-                            : [...currentDays, dayName as any]
-                        })
-                      }}
-                      className={`px-2 py-2 text-xs rounded transition-colors ${
-                        recurrencePattern.daysOfWeek?.includes(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][idx] as any)
-                          ? 'bg-brain-600 text-white'
-                          : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {day}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {recurrencePattern?.frequency === 'daily' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Times per day (optional)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={recurrencePattern.timesPerInterval || 1}
-                  onChange={(e) => setRecurrencePattern({
-                    ...recurrencePattern,
-                    timesPerInterval: parseInt(e.target.value)
-                  })}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brain-500"
-                />
-              </div>
-            )}
-            
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 flex items-start gap-2">
-              <Sparkles className="w-4 h-4 text-purple-600 mt-0.5" />
-              <div className="text-sm text-purple-800">
-                <p className="font-medium mb-1">AI Tip:</p>
-                <p>Recurring tasks help build habits and ensure regular progress. They're perfect for maintenance tasks, daily practices, or periodic reviews.</p>
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              {recurrencePattern && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setRecurrencePattern(null)
-                    handleSaveRecurrence()
-                  }}
-                  className="text-red-600 hover:bg-red-50"
-                >
-                  Remove Recurrence
-                </Button>
-              )}
-              <div className="flex-1" />
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowRecurrenceConfig(false)
-                  setRecurrencePattern(currentNode.recurrence || null)
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleSaveRecurrence}
-                disabled={saving || !recurrencePattern}
-              >
-                {saving ? 'Saving...' : 'Save'}
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
-    </Modal>
+    </>
   )
 }

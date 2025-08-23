@@ -26,6 +26,7 @@ interface MatrixQuadrantRendererProps {
   onToggleFamily: (familyId: string) => void
   onToggleNode: (nodeId: string) => void
   onNodeContextMenu: (e: React.MouseEvent, node: any) => void
+  onNodeDoubleClick?: (node: any) => void
 }
 
 export function MatrixQuadrantRenderer({
@@ -43,6 +44,7 @@ export function MatrixQuadrantRenderer({
   onToggleFamily,
   onToggleNode,
   onNodeContextMenu,
+  onNodeDoubleClick,
 }: MatrixQuadrantRendererProps) {
   
   // Temporarily disabled accordion view for Do First quadrant to show relationships
@@ -112,16 +114,6 @@ export function MatrixQuadrantRenderer({
     const familyColor = isFamily || isOrphan ? 
       getFamilyColor(familyId.replace('orphan-', '')) : null
     
-    // Only log families with relationships
-    if (isFamily || isOrphan) {
-      console.log(`🏠 Family ${familyId}:`, {
-        isFamily,
-        isOrphan,
-        totalNodes: familyNodes.length,
-        visibleNodes: visibleFamilyNodes.length,
-        nodes: familyNodes.map(n => n.title)
-      })
-    }
     
     // Check if family is expanded
     const isExpanded = !isFamily || expandedFamilies.has(familyId)
@@ -178,6 +170,7 @@ export function MatrixQuadrantRenderer({
           isCollapsed={isCollapsedView}
           isContextMenuOpen={contextMenuNodeId === node.id}
           onContextMenu={onNodeContextMenu}
+          onDoubleClick={onNodeDoubleClick}
           isParent={isParent}
           isChild={isChild}
           familyColor={familyColor}
@@ -202,7 +195,7 @@ export function MatrixQuadrantRenderer({
     el.props?.isParent || el.props?.isChild
   ).length
   if (relationshipElements > 0) {
-    console.log(`✅ Rendered ${relationshipElements}/${elements.length} relationship elements in ${quadrantId}`)
+
   }
   
   return <>{elements}</>

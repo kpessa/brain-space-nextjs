@@ -84,10 +84,7 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
         
         // Debug: Only log nodes with relationships
         if (data.parent || (data.children && data.children.length > 0)) {
-          console.log(`🔗 ${data.title}:`, {
-            parent: data.parent,
-            children: data.children
-          })
+
         }
         
         const nodeData = {
@@ -288,14 +285,25 @@ export const useNodesStore = create<NodesStore>((set, get) => ({
     
     try {
       const updateId = `update-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      
+      // Build the update object without undefined values
       const newUpdate: NodeUpdate = {
         id: updateId,
         content: update.content || '',
-        timestamp: new Date().toISOString(),
+        timestamp: update.timestamp || new Date().toISOString(),
         userId: update.userId || node.userId,
-        userName: update.userName,
         type: update.type || 'note',
-        isPinned: update.isPinned || false,
+      }
+      
+      // Only add optional fields if they have values
+      const authorName = update.author || update.userName || 'User'
+      if (authorName) {
+        newUpdate.author = authorName
+        newUpdate.userName = authorName
+      }
+      
+      if (update.isPinned !== undefined) {
+        newUpdate.isPinned = update.isPinned
       }
       
       const existingUpdates = node.updates || []

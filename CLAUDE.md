@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Brain Space is a PWA-first personal knowledge management system with a Next.js frontend and Firebase backend. The application has been migrated from Vite to Next.js 15 with App Router, maintaining the brain dump flow for capturing thoughts, which are then processed by AI services to categorize and organize them into structured nodes.
 
+
+## Design 
+- Keep components to 300-500 lines of code.  If they become more, look to refactor.
+
 ### Key Architecture Components:
 
 1. **Frontend (Next.js 15 + React 19 + TypeScript)**
@@ -211,7 +215,7 @@ NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=...
 
 ## Current Development State
 
-**Last Updated**: 2024-08-17
+**Last Updated**: 2025-01-23
 
 ### Active Priorities
 1. **🔴 CRITICAL**: Bundle size optimization - /nodes route at 83.3kB (target: <50kB)
@@ -220,6 +224,10 @@ NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=...
 4. **🟢 MEDIUM**: Performance monitoring setup
 
 ### Recent Completions
+- ✅ Node Updates feature added to Matrix view - can now add timestamped updates/notes to nodes from /matrix route
+- ✅ Fixed Firestore undefined field value errors in node updates
+- ✅ Added visual indicators for nodes with updates in Matrix view (MessageSquare icon with count)
+- ✅ Enabled double-click and context menu access to NodeDetailModal in Matrix view
 - ✅ Knowledge base initialized with comprehensive documentation
 - ✅ Work/Personal mode toggle for nodes implemented
 - ✅ Build errors fixed (TypeScript, imports, console logs)

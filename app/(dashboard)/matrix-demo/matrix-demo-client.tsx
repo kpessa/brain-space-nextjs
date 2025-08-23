@@ -217,7 +217,7 @@ export default function MatrixDemoClient() {
   
   const handleDragEnd = (result: DropResult) => {
     // Demo doesn't actually move items
-    console.log('Drag ended:', result)
+
   }
   
   const renderQuadrantNodes = (quadrantId: string, nodes: any[]) => {

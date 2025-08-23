@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useNodesStore } from '@/store/nodeStore'
 import { useUserPreferencesStore } from '@/store/userPreferencesStore'
@@ -14,6 +14,8 @@ import { MatrixQuadrantRenderer } from '@/components/matrix/MatrixQuadrantRender
 import { useMatrixState } from '@/hooks/useMatrixState'
 import { useMatrixOrganization } from '@/hooks/useMatrixOrganization'
 import { useMatrixHandlers } from '@/hooks/useMatrixHandlers'
+import { NodeDetailModal } from '@/components/nodes/NodeDetailModal'
+import type { Node } from '@/types/node'
 
 // Dynamic import for drag and drop to avoid SSR issues
 const DragDropContext = dynamic(() => import('@hello-pangea/dnd').then(mod => ({ default: mod.DragDropContext })), { ssr: false })
@@ -62,10 +64,13 @@ const quadrants: Quadrant[] = [
   },
 ]
 
-
 export default function MatrixClient({ userId }: { userId: string }) {
   const { nodes, isLoading: loading, error, loadNodes, updateNode, createNode, deleteNode, snoozeNode, unsnoozeNode, createChildNode } = useNodesStore()
   const { currentMode, hidePersonalInWorkMode, hideWorkInPersonalMode } = useUserPreferencesStore()
+  
+  // State for NodeDetailModal
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null)
+  const [showDetailModal, setShowDetailModal] = useState(false)
   
   // Use custom hooks for state management
   const {
@@ -123,11 +128,23 @@ export default function MatrixClient({ userId }: { userId: string }) {
     setSelectedQuadrant,
     setContextMenu,
   })
+  
+  // Handler to open detail modal
+  const handleOpenDetailModal = (node: Node) => {
+    setSelectedNode(node)
+    setShowDetailModal(true)
+    handleNodeContextMenuClose()
+  }
+  
+  // Handler for double-click on node
+  const handleNodeDoubleClick = (node: any) => {
+    setSelectedNode(node)
+    setShowDetailModal(true)
+  }
 
   useEffect(() => {
     loadNodes(userId)
   }, [userId, loadNodes])
-  
 
   if (loading) {
     return (
@@ -225,6 +242,7 @@ export default function MatrixClient({ userId }: { userId: string }) {
                     onToggleFamily={toggleFamily}
                     onToggleNode={toggleNode}
                     onNodeContextMenu={handleNodeContextMenu}
+                    onNodeDoubleClick={handleNodeDoubleClick}
                   />
                 </QuadrantCard>
               )
@@ -251,7 +269,23 @@ export default function MatrixClient({ userId }: { userId: string }) {
             onDeleteNode={handleDeleteNode}
             onSnoozeNode={handleSnoozeNode}
             onUnsnoozeNode={handleUnsnoozeNode}
+            onOpenDetailModal={handleOpenDetailModal}
           />
+          
+          {selectedNode && (
+            <NodeDetailModal
+              isOpen={showDetailModal}
+              onClose={() => {
+                setShowDetailModal(false)
+                setSelectedNode(null)
+                // Reload nodes to reflect any updates
+                loadNodes(userId)
+              }}
+              node={selectedNode}
+              userId={userId}
+              userName="User"
+            />
+          )}
           </div>
         </div>
       </DragDropContext>

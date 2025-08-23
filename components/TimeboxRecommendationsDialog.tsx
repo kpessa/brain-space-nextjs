@@ -5,6 +5,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Sparkles, Brain, Loader2, ChevronRight, CheckCircle, Info } from '@/lib/icons'
+import DOMPurify from 'dompurify'
 import { useTimeboxStore } from '@/store/timeboxStore'
 import { useNodesStore } from '@/store/nodeStore'
 import { useUserPreferencesStore } from '@/store/userPreferencesStore'
@@ -27,9 +28,9 @@ interface RecommendationsDialogProps {
   trigger?: React.ReactNode
 }
 
-// Simple markdown to HTML converter
+// Simple markdown to HTML converter with XSS protection
 function markdownToHtml(markdown: string): string {
-  return markdown
+  const html = markdown
     .replace(/### (.*?)$/gm, '<h3 class="font-semibold mt-3 mb-1">$1</h3>')
     .replace(/## (.*?)$/gm, '<h2 class="font-bold mt-4 mb-2">$1</h2>')
     .replace(/# (.*?)$/gm, '<h1 class="font-bold text-lg mt-4 mb-2">$1</h1>')
@@ -38,6 +39,12 @@ function markdownToHtml(markdown: string): string {
     .replace(/\n\n/g, '</p><p class="mb-2">')
     .replace(/^/, '<p class="mb-2">')
     .replace(/$/, '</p>')
+  
+  // Sanitize HTML to prevent XSS attacks
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['h1', 'h2', 'h3', 'strong', 'em', 'p'],
+    ALLOWED_ATTR: ['class']
+  })
 }
 
 export default function TimeboxRecommendationsDialog({ 

@@ -114,8 +114,7 @@ export function useMatrixHandlers({
   
   // Debug function to create test relationships
   const createTestRelationships = async () => {
-    console.log('📝 Creating test parent-child relationships...')
-    
+
     try {
       // Create a parent task
       const parentId = await createNode({
@@ -144,8 +143,7 @@ export function useMatrixHandlers({
           importance: 7,
           isPersonal: currentMode === 'personal'
         })
-        
-        console.log('✅ Test relationships created!')
+
       }
     } catch (error) {
       console.error('Failed to create test relationships:', error)

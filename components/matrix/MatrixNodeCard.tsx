@@ -3,7 +3,7 @@
 import { memo } from 'react'
 import { Draggable } from '@hello-pangea/dnd'
 import { calculatePriority, getPriorityLevel, getFamilyColor, hasChildren } from './utils'
-import { ChevronRight, ChevronDown, Folder, FolderOpen, FileText } from 'lucide-react'
+import { ChevronRight, ChevronDown, Folder, FolderOpen, FileText, MessageSquare } from 'lucide-react'
 
 interface MatrixNodeCardProps {
   node: any
@@ -12,6 +12,7 @@ interface MatrixNodeCardProps {
   isDragging?: boolean
   isContextMenuOpen?: boolean
   onContextMenu?: (e: React.MouseEvent, node: any) => void
+  onDoubleClick?: (node: any) => void
   isParent?: boolean
   isChild?: boolean
   familyColor?: string
@@ -29,6 +30,7 @@ export const MatrixNodeCard = memo(function MatrixNodeCard({
   isCollapsed = false,
   isContextMenuOpen = false,
   onContextMenu,
+  onDoubleClick,
   isParent = false,
   isChild = false,
   familyColor,
@@ -89,6 +91,9 @@ export const MatrixNodeCard = memo(function MatrixNodeCard({
             e.preventDefault()
             onContextMenu?.(e, node)
           }}
+          onDoubleClick={() => {
+            onDoubleClick?.(node)
+          }}
         >
           {isCollapsed ? (
             // Collapsed view - just title and priority
@@ -115,6 +120,12 @@ export const MatrixNodeCard = memo(function MatrixNodeCard({
                 {nodeIsParent && !isExpanded && actualChildCount > 0 && (
                   <span className="text-xs text-gray-500 bg-gray-100 px-1 py-0.5 rounded ml-1">
                     {actualChildCount}
+                  </span>
+                )}
+                {node.updates && node.updates.length > 0 && (
+                  <span className="text-xs text-brain-600 bg-brain-100 px-1 py-0.5 rounded ml-1 flex items-center gap-0.5">
+                    <MessageSquare className="w-3 h-3" />
+                    {node.updates.length}
                   </span>
                 )}
               </h4>
@@ -154,6 +165,12 @@ export const MatrixNodeCard = memo(function MatrixNodeCard({
                   {nodeIsParent && actualChildCount > 0 && (
                     <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
                       {actualChildCount} {isExpanded ? 'subtasks' : 'hidden'}
+                    </span>
+                  )}
+                  {node.updates && node.updates.length > 0 && (
+                    <span className="text-xs text-brain-600 bg-brain-100 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                      <MessageSquare className="w-3 h-3" />
+                      {node.updates.length} update{node.updates.length !== 1 ? 's' : ''}
                     </span>
                   )}
                 </h4>

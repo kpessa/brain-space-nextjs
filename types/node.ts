@@ -16,6 +16,7 @@ export interface NodeUpdate {
   timestamp: string // ISO date
   userId: string
   userName?: string // Optional display name
+  author?: string // Display name for the author (alias for userName)
   type?: 'note' | 'status' | 'progress'
   isPinned?: boolean
 }

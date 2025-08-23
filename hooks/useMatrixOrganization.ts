@@ -21,18 +21,17 @@ export function useMatrixOrganization({
   
   useEffect(() => {
     console.group('🔍 Matrix Debug: Organizing nodes')
-    console.log('Total nodes:', nodes.length)
-    
+
     // Debug: Check for nodes with parent/children relationships
     const nodesWithParent = nodes.filter(n => n.parent)
     const nodesWithChildren = nodes.filter(n => n.children && n.children.length > 0)
     
     if (nodesWithParent.length > 0 || nodesWithChildren.length > 0) {
-      console.log('🔗 RELATIONSHIPS FOUND:')
+
       console.log('  Parents:', nodesWithChildren.length, nodesWithChildren.map(n => n.title))
       console.log('  Children:', nodesWithParent.length, nodesWithParent.map(n => `${n.title} -> ${n.parent}`))
     } else {
-      console.log('❌ No parent-child relationships found')
+
     }
     
     // Organize nodes into quadrants based on urgency and importance
@@ -75,23 +74,11 @@ export function useMatrixOrganization({
     
     // Debug urgent-important quadrant specifically
     if (organized['urgent-important'].length > 0) {
-      console.log('🔍 Urgent-Important Quadrant Details:')
-      console.log('  Total nodes:', organized['urgent-important'].length)
+
       const uiNodesWithRelationships = organized['urgent-important'].filter(n => 
         n.parent || (n.children && n.children.length > 0)
       )
-      console.log('  Nodes with relationships:', uiNodesWithRelationships.length)
-      
-      // Show first few nodes for debugging
-      organized['urgent-important'].slice(0, 5).forEach(node => {
-        console.log(`  📌 ${node.title}:`, {
-          id: node.id,
-          parent: node.parent || 'none',
-          children: node.children || [],
-          hasParent: !!node.parent,
-          hasChildren: !!(node.children && node.children.length > 0)
-        })
-      })
+
     }
 
     // Sort nodes within each quadrant by priority (highest first)
@@ -109,7 +96,7 @@ export function useMatrixOrganization({
       if (quadrantNodes.length > 0) {
         const withRelationships = quadrantNodes.filter(n => n.parent || (n.children && n.children.length > 0))
         if (withRelationships.length > 0) {
-          console.log(`📊 ${quadrant}: ${withRelationships.length}/${quadrantNodes.length} nodes have relationships`)
+
         }
       }
     })

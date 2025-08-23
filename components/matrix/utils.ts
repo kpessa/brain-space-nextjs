@@ -171,25 +171,22 @@ export const groupNodesByFamily = (nodes: any[], allNodes: any[]): Map<string, a
   const nodesInQuadrant = nodes.filter(n => n.parent || (n.children && n.children.length > 0))
   
   if (nodesInQuadrant.length > 0) {
-    console.log(`🔗 ${nodesInQuadrant.length} nodes with relationships in this quadrant`)
-    
+
     // Debug: Check if parent IDs actually exist
     const nodesWithParents = nodes.filter(n => n.parent)
     if (nodesWithParents.length > 0) {
-      console.log(`📍 ${nodesWithParents.length} nodes have parent field:`)
+
       nodesWithParents.forEach(n => {
         const parentExists = allNodes.find(p => p.id === n.parent)
         const parentInQuadrant = nodes.find(p => p.id === n.parent)
-        console.log(`  "${n.title}" -> parent: ${n.parent}`)
-        console.log(`    Parent exists in all nodes: ${parentExists ? '✅' : '❌'}`)
-        console.log(`    Parent in same quadrant: ${parentInQuadrant ? '✅' : '❌'}`)
+
       })
     }
     
     // Debug: Check if children IDs actually exist
     const nodesWithChildren = nodes.filter(n => n.children && n.children.length > 0)
     if (nodesWithChildren.length > 0) {
-      console.log(`📍 ${nodesWithChildren.length} nodes have children array:`)
+
       nodesWithChildren.forEach(n => {
         const childrenInAllNodes = n.children.filter((childId: string) => 
           allNodes.find(c => c.id === childId)
@@ -197,9 +194,7 @@ export const groupNodesByFamily = (nodes: any[], allNodes: any[]): Map<string, a
         const childrenInQuadrant = n.children.filter((childId: string) => 
           nodes.find(c => c.id === childId)
         )
-        console.log(`  "${n.title}" -> ${n.children.length} children`)
-        console.log(`    Children exist in all nodes: ${childrenInAllNodes.length}/${n.children.length}`)
-        console.log(`    Children in same quadrant: ${childrenInQuadrant.length}/${n.children.length}`)
+
         if (childrenInQuadrant.length > 0) {
           const childNames = childrenInQuadrant.map((id: string) => 
             nodes.find(c => c.id === id)?.title || id
@@ -209,7 +204,7 @@ export const groupNodesByFamily = (nodes: any[], allNodes: any[]): Map<string, a
       })
     }
   } else {
-    console.log('❌ No relationships in this quadrant')
+
   }
   
   const families = new Map<string, any[]>()
@@ -246,9 +241,7 @@ export const groupNodesByFamily = (nodes: any[], allNodes: any[]): Map<string, a
     
     return hasNoParent || (parentNotInQuadrant && isHighestInQuadrant)
   })
-  
-  console.log(`🌳 Found ${rootNodes.length} root nodes in quadrant`)
-  
+
   // For each root, collect all its descendants that are in the quadrant
   rootNodes.forEach(root => {
     if (processed.has(root.id)) return
@@ -295,11 +288,11 @@ export const groupNodesByFamily = (nodes: any[], allNodes: any[]): Map<string, a
   
   const standaloneCount = Array.from(families.keys()).filter(key => key.startsWith('standalone-')).length
   if (standaloneCount > 0) {
-    console.log(`🔲 ${standaloneCount} standalone nodes`)
+
   }
   
   if (families.size > 0) {
-    console.log(`✅ Created ${families.size} family groups`)
+
     families.forEach((familyNodes, familyId) => {
       if (!familyId.startsWith('standalone-') && !familyId.startsWith('unprocessed-')) {
         const depths = familyNodes.map(n => `${n.title}(L${getNodeDepth(n, allNodes)})`)

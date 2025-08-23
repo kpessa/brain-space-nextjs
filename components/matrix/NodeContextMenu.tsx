@@ -15,7 +15,8 @@ import {
   Link,
   Unlink,
   FolderPlus,
-  Users
+  Users,
+  FileText
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -38,6 +39,7 @@ interface NodeContextMenuProps {
     snoozedUntil?: string
     parent?: string
     children?: string[]
+    updates?: any[]
   } | null
   onClose: () => void
   onUpdateNode: (nodeId: string, updates: any) => void
@@ -48,6 +50,7 @@ interface NodeContextMenuProps {
   onLinkToParent?: (nodeId: string) => void
   onUnlinkFromParent?: (nodeId: string) => void
   onShowRelated?: (nodeId: string) => void
+  onOpenDetailModal?: (node: any) => void
 }
 
 export function NodeContextMenu({
@@ -62,7 +65,8 @@ export function NodeContextMenu({
   onCreateSubtask,
   onLinkToParent,
   onUnlinkFromParent,
-  onShowRelated
+  onShowRelated,
+  onOpenDetailModal
 }: NodeContextMenuProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
@@ -164,6 +168,27 @@ export function NodeContextMenu({
   return (
     <ContextMenu isOpen={isOpen} position={position} onClose={onClose}>
       <div className="p-4">
+        {/* View Details & Updates Button */}
+        {onOpenDetailModal && (
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => {
+              onOpenDetailModal(node)
+              onClose()
+            }}
+            className="w-full mb-3 flex items-center justify-center gap-2"
+          >
+            <FileText className="w-4 h-4" />
+            View Details & Updates
+            {node.updates && node.updates.length > 0 && (
+              <span className="ml-auto bg-white/20 text-xs px-1.5 py-0.5 rounded-full">
+                {node.updates.length}
+              </span>
+            )}
+          </Button>
+        )}
+        
         {/* Header with title */}
         <div className="mb-4 pr-6">
           {isEditingTitle ? (
