@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useMemo } from 'react'
 import { useIOSKeyboardAvoidance } from '@/hooks/useIOSKeyboardAvoidance'
 import { useHaptic } from '@/lib/haptic'
+import { useViewportHeight } from '@/hooks/useViewportHeight'
 
 interface IOSContextValue {
   // Keyboard avoidance
@@ -63,6 +64,9 @@ export function IOSProvider({
   keyboardOffset = 20,
   scrollBehavior = 'smooth'
 }: IOSProviderProps) {
+  // Initialize viewport height fix for iOS
+  useViewportHeight()
+  
   // Initialize keyboard avoidance globally
   const keyboardAvoidance = useIOSKeyboardAvoidance({
     enabled: keyboardAvoidanceEnabled,

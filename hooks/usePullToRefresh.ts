@@ -54,6 +54,7 @@ export function usePullToRefresh({
     
     const diff = currentY.current - startY.current
     
+    // Only handle pull-to-refresh if we're pulling down AND at the top
     if (diff > 0 && isAtTop()) {
       // Apply resistance factor
       const adjustedDiff = Math.min(diff / resistance, maxPull)
@@ -64,10 +65,15 @@ export function usePullToRefresh({
         triggerHaptic('medium')
       }
       
-      // Prevent default scrolling when pulling
-      if (adjustedDiff > 5) {
+      // Only prevent default if we have a significant pull distance
+      // This allows normal scrolling to work while still enabling pull-to-refresh
+      if (adjustedDiff > 20) {
         e.preventDefault()
       }
+    } else if (diff < 0) {
+      // If pulling up (scrolling down), stop the pull-to-refresh
+      setIsPulling(false)
+      setPullDistance(0)
     }
   }, [isPulling, isRefreshing, enabled, isAtTop, resistance, maxPull, threshold])
   
@@ -102,9 +108,14 @@ export function usePullToRefresh({
     const container = containerRef.current
     if (!container || !enabled) return
     
-    container.addEventListener('touchstart', handleTouchStart, { passive: true })
-    container.addEventListener('touchmove', handleTouchMove, { passive: false })
-    container.addEventListener('touchend', handleTouchEnd, { passive: true })
+    // Use passive listeners for better performance
+    // Only touchmove needs to be non-passive since we might preventDefault
+    const touchMoveOptions = { passive: false, capture: false }
+    const passiveOptions = { passive: true, capture: false }
+    
+    container.addEventListener('touchstart', handleTouchStart, passiveOptions)
+    container.addEventListener('touchmove', handleTouchMove, touchMoveOptions)
+    container.addEventListener('touchend', handleTouchEnd, passiveOptions)
     
     return () => {
       container.removeEventListener('touchstart', handleTouchStart)
