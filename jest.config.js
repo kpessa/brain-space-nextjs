@@ -15,6 +15,7 @@ const customJestConfig = {
     '**/__tests__/**/*.[jt]s?(x)',
     '**/?(*.)+(spec|test).[jt]s?(x)',
   ],
+  testPathIgnorePatterns: ['/node_modules/', '/.next/', '/e2e/', '/playwright-report/'],
   collectCoverageFrom: [
     'app/**/*.{js,jsx,ts,tsx}',
     'components/**/*.{js,jsx,ts,tsx}',
@@ -27,7 +28,7 @@ const customJestConfig = {
     '!**/coverage/**',
     '!**/jest.config.js',
   ],
-  coverageThresholds: {
+  coverageThreshold: {
     global: {
       branches: 70,
       functions: 70,
@@ -35,9 +36,8 @@ const customJestConfig = {
       statements: 80,
     },
   },
-  testPathIgnorePatterns: ['/node_modules/', '/.next/'],
   transformIgnorePatterns: [
-    '/node_modules/',
+    '/node_modules/(?!(jose|jwks-rsa|firebase-admin)/)',
     '^.+\\.module\\.(css|sass|scss)$',
   ],
   moduleDirectories: ['node_modules', '<rootDir>'],

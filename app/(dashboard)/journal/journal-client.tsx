@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -9,12 +9,15 @@ import { useJournalStore } from '@/store/journalStore'
 import { XPBar } from '@/components/journal/XPBar'
 import { LevelDisplay } from '@/components/journal/LevelDisplay'
 import { StreakCounter } from '@/components/journal/StreakCounter'
-import { LEVELS } from '@/types/journal'
+import { JournalEntryModal } from '@/components/journal/JournalEntryModal'
+import { LEVELS, JournalEntry } from '@/types/journal'
 
 export default function JournalClient({ userId }: { userId: string }) {
   const { entries, userProgress, getTodayEntry, loadEntriesFromFirestore, loadUserProgressFromFirestore, isLoading } = useJournalStore()
   const todayEntry = getTodayEntry()
   const currentLevel = LEVELS.find(l => l.level === userProgress.level) || LEVELS[0]
+  const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   
   useEffect(() => {
     // Load data from Firestore
@@ -102,25 +105,123 @@ export default function JournalClient({ userId }: { userId: string }) {
               </CardHeader>
               <CardContent>
                 {entries.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No entries yet. Start your journey!</p>
+                  <div className="text-gray-500 text-center py-8" data-testid="journal-empty-state">
+                    <p>No entries yet. Start your journey!</p>
+                    <Link href="/journal/new">
+                      <Button variant="primary" className="mt-4" data-testid="create-journal-entry-cta">
+                        Create Your First Entry
+                      </Button>
+                    </Link>
+                  </div>
                 ) : (
                   <div className="space-y-3">
-                    {entries.slice(0, 5).map(entry => (
-                      <div key={entry.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                        <div>
-                          <p className="font-medium">{new Date(entry.date).toLocaleDateString()}</p>
-                          <p className="text-sm text-gray-600 truncate">{entry.dailyQuest}</p>
+                    {entries.slice(0, 5).map(entry => {
+                      // Create summary from available data
+                      const gratitudeCount = Array.isArray(entry.gratitude) ? entry.gratitude.length : 0
+                      const questsText = Array.isArray(entry.quests) 
+                        ? entry.quests.slice(0, 2).join(', ')
+                        : entry.dailyQuest || 'No quests recorded'
+                      const notesPreview = entry.notes 
+                        ? entry.notes.substring(0, 100) + (entry.notes.length > 100 ? '...' : '')
+                        : ''
+                      
+                      // Calculate word count estimate
+                      const wordCount = [
+                        entry.notes || '',
+                        ...(Array.isArray(entry.gratitude) ? entry.gratitude : []),
+                        ...(Array.isArray(entry.quests) ? entry.quests : []),
+                        ...(Array.isArray(entry.allies) ? entry.allies : [entry.allies || '']),
+                        ...(Array.isArray(entry.threats) ? entry.threats : [entry.threats || ''])
+                      ].join(' ').split(/\s+/).filter(word => word.length > 0).length
+                      
+                      return (
+                        <div 
+                          key={entry.id} 
+                          className="group p-4 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                          data-testid="journal-entry"
+                          onClick={() => {
+                            setSelectedEntry(entry)
+                            setIsModalOpen(true)
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 space-y-2">
+                              {/* Date and XP */}
+                              <div className="flex items-center gap-3">
+                                <p className="font-medium" data-testid="journal-entry-date">
+                                  {new Date(entry.date).toLocaleDateString('en-US', { 
+                                    weekday: 'short', 
+                                    month: 'short', 
+                                    day: 'numeric' 
+                                  })}
+                                </p>
+                                <span className="text-sm text-brain-600 font-medium" data-testid="journal-entry-xp">
+                                  +{entry.xpEarned} XP
+                                </span>
+                                {wordCount > 0 && (
+                                  <span className="text-xs text-gray-500" data-testid="journal-entry-word-count">
+                                    {wordCount} words
+                                  </span>
+                                )}
+                              </div>
+                              
+                              {/* Summary/Excerpt */}
+                              <div className="text-sm text-gray-600" data-testid="journal-entry-summary">
+                                {notesPreview || questsText}
+                              </div>
+                              
+                              {/* Tags/Metadata */}
+                              <div className="flex flex-wrap gap-2" data-testid="journal-entry-tags">
+                                {gratitudeCount > 0 && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700 tag">
+                                    🙏 {gratitudeCount} gratitude{gratitudeCount !== 1 ? 's' : ''}
+                                  </span>
+                                )}
+                                {Array.isArray(entry.quests) && entry.quests.length > 0 && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700 tag">
+                                    ⚔️ {entry.quests.length} quest{entry.quests.length !== 1 ? 's' : ''}
+                                  </span>
+                                )}
+                                {(Array.isArray(entry.allies) ? entry.allies.length > 0 : entry.allies) && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-700 tag">
+                                    🤝 Allies
+                                  </span>
+                                )}
+                                {(Array.isArray(entry.threats) ? entry.threats.length > 0 : entry.threats) && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-700 tag">
+                                    ⚠️ Threats
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Actions */}
+                            <div className="flex gap-1">
+                              <Link href={`/journal/entry/${entry.id}`}>
+                                <Button size="sm" variant="ghost" title="View full entry">
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                              </Link>
+                              <Link href={`/journal/edit/${entry.id}`}>
+                                <Button size="sm" variant="ghost" title="Edit entry">
+                                  <Edit2 className="w-4 h-4" />
+                                </Button>
+                              </Link>
+                            </div>
+                          </div>
+                          
+                          {/* Expandable preview on hover */}
+                          <div 
+                            className="hidden group-hover:block mt-3 p-3 bg-gray-50 rounded text-sm text-gray-600"
+                            data-testid="journal-entry-expanded"
+                          >
+                            {entry.notes && (
+                              <p className="line-clamp-3">{entry.notes}</p>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-brain-600 font-medium">+{entry.xpEarned} XP</span>
-                          <Link href={`/journal/entry/${entry.id}`}>
-                            <Button size="sm" variant="ghost">
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -181,6 +282,16 @@ export default function JournalClient({ userId }: { userId: string }) {
             </Card>
           </div>
         </div>
+        
+        {/* Journal Entry Modal */}
+        <JournalEntryModal 
+          entry={selectedEntry}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false)
+            setSelectedEntry(null)
+          }}
+        />
       </div>
       </div>
   )

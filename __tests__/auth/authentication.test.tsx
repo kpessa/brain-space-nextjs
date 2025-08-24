@@ -1,9 +1,24 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { act } from 'react'
-import { useRouter } from 'next/navigation'
 import { onAuthStateChanged } from 'firebase/auth'
 import FirebaseAuthHandler from '@/app/__/auth/handler/page'
 import { auth } from '@/lib/firebase'
+
+const mockPush = jest.fn()
+const mockReplace = jest.fn()
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockPush,
+    replace: mockReplace,
+    prefetch: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    refresh: jest.fn(),
+  }),
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => '/',
+}))
 
 jest.mock('firebase/auth', () => ({
   getRedirectResult: jest.fn(),
@@ -17,15 +32,12 @@ jest.mock('@/lib/firebase', () => ({
 }))
 
 describe('Authentication Flow', () => {
-  const mockRouter = useRouter as jest.Mock
   const mockOnAuthStateChanged = onAuthStateChanged as jest.Mock
 
   beforeEach(() => {
     jest.clearAllMocks()
-    mockRouter.mockReturnValue({
-      push: jest.fn(),
-      replace: jest.fn(),
-    })
+    mockPush.mockClear()
+    mockReplace.mockClear()
   })
 
   describe('FirebaseAuthHandler', () => {
@@ -104,8 +116,6 @@ describe('Authentication Flow', () => {
     })
 
     it('redirects to login when no user is authenticated', async () => {
-      const router = mockRouter()
-
       mockOnAuthStateChanged.mockImplementation((auth, callback) => {
         // Call with null user (not authenticated)
         setTimeout(() => callback(null), 100)
@@ -115,7 +125,7 @@ describe('Authentication Flow', () => {
       render(<FirebaseAuthHandler />)
 
       await waitFor(() => {
-        expect(router.push).toHaveBeenCalledWith('/login')
+        expect(mockPush).toHaveBeenCalledWith('/login')
       }, { timeout: 4000 })
     })
 

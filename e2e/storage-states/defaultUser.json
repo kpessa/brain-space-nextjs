@@ -1,0 +1,15 @@
+{
+  "cookies": [
+    {
+      "name": "firebase-auth-token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYnJhaW4tc3BhY2UtNWQ3ODciLCJhdWQiOiJicmFpbi1zcGFjZS01ZDc4NyIsImF1dGhfdGltZSI6MTc1NjAzMDE3MSwidXNlcl9pZCI6InRlc3QtdXNlci0xMjMiLCJzdWIiOiJ0ZXN0LXVzZXItMTIzIiwiaWF0IjoxNzU2MDMwMTcxLCJleHAiOjE3NTYwMzM3NzEsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbInRlc3RAZXhhbXBsZS5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJjdXN0b20ifX0.5LG49i6apaNrGB8bYj6aaNoWUcH2ChBMKh-TNbpiESw",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1756033771,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}

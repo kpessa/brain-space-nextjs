@@ -98,6 +98,15 @@ export function isPublicPath(pathname: string): boolean {
 }
 
 /**
+ * Check if running in test mode
+ */
+function isTestMode(): boolean {
+  return process.env.PLAYWRIGHT_TEST === 'true' || 
+         process.env.TEST_MODE === 'true' ||
+         process.env.NODE_ENV === 'test'
+}
+
+/**
  * Enhanced token validation for Edge runtime
  * Performs additional checks beyond basic decode
  */
@@ -109,6 +118,15 @@ export function validateAuthToken(token: string): {
   // Basic format validation
   if (!token || typeof token !== 'string') {
     return { valid: false, reason: 'Missing or invalid token' }
+  }
+  
+  // In test mode, accept test tokens without full validation
+  if (isTestMode() && token.startsWith('eyJ')) {
+    const decoded = decodeAuthToken(token)
+    if (decoded) {
+      logAuthEvent('Test mode token accepted', { uid: decoded.uid })
+      return { valid: true, decoded }
+    }
   }
   
   if (token.length < 100) {

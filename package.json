@@ -10,15 +10,21 @@
     "lint": "next lint",
     "verify:firebase": "node scripts/verify-firebase-admin.js",
     "analyze": "cross-env ANALYZE=true next build --config next.config.analyzer.js",
-    "test": "jest",
+    "test": "npm run test:unit",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:api": "jest --config jest.config.api.js",
+    "test:hooks": "jest __tests__/hooks",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:real": "PLAYWRIGHT_AUTH_MODE=real playwright test e2e/real-user-example.spec.ts",
+    "test:e2e:setup-auth": "ts-node e2e/setup-real-auth.ts",
+    "test:unit": "NODE_OPTIONS=\"--max-old-space-size=4096\" jest --testPathIgnorePatterns=e2e"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@hello-pangea/dnd": "^18.0.1",
+    "@radix-ui/react-dialog": "^1.1.15",
     "@tanstack/react-query": "^5.84.1",
     "@tanstack/react-query-devtools": "^5.84.1",
     "@types/dompurify": "^3.2.0",
@@ -50,8 +56,10 @@
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/jest-dom": "^6.6.4",
     "@testing-library/react": "^16.3.0",
+    "@testing-library/react-hooks": "^8.0.1",
     "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
@@ -63,8 +71,11 @@
     "glob": "^11.0.3",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
+    "jsonwebtoken": "^9.0.2",
+    "node-fetch": "^2.7.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.17",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }

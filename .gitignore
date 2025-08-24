@@ -41,3 +41,7 @@ next-env.d.ts
 # PWA files
 public/sw.js
 public/workbox-*.js
+
+# Playwright test authentication states
+e2e/storage-states/realUser.json
+e2e/storage-states/*.local.json

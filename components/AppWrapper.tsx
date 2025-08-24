@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { ThemeProvider } from './ThemeProvider'
+import { IOSProvider } from '@/contexts/IOSContext'
 import { useState } from 'react'
 
 export function AppWrapper({ children }: { children: React.ReactNode }) {
@@ -22,9 +23,16 @@ export function AppWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        {children}
-      </ThemeProvider>
+      <IOSProvider 
+        keyboardAvoidanceEnabled={true}
+        hapticEnabled={true}
+        keyboardOffset={20}
+        scrollBehavior="smooth"
+      >
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+      </IOSProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   )

@@ -115,6 +115,7 @@ interface TasksState extends CalendarState, RoutineState {
   removeSelectedCalendarId: (id: string) => void
   toggleCalendarSelection: (id: string) => void
   setCalendarAuthenticated: (isAuth: boolean) => void
+  setIsAuthenticated: (isAuth: boolean) => void
   setCalendars: (calendars: Calendar[]) => void
   
   // Routine Actions
@@ -323,6 +324,8 @@ export const useTasksStore = create<TasksState>()(
         }),
         
       setCalendarAuthenticated: isAuth => set({ isAuthenticated: isAuth }),
+      
+      setIsAuthenticated: isAuth => set({ isAuthenticated: isAuth }),
       
       setCalendars: calendars => set({ calendars }),
       

@@ -93,7 +93,7 @@ describe('TodoStore', () => {
       expect(createdTodo!.type).toBe('task') // default
       expect(createdTodo!.status).toBe('pending') // default
       expect(createdTodo!.sourceType).toBe('manual') // default
-      expect(createdTodo!.id).toMatch(/^todo-\d+$/)
+      expect(createdTodo!.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
     })
 
     it('generates unique IDs for multiple todos', async () => {
