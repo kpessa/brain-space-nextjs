@@ -141,28 +141,28 @@ export function IOSProvider({
   useEffect(() => {
     if (!keyboardAvoidance.isIOS) return
     
-    // Prevent bounce/elastic scrolling on iOS
+    // Prevent bounce scroll on iOS
     const preventBounce = (e: TouchEvent) => {
-      // Only prevent if we're at scroll boundaries
-      const target = e.target as HTMLElement
-      const scrollable = target.closest('.scrollable') as HTMLElement
-      
+      const scrollable = e.target as HTMLElement
       if (scrollable) {
         const isAtTop = scrollable.scrollTop <= 0
         const isAtBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight
         
+        // Only prevent default if we're at the boundaries and trying to scroll beyond
         if ((isAtTop && e.touches[0].clientY > 0) || 
             (isAtBottom && e.touches[0].clientY < 0)) {
           e.preventDefault()
         }
+        // Allow normal scrolling in all other cases
       }
     }
     
-    // Disable double-tap zoom on iOS
+    // Disable double-tap zoom on iOS - but allow normal touch events
     let lastTouchEnd = 0
     const preventDoubleTapZoom = (e: TouchEvent) => {
       const now = Date.now()
       if (now - lastTouchEnd <= 300) {
+        // Only prevent default for double-tap, not single taps
         e.preventDefault()
       }
       lastTouchEnd = now

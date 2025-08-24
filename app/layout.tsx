@@ -6,6 +6,7 @@ import { AppWrapper } from '@/components/AppWrapper'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt'
+import { TouchScrollFix } from '@/components/TouchScrollFix'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -47,6 +48,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="167x167" href="/android-chrome-192x192.png" />
       </head>
       <body suppressHydrationWarning>
+        <TouchScrollFix />
         <AppWrapper>
           {children}
           <ToastProvider />

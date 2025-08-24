@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+    <title>Touch Scroll Debug</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+            position: relative;
+        }
+        
+        .debug-info {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .scroll-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 2000px;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .success { background: #d4edda; color: #155724; }
+        .warning { background: #fff3cd; color: #856404; }
+        .error { background: #f8d7da; color: #721c24; }
+        
+        .test-button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 10px 5px;
+            cursor: pointer;
+        }
+        
+        .test-button:active {
+            background: #0056CC;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-info">
+        <h1>Touch Scroll Debug</h1>
+        <div id="device-info"></div>
+        <div id="css-info"></div>
+        <div id="scroll-info"></div>
+        <div id="status"></div>
+        
+        <button class="test-button" onclick="testScroll()">Test Scroll</button>
+        <button class="test-button" onclick="applyFixes()">Apply Fixes</button>
+        <button class="test-button" onclick="refreshInfo()">Refresh Info</button>
+    </div>
+    
+    <div class="scroll-content">
+        <h2>Scroll Test Content</h2>
+        <p>Try scrolling this content with your finger. If you can scroll down, touch scrolling is working.</p>
+        
+        <div id="scroll-markers"></div>
+        
+        <p>This is a long content area to test scrolling. Keep scrolling down to see more content...</p>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+        <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+        <p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        
+        <div id="bottom-marker" style="height: 100px; background: #e9ecef; display: flex; align-items: center; justify-content: center; margin-top: 50px;">
+            <strong>Bottom of content - If you can see this, scrolling works!</strong>
+        </div>
+    </div>
+
+    <script>
+        function getDeviceInfo() {
+            const userAgent = navigator.userAgent;
+            const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+            const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
+            const isStandalone = window.navigator.standalone === true;
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+            
+            return {
+                userAgent,
+                isIOS,
+                isSafari,
+                isStandalone,
+                isPWA,
+                viewportWidth: window.innerWidth,
+                viewportHeight: window.innerHeight
+            };
+        }
+        
+        function getCSSInfo() {
+            const bodyStyle = getComputedStyle(document.body);
+            const htmlStyle = getComputedStyle(document.documentElement);
+            
+            return {
+                bodyOverflow: bodyStyle.overflow,
+                bodyPosition: bodyStyle.position,
+                bodyTouchAction: bodyStyle.touchAction,
+                bodyWebkitOverflowScrolling: bodyStyle.webkitOverflowScrolling,
+                htmlOverflow: htmlStyle.overflow,
+                htmlPosition: htmlStyle.position,
+                htmlTouchAction: htmlStyle.touchAction,
+                htmlWebkitOverflowScrolling: htmlStyle.webkitOverflowScrolling
+            };
+        }
+        
+        function getScrollInfo() {
+            return {
+                scrollHeight: document.documentElement.scrollHeight,
+                clientHeight: document.documentElement.clientHeight,
+                scrollY: window.scrollY,
+                scrollTop: document.documentElement.scrollTop,
+                bodyScrollHeight: document.body.scrollHeight,
+                bodyClientHeight: document.body.clientHeight
+            };
+        }
+        
+        function updateInfo() {
+            const deviceInfo = getDeviceInfo();
+            const cssInfo = getCSSInfo();
+            const scrollInfo = getScrollInfo();
+            
+            document.getElementById('device-info').innerHTML = `
+                <h3>Device Info:</h3>
+                <p><strong>iOS:</strong> ${deviceInfo.isIOS}</p>
+                <p><strong>Safari:</strong> ${deviceInfo.isSafari}</p>
+                <p><strong>Standalone:</strong> ${deviceInfo.isStandalone}</p>
+                <p><strong>PWA Mode:</strong> ${deviceInfo.isPWA}</p>
+                <p><strong>Viewport:</strong> ${deviceInfo.viewportWidth} x ${deviceInfo.viewportHeight}</p>
+            `;
+            
+            document.getElementById('css-info').innerHTML = `
+                <h3>CSS Info:</h3>
+                <p><strong>Body Overflow:</strong> ${cssInfo.bodyOverflow}</p>
+                <p><strong>Body Position:</strong> ${cssInfo.bodyPosition}</p>
+                <p><strong>Body Touch Action:</strong> ${cssInfo.bodyTouchAction}</p>
+                <p><strong>Body WebKit Overflow Scrolling:</strong> ${cssInfo.bodyWebkitOverflowScrolling}</p>
+                <p><strong>HTML Overflow:</strong> ${cssInfo.htmlOverflow}</p>
+                <p><strong>HTML Position:</strong> ${cssInfo.htmlPosition}</p>
+                <p><strong>HTML Touch Action:</strong> ${cssInfo.htmlTouchAction}</p>
+                <p><strong>HTML WebKit Overflow Scrolling:</strong> ${cssInfo.htmlWebkitOverflowScrolling}</p>
+            `;
+            
+            document.getElementById('scroll-info').innerHTML = `
+                <h3>Scroll Info:</h3>
+                <p><strong>Scroll Height:</strong> ${scrollInfo.scrollHeight}</p>
+                <p><strong>Client Height:</strong> ${scrollInfo.clientHeight}</p>
+                <p><strong>Scroll Y:</strong> ${scrollInfo.scrollY}</p>
+                <p><strong>Scroll Top:</strong> ${scrollInfo.scrollTop}</p>
+                <p><strong>Body Scroll Height:</strong> ${scrollInfo.bodyScrollHeight}</p>
+                <p><strong>Body Client Height:</strong> ${scrollInfo.bodyClientHeight}</p>
+            `;
+            
+            // Check for issues
+            const issues = [];
+            if (cssInfo.bodyPosition === 'fixed') issues.push('Body has position: fixed');
+            if (cssInfo.htmlPosition === 'fixed') issues.push('HTML has position: fixed');
+            if (cssInfo.bodyOverflow === 'hidden') issues.push('Body has overflow: hidden');
+            if (cssInfo.htmlOverflow === 'hidden') issues.push('HTML has overflow: hidden');
+            if (!cssInfo.bodyTouchAction.includes('pan-y')) issues.push('Body touch-action does not include pan-y');
+            if (cssInfo.bodyWebkitOverflowScrolling !== 'touch') issues.push('Body webkit-overflow-scrolling is not touch');
+            
+            const statusDiv = document.getElementById('status');
+            if (issues.length === 0) {
+                statusDiv.innerHTML = '<div class="status success">✅ No issues detected - Touch scrolling should work!</div>';
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="status error">❌ Issues detected:</div>
+                    ${issues.map(issue => `<div class="status warning">⚠️ ${issue}</div>`).join('')}
+                `;
+            }
+        }
+        
+        function testScroll() {
+            const initialScrollY = window.scrollY;
+            window.scrollBy(0, 200);
+            
+            setTimeout(() => {
+                const finalScrollY = window.scrollY;
+                const statusDiv = document.getElementById('status');
+                if (finalScrollY > initialScrollY) {
+                    statusDiv.innerHTML = '<div class="status success">✅ Scroll test passed! Scrolled from ' + initialScrollY + ' to ' + finalScrollY + '</div>';
+                } else {
+                    statusDiv.innerHTML = '<div class="status error">❌ Scroll test failed! Could not scroll</div>';
+                }
+                updateInfo();
+            }, 100);
+        }
+        
+        function applyFixes() {
+            // Apply the same fixes as the TouchScrollFix component
+            document.documentElement.style.setProperty('overflow-y', 'auto', 'important');
+            document.documentElement.style.setProperty('overflow-x', 'hidden', 'important');
+            document.documentElement.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
+            document.documentElement.style.setProperty('touch-action', 'pan-y', 'important');
+            document.documentElement.style.setProperty('position', 'relative', 'important');
+            
+            document.body.style.setProperty('overflow-y', 'auto', 'important');
+            document.body.style.setProperty('overflow-x', 'hidden', 'important');
+            document.body.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
+            document.body.style.setProperty('touch-action', 'pan-y', 'important');
+            document.body.style.setProperty('position', 'relative', 'important');
+            
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<div class="status success">✅ Fixes applied! Try scrolling now.</div>';
+            
+            updateInfo();
+        }
+        
+        function refreshInfo() {
+            updateInfo();
+        }
+        
+        // Initialize
+        updateInfo();
+        
+        // Update on scroll
+        window.addEventListener('scroll', updateInfo);
+        
+        // Update on resize
+        window.addEventListener('resize', updateInfo);
+        
+        // Update on orientation change
+        window.addEventListener('orientationchange', () => {
+            setTimeout(updateInfo, 100);
+        });
+    </script>
+</body>
+</html>

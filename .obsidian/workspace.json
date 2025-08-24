@@ -11,32 +11,13 @@
             "id": "59ce632d8d553145",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "knowledge/README.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "README"
-            }
-          },
-          {
-            "id": "44b6607c4c486624",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "_BRAIN-SPACE-NEXTJS.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "_BRAIN-SPACE-NEXTJS"
+              "title": "New tab"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -183,45 +164,53 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "44b6607c4c486624",
+  "active": "09fe0e7409549836",
   "lastOpenFiles": [
-    "app/(dashboard)/matrix/matrix-client.tsx.tmp.1657202.1755577227267",
-    "app/(dashboard)/matrix/matrix-client.tsx.tmp.1657202.1755577023639",
-    "hooks/useMatrixHandlers.ts",
-    "hooks/useMatrixHandlers.ts.tmp.1657202.1755576955146",
-    "hooks/useMatrixOrganization.ts",
-    "hooks/useMatrixOrganization.ts.tmp.1657202.1755576906451",
-    "components/matrix/MatrixQuadrantRenderer.tsx",
-    "components/matrix/MatrixQuadrantRenderer.tsx.tmp.1657202.1755576863476",
-    "hooks/useMatrixState.ts",
-    "test-deep-nesting.ts",
-    "test-deep-nesting.ts.tmp.1657202.1755576391081",
-    "_knowledge/07-Backups/CLAUDE.MD-2025-08-17-22-06.md",
-    "_knowledge/06-Reviews/COMPREHENSIVE-AUDIT-2025-01-18.md",
-    "_knowledge/01-Research/NextJS/AUDIT-2025-01-18.md",
-    "_knowledge/02-Architecture/AUDIT-2025-01-18.md",
-    "_knowledge/01-Research/Firebase/AUDIT-2025-01-18.md",
-    "_knowledge/03-Data-Flow/AUDIT-2025-01-18.md",
-    "_knowledge/01-Research/Security/AUDIT-2025-01-18.md",
-    "_knowledge/01-Research/iOS/AUDIT-2025-01-18.md",
-    "_knowledge/01-Research/UI-UX/AUDIT-2025-01-18.md",
-    "_knowledge/01-Research/Performance/AUDIT-2025-01-18.md",
-    "_knowledge/01-Research/Refactoring/AUDIT-2025-01-18.md",
-    "_knowledge/01-Research/Testing/AUDIT-2025-01-18.md",
-    "coverage/lcov-report/sort-arrow-sprite.png",
-    "coverage/lcov-report/favicon.png",
-    "TYPESCRIPT_MIGRATION_PLAN.md",
-    "FIREBASE_ADMIN_SETUP.md",
-    "_knowledge/00-Overview/CURRENT_STATE.md",
-    "_BRAIN-SPACE-NEXTJS.md",
-    "_knowledge/00-Overview/ACTION_ITEMS.md",
-    "_knowledge/07-Backups/CLAUDE.MD-2025-08-17-13-32.md",
-    "_knowledge/00-Overview/AUDIT_SUMMARY.md",
-    "_knowledge/00-Overview/RESEARCH_GAPS.md",
-    "_knowledge/00-Overview/MOCs/PERFORMANCE_MOC.md",
-    "_knowledge/00-Overview/MOCs/SECURITY_MOC.md",
-    "CLAUDE.md",
-    "_knowledge/00-Overview/MOCs/ARCHITECTURE_MOC.md",
-    "AI_SETUP.md"
+    "public/debug-touch-scroll.html",
+    "test-results",
+    "components/TouchScrollFix.tsx",
+    "e2e/ios-real-device-debug.spec.ts",
+    "test-results/webkit-journal-scrolled.png",
+    "test-results/webkit-touch-test.png",
+    "test-results/webkit-journal.png",
+    "test-results/webkit-verification.png",
+    "test-results/ios-touch-scrolling-debug--272b4-h-scrolling-on-main-content-Mobile-Safari/error-context.md",
+    "test-results/ios-touch-scrolling-debug--8099d-andle-touch-events-properly-Mobile-Safari/error-context.md",
+    "test-results/ios-touch-scrolling-debug--272b4-h-scrolling-on-main-content-Mobile-Safari/test-failed-1.png",
+    "test-results/ios-touch-scrolling-debug--8099d-andle-touch-events-properly-Mobile-Safari/test-failed-1.png",
+    "test-results/ios-touch-scrolling-debug--272b4-h-scrolling-on-main-content-Mobile-Safari",
+    "test-results/ios-touch-scrolling-debug--8099d-andle-touch-events-properly-Mobile-Safari",
+    "e2e/ios-touch-scrolling-debug.spec.ts",
+    "test-results/ios-horizontal-overflow-fi-d7fad--work-across-all-main-pages-Mobile-Safari/test-failed-1.png",
+    "test-results/ios-horizontal-overflow-fi-d7fad--work-across-all-main-pages-Mobile-Safari",
+    "test-results/ios-horizontal-overflow-fi-d7fad--work-across-all-main-pages-Mobile-Safari/error-context.md",
+    "e2e/ios-horizontal-overflow-fix.spec.ts",
+    "test-results/ios-pwa-iOS-PWA-Features-O-c0e02-uld-register-service-worker-Mobile-Safari/error-context.md",
+    "test-results/ios-pwa-iOS-PWA-Features-O-c0e02-uld-register-service-worker-Mobile-Safari/test-failed-1.png",
+    "test-results/ios-pwa-iOS-PWA-Features-O-c0e02-uld-register-service-worker-Mobile-Safari",
+    "test-results/ios-pwa-iOS-PWA-Features-i-8e5e0-tion-without-browser-chrome-Mobile-Safari/error-context.md",
+    "test-results/ios-pwa-iOS-PWA-Features-i-8e5e0-tion-without-browser-chrome-Mobile-Safari/test-failed-1.png",
+    "test-results/ios-pwa-iOS-PWA-Features-i-8e5e0-tion-without-browser-chrome-Mobile-Safari",
+    "test-results/ios-pwa-iOS-PWA-Features-O-2e0c1-dle-offline-mode-gracefully-Mobile-Safari/error-context.md",
+    "test-results/ios-pwa-iOS-PWA-Features-O-2e0c1-dle-offline-mode-gracefully-Mobile-Safari/test-failed-1.png",
+    "test-results/ios-touch-scrolling-iOS-To-b381d-e-momentum-scrolling-on-iOS-Mobile-Safari/error-context.md",
+    "test-results/ios-scrolling-simple-iOS-S-f0d1f--and-scroll-on-Journal-page-Mobile-Safari/error-context.md",
+    "test-results/ios-scrolling-simple-iOS-S-0d866-te-and-scroll-on-Nodes-page-Mobile-Safari/error-context.md",
+    "test-results/ios-scrolling-simple-iOS-S-a5c13-rolling-with-swipe-gestures-Mobile-Safari/error-context.md",
+    "test-results/ios-scrolling-simple-iOS-S-0e9ec-should-test-all-main-routes-Mobile-Safari/error-context.md",
+    "test-results/ios-mobile-iOS-Mobile-Expe-147b7-ate-between-pages-on-mobile-Mobile-Safari/error-context.md",
+    "test-results/ios-mobile-iOS-Mobile-Expe-5aba0-dle-touch-events-on-buttons-Mobile-Safari/error-context.md",
+    "test-results/ios-mobile-iOS-Mobile-Expe-27763-isplay-properly-on-iPad-Pro-Mobile-Safari/error-context.md",
+    "test-results/ios-mobile-iOS-Mobile-Expe-05a07-splay-properly-on-iPhone-13-Mobile-Safari/error-context.md",
+    "test-results/mobile-safari-real-scrolli-ffd40-st-touch-scrolling-gestures-Mobile-Safari/error-context.md",
+    "test-results/mobile-safari-real-scrolli-c0c62-n-Nodes-page-with-real-auth-Mobile-Safari/error-context.md",
+    "test-results/mobile-safari-real-scrolli-11c3d-Journal-page-with-real-auth-Mobile-Safari/error-context.md",
+    "test-results/mobile-safari-touch-scroll-4d223-esh-without-blocking-scroll-Mobile-Safari/error-context.md",
+    "test-results/mobile-safari-touch-scroll-9f291-al-scrolling-in-matrix-view-Mobile-Safari/error-context.md",
+    "test-results/mobile-safari-touch-scroll-8151e-ical-scrolling-on-home-page-Mobile-Safari/error-context.md",
+    "test-results/mobile-safari-touch-scroll-c3ee9-omentum-scrolling-correctly-Mobile-Safari/error-context.md",
+    "test-results/ios-real-user-Real-User----33043--all-pages-on-Mobile-Safari-Mobile-Safari/error-context.md",
+    "test-results/ios-real-user-Real-User----df7f5-t-scrolling-on-real-content-Mobile-Safari/error-context.md",
+    "test-results/ios-real-user-Real-User----775aa-Access-Journal-on-iPhone-13-Mobile-Safari/error-context.md"
   ]
 }

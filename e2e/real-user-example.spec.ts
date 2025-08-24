@@ -1,13 +1,10 @@
-import { test, expect } from './fixtures/auth.fixture'
+import { test, expect, devices } from '@playwright/test'
 
 /**
- * Example tests using real Google account authentication
+ * Tests using real Google account authentication (kpessa@gmail.com)
  * 
- * Prerequisites:
- * 1. Run: pnpm exec ts-node e2e/setup-real-auth.ts
- * 2. Complete Google sign-in with your account
- * 
- * These tests will use your real authenticated session
+ * Uses saved authentication from e2e/storage-states/realUser.json
+ * Run with: pnpm exec playwright test real-user-example.spec.ts --project="Mobile Safari"
  */
 
 test.describe('Real User Tests', () => {

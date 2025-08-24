@@ -2,10 +2,10 @@
   "cookies": [
     {
       "name": "firebase-auth-token",
-      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYnJhaW4tc3BhY2UtNWQ3ODciLCJhdWQiOiJicmFpbi1zcGFjZS01ZDc4NyIsImF1dGhfdGltZSI6MTc1NjAzMDE3MSwidXNlcl9pZCI6ImFkbWluLXVzZXItNDU2Iiwic3ViIjoiYWRtaW4tdXNlci00NTYiLCJpYXQiOjE3NTYwMzAxNzEsImV4cCI6MTc1NjAzMzc3MSwiZW1haWwiOiJhZG1pbkBleGFtcGxlLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbImFkbWluQGV4YW1wbGUuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoiY3VzdG9tIn19.Vl0JJzWtzT7wYaS846eJA6RmIUay_4b4UqnWS1vgmV0",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vJHtORVhUX1BVQkxJQ19GSVJFQkFTRV9QUk9KRUNUX0lEfSIsImF1ZCI6IiR7TkVYVF9QVUJMSUNfRklSRUJBU0VfUFJPSkVDVF9JRH0iLCJhdXRoX3RpbWUiOjE3NTYwNDg5MDksInVzZXJfaWQiOiJhZG1pbi11c2VyLTQ1NiIsInN1YiI6ImFkbWluLXVzZXItNDU2IiwiaWF0IjoxNzU2MDQ4OTA5LCJleHAiOjE3NTYwNTI1MDksImVtYWlsIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJhZG1pbkBleGFtcGxlLmNvbSJdfSwic2lnbl9pbl9wcm92aWRlciI6ImN1c3RvbSJ9fQ.PcCgow110epqUXmbWL7zRFLyOCSd4aEZTtalvxnInRE",
       "domain": "localhost",
       "path": "/",
-      "expires": 1756033771,
+      "expires": 1756052509,
       "httpOnly": true,
       "secure": false,
       "sameSite": "Lax"
