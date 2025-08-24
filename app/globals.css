@@ -11,24 +11,58 @@
     /* Allow natural scrolling on mobile */
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    /* Prevent horizontal scrolling */
+    width: 100%;
+    max-width: 100vw;
   }
-  
+
   body {
     overflow-x: hidden;
     overflow-y: auto;
     position: relative;
     width: 100%;
+    max-width: 100vw;
     min-height: 100vh;
     /* Enable smooth scrolling on iOS */
     -webkit-overflow-scrolling: touch;
+    /* Prevent horizontal scrolling */
+    margin: 0;
+    padding: 0;
   }
-  
+
+  /* iOS-specific touch scrolling fixes */
+  @supports (-webkit-touch-callout: none) {
+
+    html,
+    body {
+      /* Allow vertical scrolling but prevent horizontal overflow */
+      touch-action: pan-y;
+      /* Ensure proper scrolling on iOS */
+      -webkit-overflow-scrolling: touch;
+      /* Prevent horizontal scrolling */
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+    }
+
+    /* Fix for iOS Safari viewport issues */
+    #__next,
+    main,
+    .main-content {
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
   /* Focus indicators for keyboard navigation */
   *:focus-visible {
     outline: 2px solid rgb(var(--ring));
     outline-offset: 2px;
   }
-  
+
   /* Screen reader only content */
   .sr-only {
     position: absolute;
@@ -41,23 +75,56 @@
     white-space: nowrap;
     border-width: 0;
   }
-  
-  /* Remove the iOS fixed positioning that was breaking scrolling */
-  /* Instead, use modern touch-action for scroll control */
-  @supports (-webkit-touch-callout: none) {
-    body {
-      /* Allow vertical scrolling but prevent horizontal overflow */
-      touch-action: pan-y;
-    }
-  }
 }
 
 @layer base {
+
   /* Base theme variables - defaults to colorful light mode */
   :root {
     --radius: 0.5rem;
   }
-  
+
+  /* iOS-specific scrolling fixes */
+  @supports (-webkit-touch-callout: none) {
+
+    /* Ensure proper scrolling on iOS Safari */
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Fix for iOS Safari momentum scrolling */
+    html,
+    body {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: none;
+    }
+
+    /* Prevent horizontal scrolling on all containers */
+    .container,
+    .main-content,
+    main,
+    .dashboard-content {
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Fix for iOS Safari viewport height issues */
+    .min-h-screen {
+      min-height: 100vh;
+      min-height: calc(var(--vh, 1vh) * 100);
+    }
+
+    /* Ensure touch scrolling works on scrollable elements */
+    [data-scrollable="true"],
+    .scrollable {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+  }
+
   /* Colorful theme - light mode */
   :root,
   :root.theme-colorful {
@@ -67,20 +134,24 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 258 90% 53%; /* brain-500 */
+    --primary: 258 90% 53%;
+    /* brain-500 */
     --primary-foreground: 210 40% 98%;
-    --secondary: 231 100% 55%; /* space-500 */
+    --secondary: 231 100% 55%;
+    /* space-500 */
     --secondary-foreground: 210 40% 98%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 258 90% 53%; /* brain-500 */
+    --accent: 258 90% 53%;
+    /* brain-500 */
     --accent-foreground: 210 40% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 258 90% 53%; /* brain-500 */
-    
+    --ring: 258 90% 53%;
+    /* brain-500 */
+
     /* Semantic colors */
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
@@ -90,7 +161,7 @@
     --error-foreground: 0 0% 100%;
     --info: 217 91% 60%;
     --info-foreground: 0 0% 100%;
-    
+
     /* Brain theme colors */
     --brain-50: 251 91% 97%;
     --brain-100: 250 95% 92%;
@@ -102,7 +173,7 @@
     --brain-700: 260 69% 36%;
     --brain-800: 260 60% 30%;
     --brain-900: 260 54% 25%;
-    
+
     /* Space theme colors */
     --space-50: 222 100% 97%;
     --space-100: 222 100% 93%;
@@ -115,7 +186,7 @@
     --space-800: 234 62% 34%;
     --space-900: 233 50% 28%;
   }
-  
+
   /* Professional theme - light mode */
   :root.theme-professional,
   :root.light.theme-professional {
@@ -125,7 +196,8 @@
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 217 91% 60%; /* Professional blue */
+    --primary: 217 91% 60%;
+    /* Professional blue */
     --primary-foreground: 0 0% 100%;
     --secondary: 214 32% 91%;
     --secondary-foreground: 222 47% 11%;
@@ -138,7 +210,7 @@
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 217 91% 60%;
-    
+
     /* Semantic colors - professional */
     --success: 142 45% 40%;
     --success-foreground: 0 0% 100%;
@@ -148,7 +220,7 @@
     --error-foreground: 0 0% 100%;
     --info: 217 70% 50%;
     --info-foreground: 0 0% 100%;
-    
+
     /* Professional blue-gray palette for brain colors */
     --brain-50: 210 40% 98%;
     --brain-100: 210 40% 96%;
@@ -160,7 +232,7 @@
     --brain-700: 224 76% 48%;
     --brain-800: 226 71% 40%;
     --brain-900: 226 58% 32%;
-    
+
     /* Subtle teal for space colors */
     --space-50: 204 44% 98%;
     --space-100: 204 44% 96%;
@@ -173,7 +245,7 @@
     --space-800: 213 69% 32%;
     --space-900: 214 58% 26%;
   }
-  
+
   /* Colorful theme - dark mode */
   :root.dark,
   :root.dark.theme-colorful {
@@ -183,9 +255,11 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 8%;
     --popover-foreground: 210 40% 98%;
-    --primary: 258 90% 66%; /* lighter brain color */
+    --primary: 258 90% 66%;
+    /* lighter brain color */
     --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 231 100% 66%; /* lighter space color */
+    --secondary: 231 100% 66%;
+    /* lighter space color */
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
@@ -196,7 +270,7 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 258 90% 66%;
-    
+
     /* Semantic colors - dark */
     --success: 142 71% 45%;
     --success-foreground: 0 0% 9%;
@@ -206,7 +280,7 @@
     --error-foreground: 0 0% 100%;
     --info: 217 91% 60%;
     --info-foreground: 0 0% 9%;
-    
+
     /* Brain theme colors - dark variants */
     --brain-50: 260 60% 15%;
     --brain-100: 260 60% 20%;
@@ -218,7 +292,7 @@
     --brain-700: 252 94% 75%;
     --brain-800: 251 95% 80%;
     --brain-900: 250 95% 85%;
-    
+
     /* Space theme colors - dark variants */
     --space-50: 234 62% 15%;
     --space-100: 234 62% 20%;
@@ -231,7 +305,7 @@
     --space-800: 223 100% 80%;
     --space-900: 222 100% 85%;
   }
-  
+
   /* Professional theme - dark mode */
   :root.dark.theme-professional {
     --background: 222 47% 11%;
@@ -253,7 +327,7 @@
     --border: 217 33% 17%;
     --input: 217 33% 17%;
     --ring: 217 91% 60%;
-    
+
     /* Semantic colors - dark professional */
     --success: 142 30% 50%;
     --success-foreground: 0 0% 9%;
@@ -263,7 +337,7 @@
     --error-foreground: 0 0% 100%;
     --info: 217 50% 55%;
     --info-foreground: 0 0% 9%;
-    
+
     /* Professional blue-gray palette - dark variants */
     --brain-50: 222 47% 13%;
     --brain-100: 222 47% 15%;
@@ -275,7 +349,7 @@
     --brain-700: 210 96% 74%;
     --brain-800: 207 97% 80%;
     --brain-900: 204 98% 86%;
-    
+
     --space-50: 222 47% 13%;
     --space-100: 217 41% 15%;
     --space-200: 215 37% 17%;
@@ -287,30 +361,35 @@
     --space-800: 198 97% 74%;
     --space-900: 195 98% 80%;
   }
-  
+
   * {
     border-color: hsl(var(--border));
   }
-  
+
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-family: 'Inter', sans-serif;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
-  
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-bold;
   }
-  
+
   h1 {
     @apply text-4xl md:text-5xl;
   }
-  
+
   h2 {
     @apply text-3xl md:text-4xl;
   }
-  
+
   h3 {
     @apply text-2xl md:text-3xl;
   }
@@ -383,33 +462,34 @@
 }
 
 @layer utilities {
+
   /* Safe area insets for iPhone notch and home indicator */
   .pt-safe {
     padding-top: env(safe-area-inset-top);
   }
-  
+
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }
-  
+
   .pl-safe {
     padding-left: env(safe-area-inset-left);
   }
-  
+
   .pr-safe {
     padding-right: env(safe-area-inset-right);
   }
-  
+
   .px-safe {
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
-  
+
   .py-safe {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
   }
-  
+
   /* Combined safe area utilities */
   .p-safe {
     padding-top: env(safe-area-inset-top);
@@ -417,12 +497,12 @@
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
-  
+
   /* Minimum heights including safe area */
   .min-h-screen-safe {
     min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   }
-  
+
   /* Touch handling utilities */
   .touch-pan-y {
     touch-action: pan-y;
@@ -439,7 +519,7 @@
   .touch-pinch-zoom {
     touch-action: pinch-zoom;
   }
-  
+
   /* Enable smooth touch scrolling on mobile */
   .touch-scroll {
     -webkit-overflow-scrolling: touch;
@@ -501,34 +581,37 @@ body.mobile-fullscreen-active {
 /* iOS-specific optimizations */
 @supports (-webkit-touch-callout: none) {
   /* iOS Safari specific styles */
-  
+
   /* Prevent text selection on touch */
   body {
     -webkit-user-select: none;
     -webkit-touch-callout: none;
     -webkit-tap-highlight-color: transparent;
   }
-  
+
   /* Allow text selection only where needed */
-  input, textarea, [contenteditable] {
+  input,
+  textarea,
+  [contenteditable] {
     -webkit-user-select: text;
     -webkit-touch-callout: default;
   }
-  
+
   /* Smooth momentum scrolling */
   .scrollable {
     -webkit-overflow-scrolling: touch;
     overflow-y: auto;
   }
-  
+
   /* Prevent bounce scroll on main body */
-  html, body {
+  html,
+  body {
     position: fixed;
     width: 100%;
     height: 100%;
     overflow: hidden;
   }
-  
+
   /* Main app container with scroll */
   .app-scroll-container {
     position: absolute;
@@ -539,30 +622,34 @@ body.mobile-fullscreen-active {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
-  
+
   /* Ensure touch targets meet Apple's 44x44 requirement */
-  button, a, .touch-target {
+  button,
+  a,
+  .touch-target {
     min-height: 44px;
     min-width: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
   }
-  
+
   /* Optimize for 120Hz ProMotion displays */
   * {
     -webkit-transform: translateZ(0);
     -webkit-backface-visibility: hidden;
   }
-  
+
   /* iOS-style backdrop blur */
   .ios-blur {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
-  
+
   /* Disable default iOS button styles */
-  button, input[type="button"], input[type="submit"] {
+  button,
+  input[type="button"],
+  input[type="submit"] {
     -webkit-appearance: none;
     appearance: none;
   }
@@ -590,11 +677,13 @@ body.mobile-fullscreen-active {
 }
 
 @keyframes pulse-edge {
+
   0%,
   100% {
     stroke-opacity: 1;
     filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.5));
   }
+
   50% {
     stroke-opacity: 0.6;
     filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.8));
@@ -657,6 +746,7 @@ input[type="range"]:hover::-moz-range-thumb {
     transform: translateX(0) scale(1);
     opacity: 0;
   }
+
   to {
     transform: var(--splay-transform, translateX(0) scale(1));
     opacity: 1;
@@ -667,6 +757,7 @@ input[type="range"]:hover::-moz-range-thumb {
   from {
     transform: var(--current-transform) scale(0.95);
   }
+
   to {
     transform: var(--current-transform) scale(1);
   }
@@ -682,9 +773,12 @@ input[type="range"]:hover::-moz-range-thumb {
 
 /* Splay button pulse effect */
 @keyframes splayPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
   }
+
   50% {
     box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
   }
@@ -700,6 +794,7 @@ input[type="range"]:hover::-moz-range-thumb {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -711,6 +806,7 @@ input[type="range"]:hover::-moz-range-thumb {
     opacity: 1;
     transform: translateY(0);
   }
+
   to {
     opacity: 0;
     transform: translateY(-10px);
@@ -748,18 +844,22 @@ input[type="range"]:hover::-moz-range-thumb {
     box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
     transform: scale(1);
   }
+
   25% {
     box-shadow: 0 0 0 10px rgba(59, 130, 246, 0.3);
     transform: scale(1.02);
   }
+
   50% {
     box-shadow: 0 0 0 20px rgba(59, 130, 246, 0.1);
     transform: scale(1);
   }
+
   75% {
     box-shadow: 0 0 0 10px rgba(59, 130, 246, 0.3);
     transform: scale(1.02);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
     transform: scale(1);
@@ -787,30 +887,55 @@ input[type="range"]:hover::-moz-range-thumb {
   border-left-color: rgba(59, 130, 246, 0.8) !important;
 }
 
-.matrix-node-child:hover ~ .matrix-node-child {
+.matrix-node-child:hover~.matrix-node-child {
   opacity: 0.7;
 }
 
 /* Family color classes for consistent theming */
-.family-blue { --family-accent: #3B82F6; }
-.family-green { --family-accent: #10B981; }
-.family-purple { --family-accent: #8B5CF6; }
-.family-amber { --family-accent: #F59E0B; }
-.family-red { --family-accent: #EF4444; }
-.family-pink { --family-accent: #EC4899; }
-.family-cyan { --family-accent: #06B6D4; }
-.family-lime { --family-accent: #84CC16; }
+.family-blue {
+  --family-accent: #3B82F6;
+}
+
+.family-green {
+  --family-accent: #10B981;
+}
+
+.family-purple {
+  --family-accent: #8B5CF6;
+}
+
+.family-amber {
+  --family-accent: #F59E0B;
+}
+
+.family-red {
+  --family-accent: #EF4444;
+}
+
+.family-pink {
+  --family-accent: #EC4899;
+}
+
+.family-cyan {
+  --family-accent: #06B6D4;
+}
+
+.family-lime {
+  --family-accent: #84CC16;
+}
 
 /* PWA Standalone Mode Fixes for iPhone */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
+
   /* Sticky positioning support for iOS Safari */
   nav.sticky {
     position: -webkit-sticky;
     position: sticky;
   }
-  
+
   /* When in standalone mode, adjust bottom navigation */
   @media (display-mode: standalone) {
+
     /* Ensure bottom navigation sticks properly with safe area */
     nav.sticky.bottom-0 {
       bottom: 0 !important;
@@ -820,16 +945,18 @@ input[type="range"]:hover::-moz-range-thumb {
       will-change: transform;
     }
   }
-  
+
   /* iOS Specific - using CSS environment variable check */
   @supports (-webkit-touch-callout: none) {
+
     /* Additional iOS PWA adjustments if needed */
     @media (display-mode: standalone) {
+
       /* Ensure smooth scrolling and proper viewport behavior */
       body {
         -webkit-overflow-scrolling: touch;
       }
-      
+
       /* Ensure the sticky navbar works properly in iOS PWA */
       nav.sticky {
         -webkit-backface-visibility: hidden;
@@ -841,6 +968,7 @@ input[type="range"]:hover::-moz-range-thumb {
 
 /* iOS Specific Input Styles to Prevent Zoom */
 @supports (-webkit-touch-callout: none) {
+
   /* Prevent iOS zoom on input focus */
   input[type="text"],
   input[type="time"],
@@ -854,9 +982,10 @@ input[type="range"]:hover::-moz-range-thumb {
   input[type="url"],
   textarea,
   select {
-    font-size: 16px !important; /* Minimum 16px prevents zoom */
+    font-size: 16px !important;
+    /* Minimum 16px prevents zoom */
   }
-  
+
   /* Additional iOS input styling */
   input,
   textarea,
@@ -866,7 +995,7 @@ input[type="range"]:hover::-moz-range-thumb {
     appearance: none;
     -webkit-text-size-adjust: 100%;
   }
-  
+
   /* Prevent double-tap zoom on buttons */
   button,
   a,
@@ -874,7 +1003,7 @@ input[type="range"]:hover::-moz-range-thumb {
   input[type="button"] {
     touch-action: manipulation;
   }
-  
+
   /* Disable user select on UI elements */
   .btn,
   button,
@@ -887,92 +1016,109 @@ input[type="range"]:hover::-moz-range-thumb {
 
 /* Theme-aware utility classes */
 @layer utilities {
+
   /* Primary colors */
   .bg-primary {
     background-color: hsl(var(--primary));
   }
+
   .text-primary {
     color: hsl(var(--primary));
   }
+
   .border-primary {
     border-color: hsl(var(--primary));
   }
-  
+
   /* Secondary colors */
   .bg-secondary {
     background-color: hsl(var(--secondary));
   }
+
   .text-secondary {
     color: hsl(var(--secondary));
   }
+
   .border-secondary {
     border-color: hsl(var(--secondary));
   }
-  
+
   /* Accent colors */
   .bg-accent {
     background-color: hsl(var(--accent));
   }
+
   .text-accent {
     color: hsl(var(--accent));
   }
+
   .border-accent {
     border-color: hsl(var(--accent));
   }
-  
+
   /* Hover states */
   .hover\:bg-primary:hover {
     background-color: hsl(var(--primary));
   }
+
   .hover\:text-primary:hover {
     color: hsl(var(--primary));
   }
+
   .hover\:border-primary:hover {
     border-color: hsl(var(--primary));
   }
-  
+
   /* Focus states */
   .focus\:ring-primary:focus {
     --tw-ring-color: hsl(var(--primary));
   }
-  
+
   /* Semantic colors */
   .bg-success {
     background-color: hsl(var(--success));
   }
+
   .text-success {
     color: hsl(var(--success));
   }
+
   .border-success {
     border-color: hsl(var(--success));
   }
-  
+
   .bg-error {
     background-color: hsl(var(--error));
   }
+
   .text-error {
     color: hsl(var(--error));
   }
+
   .border-error {
     border-color: hsl(var(--error));
   }
-  
+
   .bg-warning {
     background-color: hsl(var(--warning));
   }
+
   .text-warning {
     color: hsl(var(--warning));
   }
+
   .border-warning {
     border-color: hsl(var(--warning));
   }
-  
+
   .bg-info {
     background-color: hsl(var(--info));
   }
+
   .text-info {
     color: hsl(var(--info));
   }
+
   .border-info {
     border-color: hsl(var(--info));
   }
@@ -980,44 +1126,51 @@ input[type="range"]:hover::-moz-range-thumb {
 
 /* iOS-specific optimizations and styles */
 @layer utilities {
+
   /* CSS variables for iOS safe areas and viewport */
   :root {
     --safe-area-inset-top: env(safe-area-inset-top, 0px);
     --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
     --safe-area-inset-left: env(safe-area-inset-left, 0px);
     --safe-area-inset-right: env(safe-area-inset-right, 0px);
-    --vh: 1vh; /* Will be updated by IOSProvider */
+    --vh: 1vh;
+    /* Will be updated by IOSProvider */
   }
-  
+
   /* iOS device-specific styles */
   .ios-device {
     /* Prevent elastic bounce scrolling */
     overscroll-behavior: contain;
-    
+
     /* Optimize touch responsiveness */
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
-    
+
     /* Enable momentum scrolling in scrollable areas */
     .scrollable {
       -webkit-overflow-scrolling: touch;
       overflow-y: auto;
       overscroll-behavior-y: contain;
     }
-    
+
     /* Optimize input focus on iOS */
-    input, textarea, select {
-      font-size: 16px; /* Prevents zoom on focus */
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+      /* Prevents zoom on focus */
       -webkit-appearance: none;
       appearance: none;
     }
-    
+
     /* Better button interactions */
-    button, .btn, [role="button"] {
+    button,
+    .btn,
+    [role="button"] {
       -webkit-user-select: none;
       user-select: none;
       cursor: pointer;
-      
+
       /* Active state for touch feedback */
       &:active {
         transform: scale(0.98);
@@ -1025,50 +1178,51 @@ input[type="range"]:hover::-moz-range-thumb {
       }
     }
   }
-  
+
   /* iOS notch device styles (iPhone X and later) */
   .ios-notch {
+
     /* Additional padding for notch devices */
     .header-safe {
       padding-top: max(1rem, var(--safe-area-inset-top));
     }
-    
+
     .footer-safe {
       padding-bottom: max(1rem, var(--safe-area-inset-bottom));
     }
   }
-  
+
   /* iOS standalone PWA mode */
   .ios-standalone {
     /* Status bar area handling */
     padding-top: var(--safe-area-inset-top);
-    
+
     /* Home indicator safe area */
     padding-bottom: var(--safe-area-inset-bottom);
-    
+
     /* Adjust fixed elements */
     .fixed-top {
       top: var(--safe-area-inset-top);
     }
-    
+
     .fixed-bottom {
       bottom: var(--safe-area-inset-bottom);
     }
   }
-  
+
   /* Fix for 100vh on iOS (uses CSS variable set by IOSProvider) */
   .h-screen-ios {
     height: calc(var(--vh, 1vh) * 100);
   }
-  
+
   .min-h-screen-ios {
     min-height: calc(var(--vh, 1vh) * 100);
   }
-  
+
   .max-h-screen-ios {
     max-height: calc(var(--vh, 1vh) * 100);
   }
-  
+
   /* Haptic feedback visual indicators */
   .haptic-light::after {
     content: '';
@@ -1077,26 +1231,27 @@ input[type="range"]:hover::-moz-range-thumb {
     border-radius: inherit;
     opacity: 0;
     pointer-events: none;
-    background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, transparent 70%);
     animation: haptic-ripple 0.3s ease-out;
   }
-  
+
   @keyframes haptic-ripple {
     0% {
       transform: scale(0.8);
       opacity: 0.5;
     }
+
     100% {
       transform: scale(1.2);
       opacity: 0;
     }
   }
-  
+
   /* iOS keyboard avoidance helpers */
   .keyboard-avoiding {
     transition: transform 0.3s ease-out;
   }
-  
+
   .keyboard-visible {
     /* Will be dynamically adjusted by IOSProvider */
     transform: translateY(calc(-1 * var(--keyboard-height, 0px)));

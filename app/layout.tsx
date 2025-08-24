@@ -22,6 +22,8 @@ export const viewport = {
   maximumScale: 1,
   viewportFit: 'cover',
   userScalable: 'no',
+  // Add iOS-specific viewport settings
+  interactiveWidget: 'resizes-content',
 }
 
 export default function RootLayout({
@@ -37,6 +39,8 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Brain Space" />
         <meta name="format-detection" content="telephone=no" />
+        {/* iOS-specific meta tags for better scrolling */}
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no" />
         <link rel="apple-touch-icon" href="/android-chrome-192x192.png" />
         <link rel="apple-touch-icon" sizes="152x152" href="/android-chrome-192x192.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/android-chrome-192x192.png" />
