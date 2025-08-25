@@ -51,9 +51,3 @@ const testAuthState = {
 // Write the test auth state
 fs.writeFileSync(TEST_AUTH_PATH, JSON.stringify(testAuthState, null, 2))
 
-console.log('✅ Test authentication state created!')
-console.log(`📁 Saved to: ${TEST_AUTH_PATH}`)
-console.log('\nYou can now run tests with this auth state:')
-console.log('  pnpm exec playwright test --use-test-auth')
-console.log('\nNote: This is a simulated auth state for testing.')
-console.log('For real authentication, run: pnpm run test:e2e:setup-auth')

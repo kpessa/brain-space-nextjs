@@ -20,7 +20,7 @@ test.describe('Timebox Planning', () => {
     if (await timerDisplay.isVisible()) {
       const timeText = await timerDisplay.textContent()
       expect(timeText).toMatch(/\d{1,2}:\d{2}/)
-      console.log('Timer display:', timeText)
+
     }
     
     // Check for session controls
@@ -162,7 +162,7 @@ test.describe('Timebox Planning', () => {
       // Check if break timer started
       const breakIndicator = page.locator(':text("Break"), .break-timer')
       if (await breakIndicator.isVisible()) {
-        console.log('Break timer started after session')
+
       }
     }
   })
@@ -181,7 +181,7 @@ test.describe('Timebox Planning', () => {
       const todaySessions = page.locator(':text("Today"), .today-sessions')
       if (await todaySessions.isVisible()) {
         const todayText = await todaySessions.textContent()
-        console.log('Today\'s sessions:', todayText)
+
       }
     }
   })
@@ -194,8 +194,7 @@ test.describe('Timebox Planning', () => {
     if (await nodeSelector.isVisible()) {
       // Get available nodes
       const options = await nodeSelector.locator('option').allTextContents()
-      console.log('Available nodes:', options)
-      
+
       if (options.length > 1) {
         // Select a node
         await nodeSelector.selectOption({ index: 1 })
@@ -231,21 +230,21 @@ test.describe('Timebox Planning', () => {
       const focusTime = insights.locator(':text("Focus Time"), :text("Total Time")')
       if (await focusTime.isVisible()) {
         const timeText = await focusTime.textContent()
-        console.log('Focus time:', timeText)
+
       }
       
       // Check for completion rate
       const completionRate = insights.locator(':text("Completion"), :text("Complete")')
       if (await completionRate.isVisible()) {
         const rateText = await completionRate.textContent()
-        console.log('Completion rate:', rateText)
+
       }
       
       // Check for streak
       const streak = insights.locator(':text("Streak"), .streak')
       if (await streak.isVisible()) {
         const streakText = await streak.textContent()
-        console.log('Current streak:', streakText)
+
       }
     }
   })
@@ -281,7 +280,7 @@ test.describe('Timebox Planning', () => {
         // Verify session was interrupted
         const status = page.locator('.session-status, :text("Interrupted")')
         if (await status.isVisible()) {
-          console.log('Session marked as interrupted')
+
         }
       }
     }

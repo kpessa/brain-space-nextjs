@@ -380,7 +380,7 @@ describe('useNodesLogic', () => {
       
       // Skip test if we don't have enough visible nodes
       if (selectedCount < 2) {
-        console.warn('Not enough visible nodes for bulk delete test')
+
         return
       }
       

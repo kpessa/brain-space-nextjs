@@ -69,7 +69,7 @@ export function NodeUpdateModal({ isOpen, onClose, node, userId, userName }: Nod
         toast.showError('Failed to enhance update')
       }
     } catch (error) {
-      console.error('Error enhancing update:', error)
+
       toast.showError('Failed to enhance update')
     } finally {
       setIsEnhancing(false)
@@ -113,7 +113,7 @@ export function NodeUpdateModal({ isOpen, onClose, node, userId, userName }: Nod
       setIsAddingUpdate(false)
       toast.showSuccess('Update added successfully!')
     } catch (error) {
-      console.error('Failed to add update:', error)
+
       toast.showError('Failed to add update')
     } finally {
       setLoading(false)

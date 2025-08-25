@@ -8,7 +8,6 @@ test.use({
 
 test.describe('iOS Horizontal Overflow Fix', () => {
     test('should not have horizontal overflow on main pages', async ({ page }) => {
-        console.log('🔍 Testing horizontal overflow prevention...')
 
         // Navigate to journal page
         await page.goto('/journal')
@@ -18,8 +17,6 @@ test.describe('iOS Horizontal Overflow Fix', () => {
         const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
         const viewportWidth = await page.evaluate(() => window.innerWidth)
 
-        console.log(`Body width: ${bodyWidth}px, Viewport width: ${viewportWidth}px`)
-
         // Body should not be wider than viewport
         expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1) // Allow 1px tolerance
 
@@ -27,11 +24,9 @@ test.describe('iOS Horizontal Overflow Fix', () => {
         const docWidth = await page.evaluate(() => document.documentElement.scrollWidth)
         expect(docWidth).toBeLessThanOrEqual(viewportWidth + 1)
 
-        console.log('✅ No horizontal overflow detected')
     })
 
     test('should allow vertical scrolling but prevent horizontal', async ({ page }) => {
-        console.log('📱 Testing vertical vs horizontal scrolling...')
 
         await page.goto('/nodes')
         await expect(page).toHaveURL('/nodes')
@@ -39,8 +34,6 @@ test.describe('iOS Horizontal Overflow Fix', () => {
         // Get initial scroll position
         const initialScrollX = await page.evaluate(() => window.scrollX)
         const initialScrollY = await page.evaluate(() => window.scrollY)
-
-        console.log(`Initial scroll - X: ${initialScrollX}, Y: ${initialScrollY}`)
 
         // Try to scroll horizontally (should not work)
         await page.evaluate(() => window.scrollBy(100, 0))
@@ -50,20 +43,15 @@ test.describe('iOS Horizontal Overflow Fix', () => {
         await page.evaluate(() => window.scrollBy(0, 200))
         const afterVerticalScrollY = await page.evaluate(() => window.scrollY)
 
-        console.log(`After horizontal scroll - X: ${afterHorizontalScrollX}`)
-        console.log(`After vertical scroll - Y: ${afterVerticalScrollY}`)
-
         // Horizontal scroll should remain at 0
         expect(afterHorizontalScrollX).toBe(0)
 
         // Vertical scroll should have changed
         expect(afterVerticalScrollY).toBeGreaterThan(initialScrollY)
 
-        console.log('✅ Vertical scrolling works, horizontal scrolling prevented')
     })
 
     test('should handle touch scrolling properly', async ({ page }) => {
-        console.log('👆 Testing touch scrolling behavior...')
 
         await page.goto('/journal')
         await expect(page).toHaveURL('/journal')
@@ -76,8 +64,6 @@ test.describe('iOS Horizontal Overflow Fix', () => {
             bodyWidth: document.body.scrollWidth,
             viewportWidth: window.innerWidth
         }))
-
-        console.log('Page info:', pageInfo)
 
         // Page should be scrollable vertically
         expect(pageInfo.scrollHeight).toBeGreaterThan(pageInfo.clientHeight)
@@ -96,21 +82,17 @@ test.describe('iOS Horizontal Overflow Fix', () => {
         await page.waitForTimeout(500)
 
         const finalScrollY = await page.evaluate(() => window.scrollY)
-        console.log(`Scroll Y: ${initialScrollY} -> ${finalScrollY}`)
 
         // Should have scrolled vertically
         expect(finalScrollY).toBeGreaterThan(initialScrollY)
 
-        console.log('✅ Touch scrolling working correctly')
     })
 
     test('should work across all main pages', async ({ page }) => {
-        console.log('🌐 Testing all main pages for overflow issues...')
 
         const pages = ['/journal', '/nodes', '/braindump', '/matrix', '/todos']
 
         for (const pagePath of pages) {
-            console.log(`Testing ${pagePath}...`)
 
             await page.goto(pagePath)
             await expect(page).toHaveURL(pagePath)
@@ -135,7 +117,6 @@ test.describe('iOS Horizontal Overflow Fix', () => {
                 expect(finalScrollY).toBeGreaterThan(initialScrollY)
             }
 
-            console.log(`✅ ${pagePath} - No horizontal overflow, vertical scrolling works`)
         }
     })
 })

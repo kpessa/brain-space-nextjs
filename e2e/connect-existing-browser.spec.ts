@@ -18,8 +18,7 @@ test.describe('Connect to Existing Browser', () => {
     try {
       // Connect to existing Chrome instance
       const browser = await chromium.connectOverCDP('http://localhost:9222')
-      console.log('✅ Connected to existing Chrome browser')
-      
+
       // Get the existing context
       const contexts = browser.contexts()
       if (contexts.length === 0) {
@@ -39,24 +38,20 @@ test.describe('Connect to Existing Browser', () => {
       // Navigate to the app if not already there
       if (!page.url().includes('localhost:3000')) {
         await page.goto('http://localhost:3000')
-        console.log('📍 Navigated to Brain Space')
+
       }
       
       // Check if authenticated
       const isAuthenticated = !page.url().includes('/login')
       
       if (!isAuthenticated) {
-        console.log('⚠️  Please sign in with Google in the browser window')
-        console.log('   Waiting for authentication...')
-        
+
         // Wait for redirect away from login
         await page.waitForURL((url) => !url.pathname.includes('login'), {
           timeout: 120000
         })
       }
-      
-      console.log('✅ User is authenticated!')
-      
+
       // Save the storage state
       const storageDir = path.join(process.cwd(), 'e2e', 'storage-states')
       if (!fs.existsSync(storageDir)) {
@@ -65,21 +60,12 @@ test.describe('Connect to Existing Browser', () => {
       
       const authFile = path.join(storageDir, 'realUser.json')
       await context.storageState({ path: authFile })
-      
-      console.log(`💾 Authentication saved to: ${authFile}`)
-      console.log('\n✨ You can now run tests with your real account:')
-      console.log('   pnpm exec playwright test --project="Mobile Safari" e2e/authenticated-tests.spec.ts')
-      
+
       // Don't close the browser since it's the user's session
       browser.close = () => Promise.resolve()
       
     } catch (error) {
-      console.error('❌ Error:', error.message)
-      console.log('\n📝 Instructions:')
-      console.log('1. Close all Chrome windows')
-      console.log('2. Run: /Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --remote-debugging-port=9222')
-      console.log('3. Sign in to http://localhost:3000')
-      console.log('4. Run this test again')
+
       throw error
     }
   })
@@ -112,7 +98,7 @@ test.describe('Authenticated Mobile Safari Tests', () => {
     ]
     
     for (const { route, name } of pages) {
-      console.log(`📱 Testing ${name} on iPhone...`)
+
       await page.goto(route)
       await page.waitForLoadState('networkidle')
       
@@ -124,8 +110,7 @@ test.describe('Authenticated Mobile Safari Tests', () => {
         path: `test-results/iphone-${route.slice(1)}-authenticated.png`,
         fullPage: true 
       })
-      
-      console.log(`✅ ${name} works!`)
+
     }
     
     await context.close()
@@ -145,7 +130,7 @@ test.describe('Authenticated Mobile Safari Tests', () => {
     ]
     
     for (const { route, name } of pages) {
-      console.log(`📱 Testing ${name} on iPad...`)
+
       await page.goto(route)
       await page.waitForLoadState('networkidle')
       
@@ -157,8 +142,7 @@ test.describe('Authenticated Mobile Safari Tests', () => {
         path: `test-results/ipad-${route.slice(1)}-authenticated.png`,
         fullPage: true 
       })
-      
-      console.log(`✅ ${name} works!`)
+
     }
     
     await context.close()

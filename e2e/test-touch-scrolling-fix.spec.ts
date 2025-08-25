@@ -54,7 +54,7 @@ test.describe('Touch Scrolling Fix Verification', () => {
     // Check if scroll happened
     const scrolledY = await page.evaluate(() => window.scrollY)
     expect(scrolledY).toBeGreaterThan(0)
-    console.log(`Scrolled from ${initialScrollY} to ${scrolledY}`)
+
   })
 
   test('viewport height should be set correctly', async ({ page }) => {
@@ -75,7 +75,7 @@ test.describe('Touch Scrolling Fix Verification', () => {
     
     expect(vhValue.vhSet).toBe(true)
     expect(vhValue.vhValue).toBe(vhValue.expectedVh)
-    console.log('Viewport height properly set:', vhValue)
+
   })
 
   test('touch event listeners should be optimized', async ({ page }) => {
@@ -103,9 +103,7 @@ test.describe('Touch Scrolling Fix Verification', () => {
       
       return results
     })
-    
-    console.log('Touch listener audit:', touchListeners)
-    
+
     // There should be minimal elements blocking touch
     expect(touchListeners.elementsWithTouchListeners).toBeLessThan(5)
   })
@@ -147,8 +145,7 @@ test.describe('Touch Scrolling Fix Verification', () => {
     ]
     
     for (const route of routes) {
-      console.log(`Testing scroll in ${route}`)
-      
+
       await page.goto(route)
       await page.waitForLoadState('networkidle')
       
@@ -176,7 +173,7 @@ test.describe('Touch Scrolling Fix Verification', () => {
       })
       
       expect(canScroll).toBe(true)
-      console.log(`✓ ${route} scrolls correctly`)
+
     }
   })
 })

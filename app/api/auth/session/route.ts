@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       
       // In production, Firebase Admin SDK is required
       if (process.env.NODE_ENV === 'production') {
-        console.error('[Session API] Firebase Admin not initialized in production:', adminStatus)
+
         return NextResponse.json(
           { 
             error: 'Authentication service unavailable',
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Development fallback - set cookie without full verification
-      console.warn('[Session API] Development mode - Firebase Admin not initialized:', adminStatus)
+
       await setAuthCookie(token)
       
       return NextResponse.json({
@@ -63,10 +63,7 @@ export async function POST(request: NextRequest) {
     const authResult = await verifyAuth(`Bearer ${token}`)
     
     if (authResult.error || !authResult.user) {
-      console.error('[Session API] Token verification failed:', {
-        error: authResult.error,
-        mode: authResult.mode
-      })
+
       return NextResponse.json(
         { 
           error: authResult.error || 'Invalid token',
@@ -91,7 +88,7 @@ export async function POST(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('[Session API] Unexpected error:', error)
+
     return NextResponse.json(
       { 
         error: 'Failed to create session',
@@ -112,7 +109,7 @@ export async function DELETE(request: NextRequest) {
     await clearAuthCookie()
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Session deletion error:', error)
+
     return NextResponse.json(
       { error: 'Failed to delete session' },
       { status: 500 }
@@ -133,7 +130,7 @@ export async function GET() {
       const adminStatus = getFirebaseAdminStatus()
       
       if (process.env.NODE_ENV === 'production') {
-        console.error('[Session API] Firebase Admin not initialized in production:', adminStatus)
+
         return NextResponse.json(
           { 
             authenticated: false,
@@ -180,7 +177,7 @@ export async function GET() {
       }
     })
   } catch (error) {
-    console.error('[Session API] Unexpected error in GET:', error)
+
     return NextResponse.json(
       { 
         authenticated: false, 

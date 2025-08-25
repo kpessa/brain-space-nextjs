@@ -342,7 +342,7 @@ export async function POST(request: NextRequest) {
           break
       }
     } catch (aiError) {
-      console.error('AI categorization failed, using mock:', aiError)
+
       aiResponse = mockCategorization(events)
     }
     
@@ -355,7 +355,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ categorizations })
   } catch (error) {
-    console.error('Error in categorize-calendar-event:', error)
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to categorize events' },
       { status: 500 }

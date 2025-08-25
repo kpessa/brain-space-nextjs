@@ -23,8 +23,7 @@ test.describe('iOS Safari Touch Scrolling - Focused Tests', () => {
     
     // Get initial position
     const initialY = await page.evaluate(() => window.pageYOffset)
-    console.log('Initial scroll:', initialY)
-    
+
     // Perform touch scroll using mouse events (Playwright simulates touch as mouse on desktop)
     const centerX = 195 // Half of iPhone 13 width
     const startY = 400
@@ -40,8 +39,7 @@ test.describe('iOS Safari Touch Scrolling - Focused Tests', () => {
     await page.waitForTimeout(500)
     
     const scrolledY = await page.evaluate(() => window.pageYOffset)
-    console.log('Scrolled to:', scrolledY)
-    
+
     expect(scrolledY).toBeGreaterThan(initialY)
     
     // Test scroll back up
@@ -53,8 +51,7 @@ test.describe('iOS Safari Touch Scrolling - Focused Tests', () => {
     await page.waitForTimeout(500)
     
     const finalY = await page.evaluate(() => window.pageYOffset)
-    console.log('Final scroll:', finalY)
-    
+
     expect(finalY).toBeLessThan(scrolledY)
     
     await context.close()
@@ -78,9 +75,7 @@ test.describe('iOS Safari Touch Scrolling - Focused Tests', () => {
         return style.webkitOverflowScrolling === 'touch'
       })
     })
-    
-    console.log('Has webkit overflow scrolling touch:', scrollingStyle)
-    
+
     // Check for smooth scrolling
     const smoothScrolling = await page.evaluate(() => {
       const html = document.documentElement
@@ -94,9 +89,7 @@ test.describe('iOS Safari Touch Scrolling - Focused Tests', () => {
         scrollSmooth: htmlStyle.scrollBehavior === 'smooth' || bodyStyle.scrollBehavior === 'smooth'
       }
     })
-    
-    console.log('Smooth scrolling settings:', smoothScrolling)
-    
+
     await context.close()
   })
 
@@ -131,9 +124,7 @@ test.describe('iOS Safari Touch Scrolling - Focused Tests', () => {
         isScrollable: document.documentElement.scrollHeight > window.innerHeight
       }
     })
-    
-    console.log('Viewport info:', viewportInfo)
-    
+
     expect(viewportInfo.hasViewportMeta).toBe(true)
     expect(viewportInfo.viewportWidth).toBe(390) // iPhone 13 width
     
@@ -152,8 +143,7 @@ test.describe('iOS Safari Touch Scrolling - Focused Tests', () => {
     
     // Get initial viewport height
     const initialHeight = await page.evaluate(() => window.innerHeight)
-    console.log('Initial viewport height:', initialHeight)
-    
+
     // Focus on an input (would trigger keyboard on real device)
     const emailInput = page.locator('input[type="email"]').or(
       page.locator('input').first()
@@ -172,16 +162,14 @@ test.describe('iOS Safari Touch Scrolling - Focused Tests', () => {
       const hasVisualViewport = await page.evaluate(() => {
         return 'visualViewport' in window
       })
-      
-      console.log('Visual Viewport API available:', hasVisualViewport)
-      
+
       if (hasVisualViewport) {
         const visualViewportInfo = await page.evaluate(() => ({
           height: window.visualViewport?.height,
           width: window.visualViewport?.width,
           scale: window.visualViewport?.scale,
         }))
-        console.log('Visual viewport info:', visualViewportInfo)
+
       }
     }
     

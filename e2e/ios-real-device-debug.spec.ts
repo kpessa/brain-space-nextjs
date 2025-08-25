@@ -8,8 +8,7 @@ test.use({
 
 test.describe('iOS Real Device Debug', () => {
   test('should work on real iOS device', async ({ page }) => {
-    console.log('📱 Testing on real iOS device...')
-    
+
     // Navigate to journal page
     await page.goto('/journal')
     await expect(page).toHaveURL('/journal')
@@ -49,9 +48,7 @@ test.describe('iOS Real Device Debug', () => {
         scrollY: window.scrollY
       }
     })
-    
-    console.log('Device info:', deviceInfo)
-    
+
     // Verify iOS detection
     expect(deviceInfo.isIOS).toBe(true)
     
@@ -66,17 +63,14 @@ test.describe('iOS Real Device Debug', () => {
       await page.waitForTimeout(500)
       
       const finalScrollY = await page.evaluate(() => window.scrollY)
-      console.log(`Scroll test: ${initialScrollY} -> ${finalScrollY}`)
-      
+
       expect(finalScrollY).toBeGreaterThan(initialScrollY)
     }
-    
-    console.log('✅ Device test completed')
+
   })
   
   test('should check for PWA-specific issues', async ({ page }) => {
-    console.log('🔍 Checking PWA-specific issues...')
-    
+
     await page.goto('/journal')
     await expect(page).toHaveURL('/journal')
     
@@ -106,18 +100,15 @@ test.describe('iOS Real Device Debug', () => {
         htmlOverflow: htmlStyle.overflow
       }
     })
-    
-    console.log('PWA info:', pwaInfo)
-    
+
     // Log any potential issues
     if (pwaInfo.bodyPosition === 'fixed' || pwaInfo.htmlPosition === 'fixed') {
-      console.log('⚠️  WARNING: Fixed positioning detected - this may prevent scrolling')
+
     }
     
     if (pwaInfo.bodyOverflow === 'hidden' || pwaInfo.htmlOverflow === 'hidden') {
-      console.log('⚠️  WARNING: Overflow hidden detected - this may prevent scrolling')
+
     }
-    
-    console.log('✅ PWA check completed')
+
   })
 })

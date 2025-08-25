@@ -39,7 +39,7 @@ export async function getCSRFToken(): Promise<string> {
     
     return newToken
   } catch (error) {
-    console.error('Error getting CSRF token:', error)
+
     // If cookies are not available, just return a new token
     return generateCSRFToken()
   }

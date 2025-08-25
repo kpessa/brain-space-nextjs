@@ -234,8 +234,7 @@ export async function registerServiceWorker() {
   if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
     try {
       const registration = await navigator.serviceWorker.register('/sw.js')
-      console.log('Service Worker registered:', registration)
-      
+
       // Check for updates periodically
       setInterval(() => {
         registration.update()
@@ -243,7 +242,7 @@ export async function registerServiceWorker() {
       
       return registration
     } catch (error) {
-      console.error('Service Worker registration failed:', error)
+
     }
   }
 }

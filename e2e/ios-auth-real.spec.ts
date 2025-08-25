@@ -13,26 +13,18 @@ test.describe('Real User Authentication Setup', () => {
     
     const context = await browser.newContext()
     const page = await context.newPage()
-    
-    console.log('🔐 Please authenticate with your Google account')
-    console.log('================================================')
-    
+
     await page.goto('http://localhost:3000/login')
     
     // Click Continue with Google
     await page.click('button:has-text("Continue with Google")')
-    
-    console.log('\n⚠️  Complete Google sign-in in the browser window')
-    console.log('   Email: kpessa@gmail.com')
-    
+
     // Wait for redirect after successful auth (with longer timeout)
     try {
       await page.waitForURL((url) => !url.pathname.includes('login'), {
         timeout: 120000 // 2 minutes
       })
-      
-      console.log('✅ Authentication successful!')
-      
+
       // Save auth state
       const storageDir = path.join(process.cwd(), 'e2e', 'storage-states')
       if (!fs.existsSync(storageDir)) {
@@ -41,12 +33,9 @@ test.describe('Real User Authentication Setup', () => {
       
       const authFile = path.join(storageDir, 'realUser.json')
       await context.storageState({ path: authFile })
-      
-      console.log(`💾 Auth state saved to: ${authFile}`)
-      console.log('\n✨ You can now run tests with your real account!')
-      
+
     } catch (error) {
-      console.error('❌ Authentication failed or timed out')
+
       throw error
     } finally {
       await browser.close()
@@ -134,10 +123,10 @@ test.describe('Authenticated iOS Tests', () => {
       await page.waitForTimeout(500)
       
       const scrollY = await page.evaluate(() => window.pageYOffset)
-      console.log('Scrolled to:', scrollY)
+
       expect(scrollY).toBeGreaterThan(0)
     } else {
-      console.log('Page not scrollable - not enough content')
+
     }
     
     await context.close()
@@ -161,7 +150,7 @@ test.describe('Mobile Safari with Real Auth', () => {
     const routes = ['/journal', '/nodes', '/matrix', '/braindump', '/timebox']
     
     for (const route of routes) {
-      console.log(`Testing ${route}...`)
+
       await page.goto(route)
       await page.waitForLoadState('networkidle')
       
@@ -172,8 +161,7 @@ test.describe('Mobile Safari with Real Auth', () => {
       await page.screenshot({ 
         path: `test-results/mobile-safari-${route.slice(1)}.png` 
       })
-      
-      console.log(`✅ ${route} accessible`)
+
     }
     
     await context.close()

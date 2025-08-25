@@ -4,15 +4,25 @@ import dayjs from 'dayjs'
 
 describe('TimeboxStore', () => {
   beforeEach(() => {
-    // Reset store state before each test
+    // Complete state reset to prevent memory accumulation
     useTimeboxStore.setState({
       selectedDate: dayjs().format('YYYY-MM-DD'),
       timeSlots: [],
+      timeSlotsMap: new Map(),
+      tasksMap: new Map(),
       draggedTask: null,
       hoveredSlotId: null,
       isLoading: false,
       error: null,
-    })
+      calendarEvents: [],
+    }, true) // Force complete replacement
+  })
+
+  afterEach(() => {
+    // Clear all intervals/timeouts
+    jest.clearAllTimers()
+    // Clear mocks
+    jest.clearAllMocks()
   })
 
   describe('Task Management', () => {
@@ -22,15 +32,11 @@ describe('TimeboxStore', () => {
       // Store should already have slots initialized
       expect(result.current.timeSlots.length).toBeGreaterThan(0)
 
+      // Create minimal task to reduce memory footprint
       const task = {
         id: 'task-1',
         label: 'Test Task',
         nodeId: 'node-1',
-        importance: 8,
-        urgency: 7,
-        category: 'task' as const,
-        userId: 'user-1',
-        timeboxDate: '2024-01-01',
       }
 
       const slotId = result.current.timeSlots[0].id

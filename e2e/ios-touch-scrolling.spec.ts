@@ -17,8 +17,7 @@ test.describe('iOS Touch Scrolling', () => {
     
     // Get initial scroll position
     const initialScrollY = await page.evaluate(() => window.scrollY)
-    console.log('Initial scroll position:', initialScrollY)
-    
+
     // Simulate touch scroll down
     await page.locator('body').dispatchEvent('touchstart', {
       touches: [{ clientX: 200, clientY: 400 }],
@@ -42,8 +41,7 @@ test.describe('iOS Touch Scrolling', () => {
     
     // Check if scrolled
     const scrolledY = await page.evaluate(() => window.scrollY)
-    console.log('Scrolled position:', scrolledY)
-    
+
     // Verify scroll happened
     expect(scrolledY).toBeGreaterThanOrEqual(initialScrollY)
     
@@ -86,8 +84,7 @@ test.describe('iOS Touch Scrolling', () => {
     await page.waitForTimeout(1000)
     
     const finalScrollY = await page.evaluate(() => window.scrollY)
-    console.log('Final scroll after momentum:', finalScrollY)
-    
+
     expect(finalScrollY).toBeGreaterThan(0)
     
     await context.close()
@@ -132,8 +129,7 @@ test.describe('iOS Touch Scrolling', () => {
         return document.querySelector('.refreshing') !== null ||
                document.querySelector('[aria-busy="true"]') !== null
       })
-      
-      console.log('Pull-to-refresh triggered:', refreshing)
+
     }
     
     await context.close()
@@ -165,9 +161,7 @@ test.describe('iOS Touch Scrolling', () => {
         touchAction: bodyStyle.touchAction,
       }
     })
-    
-    console.log('Bounce protection styles:', hasBounceProtection)
-    
+
     // Test overscroll at top
     await page.evaluate(() => window.scrollTo(0, 0))
     
@@ -220,8 +214,7 @@ test.describe('iOS Touch Scrolling', () => {
     
     // Check if any horizontal scroll or navigation occurred
     const horizontalScroll = await page.evaluate(() => window.scrollX)
-    console.log('Horizontal scroll position:', horizontalScroll)
-    
+
     await context.close()
   })
 
@@ -240,9 +233,7 @@ test.describe('iOS Touch Scrolling', () => {
       const viewport = document.querySelector('meta[name="viewport"]')
       return viewport?.getAttribute('content')
     })
-    
-    console.log('Viewport settings:', viewportSettings)
-    
+
     // Check if zoom is disabled (user-scalable=no)
     const zoomDisabled = viewportSettings?.includes('user-scalable=no')
     
@@ -270,10 +261,9 @@ test.describe('iOS Touch Scrolling', () => {
       const scale = await page.evaluate(() => {
         return window.visualViewport?.scale || 1
       })
-      
-      console.log('Zoom scale after pinch:', scale)
+
     } else {
-      console.log('Zoom is disabled by viewport meta tag')
+
       expect(zoomDisabled).toBe(true)
     }
     

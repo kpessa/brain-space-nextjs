@@ -41,7 +41,7 @@ try {
         connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true })
       }
     } catch (error) {
-      console.warn('Failed to connect to Auth emulator:', error)
+
     }
 
     try {
@@ -50,7 +50,7 @@ try {
         connectFirestoreEmulator(db, 'localhost', 8080)
       }
     } catch (error) {
-      console.warn('Failed to connect to Firestore emulator:', error)
+
     }
 
     try {
@@ -59,13 +59,13 @@ try {
         connectStorageEmulator(storage, 'localhost', 9199)
       }
     } catch (error) {
-      console.warn('Failed to connect to Storage emulator:', error)
+
     }
   } else if (typeof window !== 'undefined') {
 
   }
 } catch (error) {
-  console.error('Failed to initialize Firebase:', error)
+
   throw error
 }
 

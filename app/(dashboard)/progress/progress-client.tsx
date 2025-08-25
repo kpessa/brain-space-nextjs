@@ -122,7 +122,7 @@ export default function ProgressClient({ userId }: { userId: string }) {
   ]
 
   return (
-      <div className="bg-gradient-to-br from-primary via-secondary to-primary -m-8 p-8 min-h-[calc(100vh-4rem)]">
+      <div className="bg-gradient-to-br from-primary via-secondary to-primary -m-8 p-8 min-h-[calc(var(--vh,1vh)*100-4rem)]">
         <div className="max-w-6xl mx-auto">
           <header className="text-center mb-8">
             <div className="flex items-center justify-center gap-3 mb-4">

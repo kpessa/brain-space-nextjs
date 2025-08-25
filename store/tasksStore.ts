@@ -617,11 +617,19 @@ export function useTasksStoreSSR() {
   
   // Return safe defaults during SSR to prevent hydration mismatches
   if (!isHydrated) {
-    return {
+    const sseState = {
       ...storeData,
       selectedCalendarIds: new Set<string>(),
-      selectedCalendars: [],
     }
+    // Add the getter for selectedCalendars
+    Object.defineProperty(sseState, 'selectedCalendars', {
+      get() {
+        return Array.from(this.selectedCalendarIds)
+      },
+      enumerable: true,
+      configurable: true
+    })
+    return sseState
   }
   
   return storeData

@@ -205,7 +205,7 @@ test.describe('MCP Browser API Integration Tests', () => {
     
     // Execute some JavaScript that logs to console
     await page.evaluate(() => {
-      console.log('Test message from MCP browser test')
+
     })
     
     expect(consoleMessages).toContain('Test message from MCP browser test')
@@ -227,7 +227,7 @@ test.describe('MCP Browser API Integration Tests', () => {
     const hasHTMLOrJSON = requests.some(url => url.endsWith('/') || url.includes('.json') || url.includes('.html'))
     
     // Log requests for debugging
-    console.log('Total requests captured:', requests.length)
+
     console.log('Sample requests:', requests.slice(0, 5))
     
     expect(hasJavaScript).toBe(true)
@@ -272,8 +272,7 @@ test.describe('MCP Browser API Integration Tests', () => {
     })
     
     // Log the detection results
-    console.log('iOS Detection Results:', iosDetection)
-    
+
     // The test passes regardless, but logs useful info
     expect(iosDetection).toHaveProperty('isIOS')
   })

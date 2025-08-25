@@ -63,7 +63,7 @@ class RealtimeSyncService {
         onSync?.('synced')
       },
       (error) => {
-        console.error('Node sync error:', error)
+
         this.syncStatus = 'error'
         onError?.(error)
         onSync?.('error')

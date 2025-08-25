@@ -14,6 +14,57 @@ jest.mock('@/lib/firebase-admin', () => ({
   },
 }))
 
+// Mock NextRequest and NextResponse
+jest.mock('next/server', () => ({
+  NextRequest: class {
+    constructor(url, init = {}) {
+      this.url = url
+      this.method = init.method || 'GET'
+      this.headers = new Headers(init.headers || {})
+      this.body = init.body
+      this._bodyUsed = false
+    }
+    
+    async json() {
+      if (this._bodyUsed) throw new Error('Body already read')
+      this._bodyUsed = true
+      return JSON.parse(this.body)
+    }
+    
+    async text() {
+      if (this._bodyUsed) throw new Error('Body already read')
+      this._bodyUsed = true
+      return this.body
+    }
+  },
+  NextResponse: class {
+    static json(body, init = {}) {
+      return {
+        body,
+        status: init.status || 200,
+        headers: new Headers(init.headers || {}),
+        json: async () => body,
+        text: async () => JSON.stringify(body)
+      }
+    }
+  },
+  Response: class {
+    constructor(body, init = {}) {
+      this.body = body
+      this.status = init.status || 200
+      this.headers = new Headers(init.headers || {})
+    }
+    
+    async json() {
+      return typeof this.body === 'string' ? JSON.parse(this.body) : this.body
+    }
+    
+    async text() {
+      return typeof this.body === 'string' ? this.body : JSON.stringify(this.body)
+    }
+  }
+}))
+
 import { POST } from '@/app/api/ai/categorize/route'
 import { NextRequest } from 'next/server'
 import * as authHelpers from '@/lib/auth-helpers'

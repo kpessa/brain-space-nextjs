@@ -19,10 +19,10 @@ test.describe('Mobile Safari Scrolling - Test User', () => {
     // Check URL - if redirected to login, the auth didn't work
     const url = page.url()
     if (url.includes('/login')) {
-      console.log('⚠️ Authentication not working, trying direct navigation...')
+
       // Skip auth check and continue
     } else {
-      console.log('✅ Authenticated! URL:', url)
+
     }
     
     // Take screenshot regardless
@@ -41,24 +41,20 @@ test.describe('Mobile Safari Scrolling - Test User', () => {
         hasContent: document.body.textContent?.length || 0
       }
     })
-    
-    console.log('📜 Page info:', scrollInfo)
-    
+
     if (scrollInfo.isScrollable) {
       // Get initial scroll position
       const initialScroll = await page.evaluate(() => window.scrollY)
-      console.log(`Initial scroll position: ${initialScroll}px`)
-      
+
       // Scroll down
       await page.evaluate(() => window.scrollBy(0, 300))
       await page.waitForTimeout(500)
       
       // Verify scroll happened
       const newScroll = await page.evaluate(() => window.scrollY)
-      console.log(`New scroll position: ${newScroll}px`)
-      
+
       if (newScroll > initialScroll) {
-        console.log('✅ Scrolling works on Mobile Safari!')
+
       }
       
       // Take screenshot after scroll
@@ -67,7 +63,7 @@ test.describe('Mobile Safari Scrolling - Test User', () => {
         fullPage: false 
       })
     } else {
-      console.log('ℹ️ Page not scrollable')
+
     }
   })
   
@@ -80,22 +76,18 @@ test.describe('Mobile Safari Scrolling - Test User', () => {
     await page.waitForTimeout(2000)
     
     const url = page.url()
-    console.log('Current URL:', url)
-    
+
     // Get page dimensions
     const dimensions = await page.evaluate(() => ({
       scrollHeight: document.documentElement.scrollHeight,
       clientHeight: document.documentElement.clientHeight,
       scrollY: window.scrollY
     }))
-    
-    console.log('Page dimensions:', dimensions)
-    
+
     // Simulate touch scroll
     const viewport = page.viewportSize()
     if (viewport && dimensions.scrollHeight > dimensions.clientHeight) {
-      console.log('Attempting touch scroll...')
-      
+
       const centerX = viewport.width / 2
       const startY = viewport.height * 0.7
       const endY = viewport.height * 0.3
@@ -114,13 +106,12 @@ test.describe('Mobile Safari Scrolling - Test User', () => {
       
       // Check result
       const newScrollY = await page.evaluate(() => window.scrollY)
-      console.log(`Scrolled from ${dimensions.scrollY}px to ${newScrollY}px`)
-      
+
       if (newScrollY > dimensions.scrollY) {
-        console.log('✅ Touch scrolling simulation successful!')
+
       }
     } else {
-      console.log('ℹ️ Page not scrollable or viewport not available')
+
     }
     
     // Take screenshot
@@ -130,34 +121,25 @@ test.describe('Mobile Safari Scrolling - Test User', () => {
   })
   
   test('WebKit browser verification', async ({ page, browserName }) => {
-    console.log('🔍 Verifying browser engine...')
-    console.log('Browser name from Playwright:', browserName)
-    
+
     // Navigate to any page
     await page.goto('/')
     
     // Check user agent
     const userAgent = await page.evaluate(() => navigator.userAgent)
-    console.log('User Agent:', userAgent)
-    
+
     // Check if it's WebKit/Safari
     const isWebKit = userAgent.includes('WebKit') && !userAgent.includes('Chrome')
     const isMobile = userAgent.includes('Mobile')
     const isiPhone = userAgent.includes('iPhone')
-    
-    console.log('Browser detection:')
-    console.log('  - Is WebKit/Safari:', isWebKit)
-    console.log('  - Is Mobile:', isMobile)
-    console.log('  - Is iPhone:', isiPhone)
-    
+
     // Check viewport
     const viewport = await page.evaluate(() => ({
       width: window.innerWidth,
       height: window.innerHeight,
       devicePixelRatio: window.devicePixelRatio
     }))
-    console.log('Viewport:', viewport)
-    
+
     // This should be WebKit when run with --project="Mobile Safari"
     expect(browserName).toBe('webkit')
     console.log('✅ Confirmed running on WebKit (Safari engine)')

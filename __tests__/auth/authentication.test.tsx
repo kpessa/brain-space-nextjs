@@ -73,8 +73,9 @@ describe('Authentication Flow', () => {
 
       render(<FirebaseAuthHandler />)
 
+      // Initially shows "Redirecting..." status
       await waitFor(() => {
-        expect(screen.getByText('Setting up your session...')).toBeInTheDocument()
+        expect(screen.getByText('Redirecting...')).toBeInTheDocument()
       })
 
       await waitFor(() => {
@@ -159,13 +160,16 @@ describe('Authentication Flow', () => {
       expect(unsubscribe).toHaveBeenCalled()
     })
 
-    it('handles refresh button click on error', async () => {
-      // Mock window.location.reload
-      const originalReload = window.location.reload
-      window.location.reload = jest.fn()
+    it('handles back to login button click on error', async () => {
+      // Mock failed auth
+      const mockUser = {
+        uid: 'test-uid',
+        email: 'test@example.com',
+        getIdToken: jest.fn().mockRejectedValue(new Error('Token generation failed')),
+      }
 
       mockOnAuthStateChanged.mockImplementation((auth, callback) => {
-        setTimeout(() => callback(null), 100)
+        setTimeout(() => callback(mockUser), 100)
         return jest.fn()
       })
 
@@ -173,18 +177,15 @@ describe('Authentication Flow', () => {
 
       // Wait for error state
       await waitFor(() => {
-        const refreshButton = screen.getByRole('button', { name: /refresh page/i })
-        expect(refreshButton).toBeInTheDocument()
+        const backButton = screen.getByRole('button', { name: /back to login/i })
+        expect(backButton).toBeInTheDocument()
       }, { timeout: 5000 })
 
-      // Click refresh button
-      const refreshButton = screen.getByRole('button', { name: /refresh page/i })
-      fireEvent.click(refreshButton)
+      // Click back to login button
+      const backButton = screen.getByRole('button', { name: /back to login/i })
+      fireEvent.click(backButton)
 
-      expect(window.location.reload).toHaveBeenCalled()
-
-      // Restore original reload
-      window.location.reload = originalReload
+      expect(mockPush).toHaveBeenCalledWith('/login')
     })
   })
 })

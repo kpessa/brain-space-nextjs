@@ -13,16 +13,14 @@ test.describe('Real User - Mobile Safari (WebKit)', () => {
       storageState: 'e2e/storage-states/realUser.json'
     })
     const page = await context.newPage()
-    
-    console.log('📱 Testing Journal on iPhone 13 with WebKit...')
+
     await page.goto('/journal')
     await page.waitForLoadState('networkidle')
     
     // Should NOT redirect to login
     const url = page.url()
     expect(url).not.toContain('/login')
-    console.log('✅ Authenticated! Current URL:', url)
-    
+
     // Take screenshot
     await page.screenshot({ 
       path: 'test-results/webkit-iphone-journal.png',
@@ -48,7 +46,7 @@ test.describe('Real User - Mobile Safari (WebKit)', () => {
     ]
     
     for (const route of routes) {
-      console.log(`🧪 Testing ${route.name} on Mobile Safari...`)
+
       await page.goto(route.path)
       await page.waitForLoadState('networkidle')
       
@@ -59,8 +57,7 @@ test.describe('Real User - Mobile Safari (WebKit)', () => {
       await page.screenshot({ 
         path: `test-results/webkit-iphone-${route.name.toLowerCase().replace(' ', '-')}.png` 
       })
-      
-      console.log(`✅ ${route.name} works!`)
+
     }
     
     await context.close()
@@ -73,8 +70,7 @@ test.describe('Real User - Mobile Safari (WebKit)', () => {
       storageState: 'e2e/storage-states/realUser.json'
     })
     const page = await context.newPage()
-    
-    console.log('📜 Testing scrolling with real data...')
+
     await page.goto('/journal')
     await page.waitForLoadState('networkidle')
     
@@ -87,14 +83,13 @@ test.describe('Real User - Mobile Safari (WebKit)', () => {
     })
     
     if (isScrollable) {
-      console.log('✅ Page has scrollable content')
-      
+
       // Scroll down
       await page.evaluate(() => window.scrollBy(0, 200))
       await page.waitForTimeout(500)
       
       const scrollY = await page.evaluate(() => window.pageYOffset)
-      console.log(`📍 Scrolled to: ${scrollY}px`)
+
       expect(scrollY).toBeGreaterThan(0)
     } else {
       console.log('ℹ️ Page not scrollable (not enough content)')
@@ -109,8 +104,7 @@ test.describe('Real User - Mobile Safari (WebKit)', () => {
       storageState: 'e2e/storage-states/realUser.json'
     })
     const page = await context.newPage()
-    
-    console.log('📱 Testing on iPad Pro with WebKit...')
+
     await page.goto('/nodes')
     await page.waitForLoadState('networkidle')
     
@@ -122,9 +116,7 @@ test.describe('Real User - Mobile Safari (WebKit)', () => {
       path: 'test-results/webkit-ipad-nodes.png',
       fullPage: true 
     })
-    
-    console.log('✅ iPad Safari test complete!')
-    
+
     await context.close()
   })
 })

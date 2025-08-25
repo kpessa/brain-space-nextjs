@@ -152,7 +152,7 @@ export default function TodosClient({ userId }: { userId: string }) {
   const upcomingTodos = getUpcomingTodos(7).filter(t => !t.completed && !todayTodos.includes(t))
 
   return (
-      <div className="bg-gradient-to-br from-primary via-secondary to-primary -m-8 p-8 min-h-[calc(100vh-4rem)]">
+      <div className="bg-gradient-to-br from-primary via-secondary to-primary -m-8 p-8 min-h-[calc(var(--vh,1vh)*100-4rem)]">
         <div className="max-w-7xl mx-auto">
           <header className="mb-8">
             <h1 className="text-4xl font-bold text-primary-foreground mb-2">Unified Todos</h1>

@@ -72,7 +72,7 @@ const storeMappings = {
 };
 
 async function verifyStoreCompatibility() {
-  console.log('🔍 Verifying Store Consolidation Backward Compatibility\n');
+
   console.log('=' .repeat(60));
   
   const results = {
@@ -82,8 +82,7 @@ async function verifyStoreCompatibility() {
   };
   
   for (const [storeName, config] of Object.entries(storeMappings)) {
-    console.log(`\n📦 Checking ${storeName}...`);
-    
+
     try {
       // Try to import the store
       const storePath = join(__dirname, '..', 'store', storeName);
@@ -109,20 +108,20 @@ async function verifyStoreCompatibility() {
           );
           
           if (hasReexport && hasExpectedExports) {
-            console.log(`  ✅ Re-export from ${config.consolidatedIn} found`);
+
             console.log(`  ✅ Expected exports present: ${config.expectedExports.join(', ')}`);
             results.passed.push(storeName);
           } else if (!hasReexport) {
-            console.log(`  ⚠️  Custom compatibility wrapper detected`);
+
             if (hasExpectedExports) {
               console.log(`  ✅ Expected exports present: ${config.expectedExports.join(', ')}`);
               results.passed.push(storeName);
             } else {
-              console.log(`  ❌ Missing expected exports`);
+
               results.failed.push(storeName);
             }
           } else {
-            console.log(`  ❌ Missing expected exports`);
+
             results.failed.push(storeName);
           }
           
@@ -132,44 +131,42 @@ async function verifyStoreCompatibility() {
           }
           
         } else {
-          console.log(`  ❌ Compatibility shim not found at store/${storeName}.ts`);
+
           results.failed.push(storeName);
         }
         
       } catch (error) {
-        console.log(`  ❌ Error checking store: ${error.message}`);
+
         results.failed.push(storeName);
       }
       
     } catch (error) {
-      console.log(`  ❌ Failed to verify: ${error.message}`);
+
       results.failed.push(storeName);
     }
   }
   
   // Print summary
   console.log('\n' + '=' .repeat(60));
-  console.log('📊 SUMMARY\n');
-  
+
   console.log(`✅ Passed: ${results.passed.length}/${Object.keys(storeMappings).length}`);
   if (results.passed.length > 0) {
     console.log(`   ${results.passed.join(', ')}`);
   }
   
   if (results.failed.length > 0) {
-    console.log(`\n❌ Failed: ${results.failed.length}`);
+
     console.log(`   ${results.failed.join(', ')}`);
   }
   
   if (results.warnings.length > 0) {
-    console.log(`\n⚠️  Warnings: ${results.warnings.length}`);
+
     results.warnings.forEach(w => console.log(`   - ${w}`));
   }
   
   // Check for files that might be using old imports
   console.log('\n' + '=' .repeat(60));
-  console.log('🔍 Checking for potential breaking changes in components...\n');
-  
+
   const fs = require('fs');
   const path = require('path');
   const glob = require('glob');
@@ -192,28 +189,27 @@ async function verifyStoreCompatibility() {
   });
   
   if (issueFiles.length > 0) {
-    console.log(`⚠️  Found ${issueFiles.length} files with potential issues:`);
+
     issueFiles.forEach(({ file, issue }) => {
-      console.log(`   - ${file}: ${issue}`);
+
     });
   } else {
-    console.log('✅ No obvious breaking changes detected in component files');
+
   }
   
   // Final verdict
   console.log('\n' + '=' .repeat(60));
   if (results.failed.length === 0 && issueFiles.length === 0) {
-    console.log('✅ VERDICT: Store consolidation backward compatibility verified!');
+
     process.exit(0);
   } else {
-    console.log('❌ VERDICT: Some compatibility issues detected');
-    console.log('   Run "pnpm run dev" to test the application');
+
     process.exit(1);
   }
 }
 
 // Run verification
 verifyStoreCompatibility().catch(error => {
-  console.error('Fatal error:', error);
+
   process.exit(1);
 });

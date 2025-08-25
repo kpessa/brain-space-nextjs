@@ -316,7 +316,7 @@ IMPORTANT:
         parsed.recommendations.forEach((rec: unknown, index: number) => {
           const recommendation = rec as Record<string, unknown>
           if (!recommendation.slotId || !recommendation.taskId) {
-            console.warn(`Invalid recommendation at index ${index}:`, rec)
+
           }
         })
         
@@ -326,8 +326,7 @@ IMPORTANT:
           summary: parsed.summary || undefined
         }
       } catch (parseError) {
-        console.error('Failed to parse Gemini response:', parseError)
-        console.error('Raw text:', text)
+
         throw new Error(`Failed to parse AI response: ${parseError}`)
       }
     }
@@ -362,7 +361,7 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json(result)
   } catch (error) {
-    console.error('Error generating timebox recommendations:', error)
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to generate recommendations' },
       { status: 500 }

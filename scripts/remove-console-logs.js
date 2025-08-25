@@ -44,7 +44,7 @@ function removeConsoleLogs(filePath) {
 
   if (content !== originalContent) {
     fs.writeFileSync(filePath, content, 'utf8');
-    console.log(`✓ ${filePath} - Removed ${count} console.log statements`);
+
     return count;
   }
   
@@ -57,8 +57,6 @@ const files = glob.sync('**/*.{ts,tsx,js,jsx}', {
   nodir: true
 });
 
-console.log(`Found ${files.length} files to process...\n`);
-
 let totalRemoved = 0;
 let filesModified = 0;
 
@@ -69,5 +67,3 @@ files.forEach(file => {
     filesModified++;
   }
 });
-
-console.log(`\n✨ Complete! Removed ${totalRemoved} console.log statements from ${filesModified} files.`);

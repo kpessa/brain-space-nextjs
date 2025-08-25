@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       lastUpdated: data?.updatedAt?.toDate() || null,
     })
   } catch (error) {
-    console.error('Error checking calendar auth:', error)
+
     return NextResponse.json(
       { error: 'Failed to check calendar authorization' },
       { status: 500 }
@@ -84,7 +84,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error disconnecting calendar:', error)
+
     return NextResponse.json(
       { error: 'Failed to disconnect calendar' },
       { status: 500 }

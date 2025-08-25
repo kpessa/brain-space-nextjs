@@ -15,8 +15,7 @@ test.describe('MCP Mobile Safari Touch Scrolling Tests', () => {
   }
 
   test('MCP: Test scrolling on all major routes', async () => {
-    console.log('Starting MCP Mobile Safari scroll tests...')
-    
+
     // Test routes that commonly have scroll issues
     const routesToTest = [
       { path: '/', name: 'Home', scrollTarget: 300 },
@@ -33,47 +32,37 @@ test.describe('MCP Mobile Safari Touch Scrolling Tests', () => {
       console.log(`Testing route: ${route.name} (${route.path})`)
       
       // Navigate to route
-      console.log(`mcp__playwright__browser_navigate: ${route.path}`)
-      
+
       // Wait for page load
       await new Promise(resolve => setTimeout(resolve, 2000))
       
       // Take initial screenshot
-      console.log(`mcp__playwright__browser_take_screenshot: ${route.name}-before-scroll`)
-      
+
       // Get page snapshot for analysis
-      console.log('mcp__playwright__browser_snapshot')
-      
+
       // Test vertical scrolling
       if (route.scrollTarget > 0) {
         // Evaluate scroll capability
-        console.log(`mcp__playwright__browser_evaluate: Check scrollable height`)
-        
+
         // Perform scroll gesture
-        console.log(`Touch scroll test for ${route.name}`)
-        
+
         // Verify scroll occurred
-        console.log(`mcp__playwright__browser_evaluate: Verify scroll position`)
+
       }
       
       // Test for blocking elements
-      console.log(`mcp__playwright__browser_evaluate: Check for touch-action: none elements`)
-      
+
       // Take after screenshot
-      console.log(`mcp__playwright__browser_take_screenshot: ${route.name}-after-scroll`)
+
     }
   })
 
   test('MCP: Diagnose pull-to-refresh blocking', async () => {
-    console.log('Diagnosing pull-to-refresh scroll blocking...')
-    
+
     // Navigate to a page with pull-to-refresh
-    console.log('mcp__playwright__browser_navigate: /braindump')
-    
+
     // Check event listeners
-    console.log(`mcp__playwright__browser_evaluate: 
-      // Check touch event listeners
-      const listeners = getEventListeners(document);
+
       const touchListeners = {
         touchstart: listeners.touchstart?.length || 0,
         touchmove: listeners.touchmove?.length || 0,
@@ -101,11 +90,7 @@ test.describe('MCP Mobile Safari Touch Scrolling Tests', () => {
     `)
     
     // Check CSS touch-action properties
-    console.log(`mcp__playwright__browser_evaluate:
-      // Find elements blocking touch
-      const blockingElements = [];
-      document.querySelectorAll('*').forEach(el => {
-        const style = window.getComputedStyle(el);
+
         if (style.touchAction === 'none' || 
             style.overflow === 'hidden' && el.scrollHeight > el.clientHeight) {
           blockingElements.push({
@@ -121,24 +106,18 @@ test.describe('MCP Mobile Safari Touch Scrolling Tests', () => {
       });
       return blockingElements;
     `)
-    
-    console.log('mcp__playwright__browser_take_screenshot: pull-to-refresh-diagnosis')
+
   })
 
   test('MCP: Test iOS-specific viewport issues', async () => {
-    console.log('Testing iOS viewport and safe area handling...')
-    
+
     // Check viewport meta tag
-    console.log(`mcp__playwright__browser_evaluate:
-      const viewport = document.querySelector('meta[name="viewport"]');
+
       return viewport ? viewport.content : 'No viewport meta tag';
     `)
     
     // Check for iOS viewport units usage
-    console.log(`mcp__playwright__browser_evaluate:
-      const issues = [];
-      const sheets = Array.from(document.styleSheets);
-      
+
       sheets.forEach(sheet => {
         try {
           const rules = Array.from(sheet.cssRules || []);
@@ -180,8 +159,7 @@ test.describe('MCP Mobile Safari Touch Scrolling Tests', () => {
     `)
     
     // Check safe area usage
-    console.log(`mcp__playwright__browser_evaluate:
-      const safeAreaSupport = CSS.supports('padding-top', 'env(safe-area-inset-top)');
+
       const safeAreaUsage = [];
       
       document.querySelectorAll('*').forEach(el => {
@@ -205,20 +183,11 @@ test.describe('MCP Mobile Safari Touch Scrolling Tests', () => {
   })
 
   test('MCP: Performance analysis of scroll handlers', async () => {
-    console.log('Analyzing scroll performance...')
-    
+
     // Navigate to a scrollable page
-    console.log('mcp__playwright__browser_navigate: /nodes')
-    
+
     // Profile scroll performance
-    console.log(`mcp__playwright__browser_evaluate:
-      // Start performance measurement
-      const marks = [];
-      let rafCount = 0;
-      let scrollCount = 0;
-      
-      // Monitor scroll events
-      const scrollStart = performance.now();
+
       let lastScrollTime = scrollStart;
       
       const scrollHandler = () => {
@@ -259,13 +228,11 @@ test.describe('MCP Mobile Safari Touch Scrolling Tests', () => {
         }, 1000);
       });
     `)
-    
-    console.log('mcp__playwright__browser_take_screenshot: scroll-performance')
+
   })
 
   test('MCP: Test touch interaction with various elements', async () => {
-    console.log('Testing touch interactions with different element types...')
-    
+
     const elementsToTest = [
       { selector: 'button', interaction: 'tap' },
       { selector: 'a', interaction: 'tap' },
@@ -276,10 +243,7 @@ test.describe('MCP Mobile Safari Touch Scrolling Tests', () => {
     ]
     
     for (const element of elementsToTest) {
-      console.log(`Testing ${element.interaction} on ${element.selector}`)
-      
-      console.log(`mcp__playwright__browser_evaluate:
-        const element = document.querySelector('${element.selector}');
+
         if (element) {
           const rect = element.getBoundingClientRect();
           const styles = window.getComputedStyle(element);
@@ -297,9 +261,9 @@ test.describe('MCP Mobile Safari Touch Scrolling Tests', () => {
       
       // Test interaction based on type
       if (element.interaction === 'tap') {
-        console.log(`mcp__playwright__browser_click: ${element.selector}`)
+
       } else if (element.interaction === 'drag') {
-        console.log(`mcp__playwright__browser_drag: ${element.selector}`)
+
       }
       
       // Check if interaction was blocked

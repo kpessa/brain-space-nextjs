@@ -45,8 +45,7 @@ test.describe('iOS Feature Tests', () => {
       const hapticSupport = await helper.testHapticFeedback()
       
       // Log support status (won't fail test)
-      console.log('Haptic Support:', hapticSupport)
-      
+
       // Test should pass regardless (haptic is enhancement)
       expect(true).toBe(true)
     })
@@ -87,9 +86,7 @@ test.describe('iOS Feature Tests', () => {
       const hasNotchClass = bodyClasses?.includes('ios-notch')
       
       // Log for debugging
-      console.log('Body classes:', bodyClasses)
-      console.log('Has notch class:', hasNotchClass)
-      
+
       // Test passes regardless (detection is device-dependent)
       expect(true).toBe(true)
     })
@@ -118,8 +115,7 @@ test.describe('iOS Feature Tests', () => {
       })
       
       // Log standalone status
-      console.log('Is standalone:', isStandalone)
-      
+
       if (isStandalone) {
         // Check for standalone-specific classes
         const bodyClasses = await page.locator('body').getAttribute('class')
@@ -196,7 +192,7 @@ test.describe('iOS Feature Tests', () => {
           const isModalVisible = await modal.isVisible()
           
           // Log result
-          console.log('Touch interaction result - Modal visible:', isModalVisible)
+
         }
       }
       
@@ -242,9 +238,7 @@ test.describe('iOS Feature Tests', () => {
       // Check bundle size impact
       const requests = network.getRequests()
       const jsRequests = requests.filter(r => r.url.includes('.js'))
-      
-      console.log(`Loaded ${jsRequests.length} JavaScript files`)
-      
+
       // Test passes - performance monitoring is informational
       expect(true).toBe(true)
     })
@@ -293,8 +287,7 @@ test.describe('MCP Browser Control Integration', () => {
     
     // Execute some console logs
     await page.evaluate(() => {
-      console.log('MCP test log')
-      console.warn('MCP test warning')
+
     })
     
     const messages = console.getMessages()

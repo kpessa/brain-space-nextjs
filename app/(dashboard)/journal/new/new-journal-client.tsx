@@ -43,17 +43,18 @@ export default function NewJournalEntryClient({ userId }: { userId: string }) {
         userId,
         date: new Date().toISOString(),
       })
-      
+
       router.push('/journal')
     } catch (error) {
-      // Failed to create entry
+
+      alert('Failed to create journal entry. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
   return (
-    <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(100vh-4rem)]">
+    <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(var(--vh,1vh)*100-4rem)]">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl font-bold text-white">New Journal Entry</h1>
@@ -158,7 +159,7 @@ export default function NewJournalEntryClient({ userId }: { userId: string }) {
                 Cancel
               </Button>
             </Link>
-            <Button type="submit" disabled={isSubmitting || formData.quests.length === 0}>
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Creating Entry...' : 'Create Entry'}
             </Button>
           </div>

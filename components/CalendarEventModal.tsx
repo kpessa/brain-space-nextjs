@@ -80,7 +80,7 @@ export function CalendarEventModal({
             const calendarList = await googleCalendarService.listCalendars()
             useCalendarStoreBase.getState().setCalendars(calendarList)
           } catch (error) {
-            console.error('Failed to load calendars:', error)
+
           }
         }
       }
@@ -136,7 +136,7 @@ export function CalendarEventModal({
         onClose()
       }
     } catch (error) {
-      console.error('Failed to create calendar event:', error)
+
       setError(error instanceof Error ? error.message : 'Failed to create event')
     } finally {
       setIsCreating(false)
@@ -157,7 +157,7 @@ export function CalendarEventModal({
         setError('Failed to authenticate with Google Calendar')
       }
     } catch (error) {
-      console.error('Authentication failed:', error)
+
       setError('Failed to authenticate with Google Calendar')
     }
   }

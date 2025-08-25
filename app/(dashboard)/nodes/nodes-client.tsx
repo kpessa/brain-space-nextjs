@@ -9,6 +9,7 @@ import { createAIService } from '@/services/ai'
 import type { Node, NodeType } from '@/types/node'
 import { getNodeTypeColor, getNodeTypeIcon, getEisenhowerQuadrant } from '@/types/node'
 import { AIProviderSelector } from '@/components/AIProviderSelector'
+import { useRealtimeSync } from '@/services/realtimeSync'
 // Import extracted components
 import { NodeCreateModal } from '@/components/nodes/NodeCreateModal'
 import { BulkLinkModal } from '@/components/nodes/NodeBulkOperations'
@@ -62,6 +63,9 @@ const BulkScheduleImportModal = dynamic(() => import('@/components/BulkScheduleI
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export default function NodesClient({ userId }: { userId: string }) {
+  // Enable real-time synchronization for nodes
+  const { syncStatus, createNode: syncCreateNode, updateNode: syncUpdateNode, deleteNode: syncDeleteNode } = useRealtimeSync()
+  
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isBulkCreateOpen, setIsBulkCreateOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -307,9 +311,18 @@ export default function NodesClient({ userId }: { userId: string }) {
               <div className="flex items-center gap-3">
                 <Network className="w-12 h-12 text-primary-foreground" />
                 <div>
-                  <h1 className="text-4xl font-bold text-primary-foreground">My Nodes</h1>
+                  <h1 className="text-4xl font-bold text-primary-foreground">
+                    My Nodes
+                    {syncStatus && syncStatus !== 'idle' && (
+                      <span className="ml-3 text-sm font-normal opacity-70">
+                        {syncStatus === 'syncing' && '🔄 Syncing...'}
+                        {syncStatus === 'synced' && '✅ Synced'}
+                        {syncStatus === 'error' && '⚠️ Sync error'}
+                      </span>
+                    )}
+                  </h1>
                   <p className="text-primary-foreground/80 text-lg">
-                    Organize your thoughts, tasks, and ideas
+                    Organize your thoughts, tasks, and ideas - Real-time sync enabled
                   </p>
                 </div>
               </div>

@@ -118,7 +118,7 @@ export function BulkNodeCreationDialog({
             description: enhanced.nodeData.description || nodeData.description,
           }
         } catch (err) {
-          console.warn('AI enhancement failed, using default values', err)
+
         }
       }
       
@@ -165,7 +165,7 @@ export function BulkNodeCreationDialog({
       
       alert(`Successfully created ${count} nodes with hierarchy!`)
     } catch (error) {
-      console.error('Failed to create nodes:', error)
+
       setError(error instanceof Error ? error.message : 'Failed to create nodes')
     } finally {
       setLoading(false)

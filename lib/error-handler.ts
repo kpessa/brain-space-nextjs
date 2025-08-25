@@ -76,7 +76,6 @@ export class ExternalServiceError extends AppError {
  */
 export function handleApiError(error: unknown): NextResponse {
   // Log error for debugging
-  console.error('[API Error]:', error)
 
   // Handle Zod validation errors
   if (error instanceof ZodError) {

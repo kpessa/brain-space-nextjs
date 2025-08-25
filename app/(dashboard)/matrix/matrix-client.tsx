@@ -164,7 +164,7 @@ export default function MatrixClient({ userId }: { userId: string }) {
 
   return (
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(100vh-4rem)]">
+        <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(var(--vh,1vh)*100-4rem)]">
           <div className="max-w-7xl mx-auto">
             <header className="mb-8">
               <div className="text-center mb-4">

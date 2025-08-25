@@ -226,7 +226,7 @@ test.describe('Mobile Safari Touch Scrolling', () => {
     
     // Some frameworks maintain scroll position on back navigation
     const restoredScrollPos = await page.evaluate(() => window.scrollY)
-    console.log('Restored scroll position:', restoredScrollPos)
+
   })
 
   test('should handle elastic scrolling (rubber band effect)', async ({ page }) => {
@@ -347,7 +347,7 @@ test.describe('Mobile Safari Touch Scrolling', () => {
     
     // Log any problematic elements
     if (blockingElements.length > 0) {
-      console.log('Elements blocking touch:', blockingElements)
+
     }
   })
 })

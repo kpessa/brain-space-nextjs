@@ -37,7 +37,7 @@ export function AuthDiagnostic() {
             }
           })
         } catch (error) {
-          console.error('[AuthDiagnostic] Error getting token:', error)
+
           setAuthState({ user: user, error: 'Failed to get token' })
         }
       } else {

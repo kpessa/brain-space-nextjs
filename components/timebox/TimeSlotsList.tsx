@@ -331,7 +331,7 @@ export function TimeSlotsList({
   }
 
   return (
-    <div className="lg:col-span-3 overflow-y-auto order-1 lg:order-2" style={{ maxHeight: 'calc(100vh - 250px)' }}>
+    <div className="lg:col-span-3 overflow-y-auto order-1 lg:order-2" style={{ maxHeight: 'calc(var(--vh, 1vh) * 100 - 250px)' }}>
       <div className="pr-2 space-y-2">
         {/* Past Time Slots Section */}
         {pastSlots.length > 0 && (

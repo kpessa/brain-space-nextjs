@@ -623,14 +623,7 @@ export const usePlanningStore = create<PlanningState>((set, get) => ({
   _debugLogState: () => {
     const state = get()
     console.group('Planning Store State')
-    console.log('Selected Date:', state.selectedDate)
-    console.log('Time Slots:', state.timeSlots.length)
-    console.log('Tasks Map Size:', state.tasksMap.size)
-    console.log('Slots Map Size:', state.timeSlotsMap.size)
-    console.log('Dragged Task:', state.draggedTask)
-    console.log('Hovered Slot:', state.hoveredSlotId)
-    console.log('Loading:', state.isLoading)
-    console.log('Error:', state.error)
+
     console.groupEnd()
   }
 }))

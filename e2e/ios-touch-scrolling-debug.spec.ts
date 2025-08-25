@@ -8,8 +8,7 @@ test.use({
 
 test.describe('iOS Touch Scrolling Debug', () => {
   test('should allow touch scrolling on main content', async ({ page }) => {
-    console.log('🔍 Debugging touch scrolling on iOS...')
-    
+
     // Navigate to journal page
     await page.goto('/journal')
     await expect(page).toHaveURL('/journal')
@@ -28,9 +27,7 @@ test.describe('iOS Touch Scrolling Debug', () => {
       touchAction: getComputedStyle(document.body).touchAction,
       webkitOverflowScrolling: getComputedStyle(document.body).webkitOverflowScrolling
     }))
-    
-    console.log('Page scroll info:', pageInfo)
-    
+
     // Page should be scrollable vertically
     expect(pageInfo.scrollHeight).toBeGreaterThan(pageInfo.clientHeight)
     
@@ -47,20 +44,17 @@ test.describe('iOS Touch Scrolling Debug', () => {
     
     // WebKit overflow scrolling should be enabled
     expect(pageInfo.webkitOverflowScrolling).toBe('touch')
-    
-    console.log('✅ Touch scrolling should be enabled')
+
   })
   
   test('should respond to touch scroll events', async ({ page }) => {
-    console.log('👆 Testing touch scroll event handling...')
-    
+
     await page.goto('/journal')
     await expect(page).toHaveURL('/journal')
     
     // Get initial scroll position
     const initialScrollY = await page.evaluate(() => window.scrollY)
-    console.log(`Initial scroll Y: ${initialScrollY}`)
-    
+
     // Simulate touch scroll by 200px
     await page.evaluate(() => {
       // Simulate a touch scroll event
@@ -71,17 +65,14 @@ test.describe('iOS Touch Scrolling Debug', () => {
     await page.waitForTimeout(500)
     
     const finalScrollY = await page.evaluate(() => window.scrollY)
-    console.log(`Final scroll Y: ${finalScrollY}`)
-    
+
     // Should have scrolled
     expect(finalScrollY).toBeGreaterThan(initialScrollY)
-    
-    console.log('✅ Touch scroll events are working')
+
   })
   
   test('should not have conflicting CSS rules', async ({ page }) => {
-    console.log('🎨 Checking for conflicting CSS rules...')
-    
+
     await page.goto('/journal')
     await expect(page).toHaveURL('/journal')
     
@@ -121,18 +112,14 @@ test.describe('iOS Touch Scrolling Debug', () => {
       
       return issues
     })
-    
-    console.log('CSS issues found:', cssIssues)
-    
+
     // Should not have any blocking CSS rules
     expect(cssIssues.length).toBe(0)
-    
-    console.log('✅ No conflicting CSS rules found')
+
   })
   
   test('should handle touch events properly', async ({ page }) => {
-    console.log('📱 Testing touch event handling...')
-    
+
     await page.goto('/journal')
     await expect(page).toHaveURL('/journal')
     
@@ -171,12 +158,9 @@ test.describe('iOS Touch Scrolling Debug', () => {
         touchEventsAllowed: 3 - touchEventsPrevented
       }
     })
-    
-    console.log('Touch event info:', touchEventInfo)
-    
+
     // Most touch events should be allowed (not prevented)
     expect(touchEventInfo.touchEventsAllowed).toBeGreaterThan(1)
-    
-    console.log('✅ Touch events are being handled properly')
+
   })
 })

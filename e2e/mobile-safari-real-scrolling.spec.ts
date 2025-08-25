@@ -9,8 +9,7 @@ test.use({
 test.describe('Mobile Safari Scrolling - Real User', () => {
   
   test('should scroll on Journal page with real auth', async ({ page }) => {
-    console.log('📱 Testing Journal on Mobile Safari with real authentication...')
-    
+
     // Go to Journal page
     await page.goto('/journal')
     await page.waitForLoadState('domcontentloaded')
@@ -19,8 +18,7 @@ test.describe('Mobile Safari Scrolling - Real User', () => {
     // Verify we're authenticated (not on login page)
     const url = page.url()
     expect(url).not.toContain('/login')
-    console.log('✅ Authenticated! URL:', url)
-    
+
     // Check if page is scrollable
     const scrollInfo = await page.evaluate(() => {
       return {
@@ -29,21 +27,18 @@ test.describe('Mobile Safari Scrolling - Real User', () => {
         isScrollable: document.documentElement.scrollHeight > window.innerHeight
       }
     })
-    
-    console.log('📜 Scroll info:', scrollInfo)
-    
+
     if (scrollInfo.isScrollable) {
       // Get initial scroll position
       const initialScroll = await page.evaluate(() => window.scrollY)
-      console.log(`Initial scroll position: ${initialScroll}px`)
-      
+
       // Scroll down
       await page.evaluate(() => window.scrollBy(0, 300))
       await page.waitForTimeout(500)
       
       // Verify scroll happened
       const newScroll = await page.evaluate(() => window.scrollY)
-      console.log(`New scroll position: ${newScroll}px`)
+
       expect(newScroll).toBeGreaterThan(initialScroll)
       
       // Take screenshot after scroll
@@ -51,16 +46,14 @@ test.describe('Mobile Safari Scrolling - Real User', () => {
         path: 'test-results/safari-journal-scrolled.png',
         fullPage: false 
       })
-      
-      console.log('✅ Scrolling works on Mobile Safari!')
+
     } else {
       console.log('ℹ️ Page not scrollable (not enough content)')
     }
   })
   
   test('should scroll on Nodes page with real auth', async ({ page }) => {
-    console.log('📱 Testing Nodes on Mobile Safari...')
-    
+
     await page.goto('/nodes')
     await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(2000)
@@ -76,9 +69,7 @@ test.describe('Mobile Safari Scrolling - Real User', () => {
         currentScroll: window.scrollY
       }
     })
-    
-    console.log('Nodes page scroll info:', scrollInfo)
-    
+
     if (scrollInfo.scrollHeight > scrollInfo.viewHeight) {
       // Perform scroll
       await page.evaluate(() => window.scrollBy(0, 400))
@@ -86,9 +77,7 @@ test.describe('Mobile Safari Scrolling - Real User', () => {
       
       const newScroll = await page.evaluate(() => window.scrollY)
       expect(newScroll).toBeGreaterThan(scrollInfo.currentScroll)
-      
-      console.log(`✅ Scrolled from ${scrollInfo.currentScroll}px to ${newScroll}px`)
-      
+
       // Take screenshot
       await page.screenshot({ 
         path: 'test-results/safari-nodes-scrolled.png' 
@@ -97,8 +86,7 @@ test.describe('Mobile Safari Scrolling - Real User', () => {
   })
   
   test('should test touch scrolling gestures', async ({ page }) => {
-    console.log('📱 Testing touch gestures on Mobile Safari...')
-    
+
     await page.goto('/braindump')
     await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(2000)
@@ -138,7 +126,7 @@ test.describe('Mobile Safari Scrolling - Real User', () => {
       const newScroll = await page.evaluate(() => window.scrollY)
       
       if (newScroll > initialScroll) {
-        console.log(`✅ Touch scrolling works! Scrolled from ${initialScroll}px to ${newScroll}px`)
+
       } else {
         console.log('ℹ️ Touch scroll did not change position (may not have scrollable content)')
       }
@@ -160,8 +148,7 @@ test.describe('Mobile Safari Scrolling - Real User', () => {
     ]
     
     for (const route of routes) {
-      console.log(`\n🧪 Testing ${route.name} on Mobile Safari...`)
-      
+
       await page.goto(route.path)
       await page.waitForLoadState('domcontentloaded')
       await page.waitForTimeout(1500)
@@ -169,21 +156,17 @@ test.describe('Mobile Safari Scrolling - Real User', () => {
       // Verify authenticated
       const url = page.url()
       if (url.includes('/login')) {
-        console.log(`❌ Redirected to login for ${route.name}`)
+
         continue
       }
-      
-      console.log(`✅ Authenticated on ${route.name}`)
-      
+
       // Test scroll capability
       const scrollInfo = await page.evaluate(() => ({
         height: document.documentElement.scrollHeight,
         viewport: window.innerHeight,
         scrollable: document.documentElement.scrollHeight > window.innerHeight
       }))
-      
-      console.log(`  Height: ${scrollInfo.height}px, Viewport: ${scrollInfo.viewport}px`)
-      
+
       if (scrollInfo.scrollable) {
         // Scroll test
         const before = await page.evaluate(() => window.scrollY)
@@ -192,10 +175,10 @@ test.describe('Mobile Safari Scrolling - Real User', () => {
         const after = await page.evaluate(() => window.scrollY)
         
         if (after > before) {
-          console.log(`  ✅ Scrolled from ${before}px to ${after}px`)
+
         }
       } else {
-        console.log(`  ℹ️ Not scrollable`)
+
       }
       
       // Screenshot

@@ -114,7 +114,7 @@ export async function POST(request: Request) {
     
     return NextResponse.json({ enhancedText })
   } catch (error) {
-    console.error('Error enhancing update:', error)
+
     return NextResponse.json(
       { error: 'Failed to enhance update' },
       { status: 500 }

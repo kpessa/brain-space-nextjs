@@ -47,7 +47,7 @@ export async function verifyAuth(
     if (!isFirebaseAdminInitialized()) {
       // Production requires Firebase Admin SDK
       if (process.env.NODE_ENV === 'production') {
-        console.error('Firebase Admin SDK not initialized in production:', adminStatus)
+
         return { 
           user: null, 
           error: 'Authentication service unavailable',
@@ -95,11 +95,7 @@ export async function verifyAuth(
       
       // Log security events in production
       if (process.env.NODE_ENV === 'production') {
-        console.warn('Token verification failed:', {
-          error: errorMessage,
-          timestamp: new Date().toISOString(),
-          // Don't log the token itself for security
-        })
+
       }
       
       return { 
@@ -109,7 +105,7 @@ export async function verifyAuth(
       }
     }
   } catch (error) {
-    console.error('Unexpected auth verification error:', error)
+
     return { 
       user: null, 
       error: error instanceof Error ? error.message : 'Authentication failed'

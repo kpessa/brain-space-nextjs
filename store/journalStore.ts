@@ -19,7 +19,7 @@ export const useJournalStore = create((set, get) => {
       getTodayEntry: state.getTodayJournalEntry,
       loadEntriesFromFirestore: state.loadJournalEntriesFromFirestore,
       loadUserProgressFromFirestore: state.loadJournalProgressFromFirestore,
-      createEntry: state.createJournalEntry,
+      addEntry: state.addJournalEntry, // Main method for adding entries
       updateEntry: state.updateJournalEntry,
       deleteEntry: state.deleteJournalEntry,
       calculateStreak: state.calculateJournalStreak,
@@ -44,7 +44,7 @@ export const useJournalStore = create((set, get) => {
     getTodayEntry: contentState.getTodayJournalEntry,
     loadEntriesFromFirestore: contentState.loadJournalEntriesFromFirestore,
     loadUserProgressFromFirestore: contentState.loadJournalProgressFromFirestore,
-    createEntry: contentState.createJournalEntry,
+    addEntry: contentState.addJournalEntry, // Main method for adding entries
     updateEntry: contentState.updateJournalEntry,
     deleteEntry: contentState.deleteJournalEntry,
     calculateStreak: contentState.calculateJournalStreak,

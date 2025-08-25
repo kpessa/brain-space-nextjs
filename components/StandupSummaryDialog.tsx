@@ -38,7 +38,12 @@ export default function StandupSummaryDialog({ trigger }: StandupSummaryDialogPr
   const { user } = useAuth()
   
   const generateSummary = async () => {
-    if (!user) return
+
+    if (!user) {
+
+      setError('Please sign in to generate standup summary')
+      return
+    }
     
     setIsGenerating(true)
     setError(null)
@@ -46,37 +51,41 @@ export default function StandupSummaryDialog({ trigger }: StandupSummaryDialogPr
     try {
       // Get work nodes only
       const workNodes = nodes.filter(n => !n.isPersonal)
-      
+
       // Get yesterday's nodes (simplified - in production would filter by date)
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)
       
+      const requestBody = {
+        nodes: workNodes,
+        yesterdayNodes: workNodes, // In production, would filter by date
+        dateRange: {
+          start: yesterday.toISOString(),
+          end: new Date().toISOString()
+        },
+        provider: selectedProvider
+      }
+
       const response = await fetch('/api/ai/standup-summary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${await user.getIdToken()}`
         },
-        body: JSON.stringify({
-          nodes: workNodes,
-          yesterdayNodes: workNodes, // In production, would filter by date
-          dateRange: {
-            start: yesterday.toISOString(),
-            end: new Date().toISOString()
-          },
-          provider: selectedProvider
-        })
+        body: JSON.stringify(requestBody)
       })
-      
+
       const data = await response.json()
-      
+
       if (!response.ok) {
+
         throw new Error(data.error || 'Failed to generate summary')
       }
       
       setSummary(data.summary)
+
     } catch (err) {
-      console.error('Error generating standup summary:', err)
+
       setError(err instanceof Error ? err.message : 'Failed to generate summary')
     } finally {
       setIsGenerating(false)
@@ -139,7 +148,10 @@ Updates Added: ${summary.metrics.updatesAdded}`
   return (
     <>
       {/* Trigger Button */}
-      <div onClick={() => setIsOpen(true)}>
+      <div onClick={() => {
+
+        setIsOpen(true)
+      }}>
         {trigger || (
           <Button variant="outline" className="gap-2">
             <Mic className="w-4 h-4" />

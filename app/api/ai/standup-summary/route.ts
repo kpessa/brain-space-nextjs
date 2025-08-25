@@ -181,6 +181,54 @@ async function callGoogleAI(prompt: string) {
   return data.candidates[0].content.parts[0].text
 }
 
+// Generate mock standup response for development
+function generateMockStandupResponse(workNodes: Node[], yesterdayNodes?: Node[]): string {
+  const categorized = categorizeWork(workNodes)
+  const yesterdayCategorized = yesterdayNodes ? categorizeWork(yesterdayNodes) : null
+  
+  let response = `**Yesterday:**\n`
+  
+  if (yesterdayCategorized && yesterdayCategorized.completed.length > 0) {
+    yesterdayCategorized.completed.slice(0, 3).forEach(node => {
+      response += `- Completed ${node.title}\n`
+    })
+  } else {
+    response += `- Reviewed and organized project tasks\n`
+    response += `- Updated documentation and project status\n`
+  }
+  
+  response += `\n**Today:**\n`
+  
+  if (categorized.inProgress.length > 0) {
+    categorized.inProgress.slice(0, 3).forEach(node => {
+      response += `- Continue working on ${node.title}\n`
+    })
+  }
+  
+  if (categorized.planned.length > 0) {
+    categorized.planned.slice(0, 2).forEach(node => {
+      response += `- Start ${node.title}\n`
+    })
+  }
+  
+  if (categorized.inProgress.length === 0 && categorized.planned.length === 0) {
+    response += `- Review and prioritize upcoming tasks\n`
+    response += `- Update project documentation\n`
+  }
+  
+  if (categorized.blocked.length > 0) {
+    response += `\n**Blockers:**\n`
+    categorized.blocked.slice(0, 2).forEach(node => {
+      response += `- ${node.title} - waiting for dependencies\n`
+    })
+  }
+  
+  response += `\n**Highlights:**\n`
+  response += `- Made good progress on project goals\n`
+  
+  return response
+}
+
 // Parse AI response into structured format
 function parseAIResponse(aiResponse: string): StandupSummary {
   const lines = aiResponse.split('\n').filter(line => line.trim())
@@ -263,25 +311,41 @@ export async function POST(request: NextRequest) {
       dateRange
     })
 
-    // Call AI service
+    // Call AI service or use mock if no API keys configured
     let aiResponse: string
     
-    switch (provider) {
-      case 'google':
-      case 'gemini':
-        if (!process.env.GOOGLE_AI_API_KEY) {
-          throw new Error('Google AI API key not configured')
-        }
-        aiResponse = await callGoogleAI(prompt)
-        break
-        
-      case 'openai':
-      default:
-        if (!process.env.OPENAI_API_KEY) {
-          throw new Error('OpenAI API key not configured')
-        }
-        aiResponse = await callOpenAI(prompt)
-        break
+    // Check if we have API keys configured
+    const hasOpenAIKey = !!process.env.OPENAI_API_KEY
+    const hasGoogleKey = !!process.env.GOOGLE_AI_API_KEY
+
+    if (!hasOpenAIKey && !hasGoogleKey) {
+      // Use mock response if no API keys are configured
+
+      aiResponse = generateMockStandupResponse(workNodes, yesterdayWorkNodes)
+    } else {
+      switch (provider) {
+        case 'google':
+        case 'gemini':
+          if (!process.env.GOOGLE_AI_API_KEY) {
+            // Fall back to mock if Google key not configured
+
+            aiResponse = generateMockStandupResponse(workNodes, yesterdayWorkNodes)
+          } else {
+            aiResponse = await callGoogleAI(prompt)
+          }
+          break
+          
+        case 'openai':
+        default:
+          if (!process.env.OPENAI_API_KEY) {
+            // Fall back to mock if OpenAI key not configured
+
+            aiResponse = generateMockStandupResponse(workNodes, yesterdayWorkNodes)
+          } else {
+            aiResponse = await callOpenAI(prompt)
+          }
+          break
+      }
     }
 
     // Parse and structure the response
@@ -310,7 +374,7 @@ export async function POST(request: NextRequest) {
       generatedAt: new Date().toISOString()
     })
   } catch (error) {
-    console.error('Error in standup-summary:', error)
+
     return NextResponse.json({
       error: error instanceof Error ? error.message : 'Failed to generate standup summary',
       summary: {

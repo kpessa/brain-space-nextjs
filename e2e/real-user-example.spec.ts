@@ -23,7 +23,7 @@ test.describe('Real User Tests', () => {
     
     // Check for user-specific content
     const userEmail = process.env.REAL_USER_EMAIL || 'kpessa@gmail.com'
-    console.log(`Testing with real user: ${userEmail}`)
+
   })
   
   test('should see journal entries with summaries', async ({ realUserPage }) => {
@@ -49,7 +49,7 @@ test.describe('Real User Tests', () => {
         await expect(tags).toBeVisible()
       }
     } else {
-      console.log('No journal entries found for real user')
+
     }
   })
   
@@ -89,8 +89,7 @@ test.describe('Real User Tests', () => {
       
       // Should see page content
       await expect(realUserPage.locator('h1, h2').first()).toBeVisible()
-      
-      console.log(`✅ Successfully accessed ${route.path}`)
+
     }
   })
 })
@@ -112,14 +111,12 @@ test.describe('Real User MCP Tests', () => {
       path: 'test-results/real-user-journal.png',
       fullPage: true 
     })
-    
-    console.log('Screenshot saved to test-results/real-user-journal.png')
-    
+
     // Verify we can interact with authenticated content
     const newEntryButton = realUserPage.locator('button:has-text("New Entry")')
     if (await newEntryButton.count() > 0) {
       await expect(newEntryButton).toBeEnabled()
-      console.log('✅ New Entry button is accessible')
+
     }
   })
 })

@@ -193,7 +193,7 @@ test.describe('Brain Dump Functionality', () => {
       
       // If draft feature exists, it should restore
       // Otherwise, this test just documents the behavior
-      console.log('Draft value after navigation:', restoredValue)
+
     }
   })
 
@@ -216,7 +216,7 @@ test.describe('Brain Dump Functionality', () => {
       const value = await textarea.inputValue()
       
       // Document the behavior
-      console.log('Textarea value after Ctrl+Enter:', value)
+
     }
   })
 
@@ -312,8 +312,7 @@ test.describe('Brain Dump to Node Conversion', () => {
             const hasExpectedCategory = testCase.expectedCategory.some(expected => 
               categories.some(cat => cat.toLowerCase().includes(expected))
             )
-            
-            console.log(`Text: "${testCase.text}" - Categories found:`, categories)
+
           }
           
           // Clear for next test

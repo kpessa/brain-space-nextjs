@@ -176,8 +176,7 @@ const nextConfig = {
     // Turbopack is now enabled by default in Next.js 15 for dev mode
     // No need for explicit configuration
   },
-  
-  
+
   // Configure headers for Firebase Auth popup compatibility
   async headers() {
     return [

@@ -18,9 +18,7 @@ test.describe('Nodes Management', () => {
     // Check for node cards
     const nodeCards = page.locator('.node-card, [data-testid*="node"], .node-item')
     const count = await nodeCards.count()
-    
-    console.log(`Found ${count} nodes`)
-    
+
     if (count > 0) {
       // Check first node structure
       const firstNode = nodeCards.first()
@@ -36,7 +34,7 @@ test.describe('Nodes Management', () => {
       const type = firstNode.locator('.node-type, .badge, [data-type]')
       if (await type.isVisible()) {
         const typeText = await type.textContent()
-        console.log('Node type:', typeText)
+
       }
       
       // Should have urgency/importance indicators
@@ -44,7 +42,7 @@ test.describe('Nodes Management', () => {
       const importance = firstNode.locator('[data-importance], .importance')
       
       if (await urgency.isVisible() || await importance.isVisible()) {
-        console.log('Node has priority indicators')
+
       }
     }
   })
@@ -199,8 +197,7 @@ test.describe('Nodes Management', () => {
     if (await typeFilter.isVisible()) {
       // Get all options
       const options = await typeFilter.locator('option').allTextContents()
-      console.log('Available types:', options)
-      
+
       // Select task type
       await typeFilter.selectOption({ label: 'Task' })
       
@@ -210,9 +207,7 @@ test.describe('Nodes Management', () => {
       // Check filtered results
       const visibleNodes = page.locator('.node-card:visible')
       const count = await visibleNodes.count()
-      
-      console.log(`Filtered to ${count} task nodes`)
-      
+
       // Verify all visible nodes are tasks
       for (let i = 0; i < count; i++) {
         const node = visibleNodes.nth(i)
@@ -239,9 +234,7 @@ test.describe('Nodes Management', () => {
       // Check results
       const visibleNodes = page.locator('.node-card:visible')
       const count = await visibleNodes.count()
-      
-      console.log(`Search returned ${count} nodes`)
-      
+
       if (count > 0) {
         // Verify results contain search term
         const firstNode = visibleNodes.first()
@@ -307,8 +300,7 @@ test.describe('Nodes Management', () => {
     if (await sortDropdown.isVisible()) {
       // Get sort options
       const options = await sortDropdown.locator('option').allTextContents()
-      console.log('Sort options:', options)
-      
+
       // Sort by date
       await sortDropdown.selectOption({ label: 'Date' })
       await page.waitForTimeout(500)
@@ -322,8 +314,7 @@ test.describe('Nodes Management', () => {
       
       // Get first node priority
       const firstNodePriority = await page.locator('.node-card').first().getAttribute('data-priority')
-      
-      console.log('Sorting verified')
+
     }
   })
 
@@ -336,7 +327,7 @@ test.describe('Nodes Management', () => {
       const currentPage = pagination.locator('.current-page, [aria-current="page"]')
       if (await currentPage.isVisible()) {
         const pageText = await currentPage.textContent()
-        console.log('Current page:', pageText)
+
       }
       
       // Click next page
@@ -386,7 +377,7 @@ test.describe('Nodes Management', () => {
         // Verify download
         expect(download).toBeTruthy()
       } catch (error) {
-        console.log('Export may not trigger actual download in test environment')
+
       }
     }
   })

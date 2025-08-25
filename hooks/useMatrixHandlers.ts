@@ -153,7 +153,7 @@ export function useMatrixHandlers({
 
       }
     } catch (error) {
-      console.error('Failed to create test relationships:', error)
+
     }
   }
   

@@ -256,8 +256,7 @@ export async function loadRealUserAuth(context: BrowserContext): Promise<boolean
   const statePath = getRealUserStorageStatePath()
   
   if (!fs.existsSync(statePath)) {
-    console.warn('⚠️  Real user authentication state not found.')
-    console.log('Run: pnpm exec ts-node e2e/setup-real-auth.ts')
+
     return false
   }
   
@@ -275,7 +274,7 @@ export async function loadRealUserAuth(context: BrowserContext): Promise<boolean
     
     return true
   } catch (error) {
-    console.error('Failed to load real user auth state:', error)
+
     return false
   }
 }

@@ -51,20 +51,20 @@
   // Try to get Firebase auth token if available
   if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
     firebase.auth().currentUser.getIdToken().then(token => {
-      console.log('Firebase Auth Token:', token);
+
       authData.firebaseToken = token;
-      console.log('\n📋 Full auth data to save:');
+
       console.log(JSON.stringify(authData, null, 2));
-      console.log('\n✅ Copy the JSON above and save it to: e2e/storage-states/realUser.json');
+
     }).catch(err => {
-      console.log('Could not get Firebase token:', err);
+
       console.log('\n📋 Auth data (without Firebase token):');
       console.log(JSON.stringify(authData, null, 2));
-      console.log('\n✅ Copy the JSON above and save it to: e2e/storage-states/realUser.json');
+
     });
   } else {
-    console.log('\n📋 Auth data:');
+
     console.log(JSON.stringify(authData, null, 2));
-    console.log('\n✅ Copy the JSON above and save it to: e2e/storage-states/realUser.json');
+
   }
 })();

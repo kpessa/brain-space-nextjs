@@ -113,7 +113,7 @@ export default function RoutinesClient({ userId }: { userId: string }) {
   
   if (!progress || progress.currentDay === 0) {
     return (
-        <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(100vh-4rem)]">
+        <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(var(--vh,1vh)*100-4rem)]">
           <div className="max-w-4xl mx-auto">
             <header className="mb-8 text-center">
               <h1 className="text-4xl font-bold text-white mb-4">Morning & Evening Routines</h1>
@@ -147,7 +147,7 @@ export default function RoutinesClient({ userId }: { userId: string }) {
   }
 
   return (
-      <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(100vh-4rem)]">
+      <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(var(--vh,1vh)*100-4rem)]">
         <div className="max-w-7xl mx-auto">
           <header className="text-center mb-8">
             <div className="flex items-center justify-center gap-3 mb-4">

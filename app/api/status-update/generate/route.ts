@@ -128,7 +128,7 @@ async function getUserNodes(userId: string, startDate: Date, endDate: Date): Pro
     
     return nodes
   } catch (error) {
-    console.error('Error fetching nodes from Firebase:', error)
+
     return []
   }
 }
@@ -320,7 +320,7 @@ export async function POST(request: NextRequest) {
             })
           }
         } catch (aiError) {
-          console.error('AI categorization failed, falling back to pattern matching:', aiError)
+
           // Fallback to original pattern matching
           events.forEach((event: CalendarEvent) => {
             const eventStartDate = event.start.date || event.start.dateTime?.split('T')[0]
@@ -351,7 +351,7 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch (error) {
-      console.error('Error fetching calendar events:', error)
+
     }
     
     // Format blockers
@@ -401,7 +401,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json(response)
   } catch (error) {
-    console.error('Error generating status update:', error)
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to generate status update' },
       { status: 500 }

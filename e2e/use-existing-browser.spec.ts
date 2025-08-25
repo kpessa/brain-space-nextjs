@@ -21,26 +21,22 @@ test.describe('Using Existing Browser Session', () => {
       // Check if we're authenticated (not redirected to login)
       const currentUrl = page.url()
       if (currentUrl.includes('/login')) {
-        console.log('⚠️  Not authenticated in existing browser')
-        console.log('Please log in to Brain Space in your Edge browser first')
+
         throw new Error('Not authenticated')
       }
-      
-      console.log('✅ Successfully accessed journal with existing auth')
-      
+
       // Now we can test with real data
       // Check for journal entries
       const entries = page.locator('[data-testid="journal-entry"]')
       const entryCount = await entries.count()
-      console.log(`Found ${entryCount} journal entries`)
-      
+
       if (entryCount > 0) {
         // Test the first entry
         const firstEntry = entries.first()
         
         // Check for summary content
         const summary = await firstEntry.locator('[data-testid="journal-summary"]').textContent()
-        console.log('First entry summary:', summary)
+
         expect(summary).toBeTruthy()
         
         // Click to open modal
@@ -52,8 +48,7 @@ test.describe('Using Existing Browser Session', () => {
         
         // Check modal content
         const modalTitle = await modal.locator('[data-testid="modal-title"]').textContent()
-        console.log('Modal title:', modalTitle)
-        
+
         // Close modal
         const closeButton = modal.locator('[aria-label="Close"]')
         await closeButton.click()
@@ -63,12 +58,12 @@ test.describe('Using Existing Browser Session', () => {
       // Test creating a new entry
       const newEntryButton = page.locator('button:has-text("New Entry")')
       if (await newEntryButton.isVisible()) {
-        console.log('New Entry button found - journal feature working!')
+
       }
       
     } finally {
       // Don't close the browser - it's the user's actual browser!
-      console.log('✅ Test complete - browser remains open')
+
     }
   })
   
@@ -89,12 +84,10 @@ test.describe('Using Existing Browser Session', () => {
     })
     
     if (userData) {
-      console.log('📧 User email:', userData.email)
-      console.log('✅ Email verified:', userData.emailVerified)
+
       expect(userData.email).toBe('kpessa@gmail.com')
     } else {
-      console.log('No user data in localStorage - checking cookies...')
-      
+
       // Check cookies
       const cookies = await page.context().cookies()
       const authCookie = cookies.find(c => 
@@ -103,8 +96,7 @@ test.describe('Using Existing Browser Session', () => {
       )
       
       if (authCookie) {
-        console.log('🍪 Found auth cookie:', authCookie.name)
-        console.log('   Domain:', authCookie.domain)
+
         console.log('   Expires:', new Date(authCookie.expires * 1000).toLocaleString())
       }
     }

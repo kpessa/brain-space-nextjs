@@ -28,7 +28,7 @@ window.location = {
 }
 `
   fs.writeFileSync(jestSetupPath, jestSetup + locationMock)
-  console.log('✅ Added window.location.reload mock')
+
 }
 
 // Fix 2: Update package.json test script to exclude E2E and set memory limit
@@ -40,9 +40,4 @@ packageJson.scripts['test:e2e'] = 'playwright test'
 packageJson.scripts['test'] = 'npm run test:unit'
 
 fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2))
-console.log('✅ Updated test scripts in package.json')
 
-console.log('\n📝 Test commands:')
-console.log('  pnpm test        - Run unit tests only')
-console.log('  pnpm test:unit   - Run unit tests with memory limit')
-console.log('  pnpm test:e2e    - Run E2E tests with Playwright')

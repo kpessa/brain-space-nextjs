@@ -97,7 +97,7 @@ export function NodeRelationshipModal({
         throw new Error(`Failed to create ${relationshipType} node`)
       }
     } catch (error) {
-      console.error(`Failed to create ${relationshipType} node:`, error)
+
       setError(error instanceof Error ? error.message : `Failed to create ${relationshipType} node`)
     } finally {
       setLoading(false)

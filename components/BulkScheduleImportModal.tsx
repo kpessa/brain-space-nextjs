@@ -195,7 +195,7 @@ export function BulkScheduleImportModal({
                 
                 eventCount++
               } catch (e) {
-                console.error('Failed to create calendar event:', e)
+
               }
             }
           }
@@ -235,14 +235,14 @@ export function BulkScheduleImportModal({
             
             eventCount++
           } catch (e) {
-            console.error('Failed to create calendar event:', e)
+
           }
         }
       }
       
       setResults({ nodes: nodeCount, events: eventCount })
     } catch (error) {
-      console.error('Bulk import failed:', error)
+
       setError(error instanceof Error ? error.message : 'Import failed')
     } finally {
       setIsProcessing(false)

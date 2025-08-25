@@ -85,7 +85,7 @@ function initializeFirebaseAdmin(): InitializationResult {
           details: 'Initialized with service account key file'
         }
       } catch (error) {
-        console.error('Failed to initialize with service account key file:', error)
+
         // Fall through to try environment variables
       }
     }
@@ -110,7 +110,7 @@ function initializeFirebaseAdmin(): InitializationResult {
           details: 'Initialized with environment variables'
         }
       } catch (error) {
-        console.error('Failed to initialize with environment variables:', error)
+
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Unknown initialization error',
@@ -136,7 +136,7 @@ function initializeFirebaseAdmin(): InitializationResult {
           details: 'Initialized with Application Default Credentials'
         }
       } catch (error) {
-        console.error('Failed to initialize with Application Default Credentials:', error)
+
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Unknown ADC error',
@@ -164,7 +164,7 @@ function initializeFirebaseAdmin(): InitializationResult {
     }
     
   } catch (error) {
-    console.error('Unexpected error during Firebase Admin initialization:', error)
+
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -179,17 +179,9 @@ const initResult = initializeFirebaseAdmin()
 
 // Log initialization result
 if (process.env.NODE_ENV === 'development') {
-  console.log('🔥 Firebase Admin SDK:', {
-    success: initResult.success,
-    mode: initResult.mode,
-    details: initResult.details,
-    error: initResult.error
-  })
+
 } else if (!initResult.success) {
-  console.error('Firebase Admin SDK initialization failed:', {
-    error: initResult.error,
-    details: initResult.details
-  })
+
 }
 
 /**

@@ -87,7 +87,7 @@ class ErrorTracker {
 
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('Error captured:', report)
+
     }
 
     // Send immediately for critical errors

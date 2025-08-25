@@ -19,8 +19,6 @@ const files = glob.sync('**/*.{ts,tsx}', {
   ]
 });
 
-console.log(`Found ${files.length} files to check...`);
-
 let filesModified = 0;
 let totalIconsReplaced = 0;
 
@@ -76,7 +74,7 @@ files.forEach(file => {
           const newImport = `import { ${icons.join(', ')} } from '@/lib/icons'`;
           content = content.replace(match, newImport);
           totalIconsReplaced += icons.length;
-          console.log(`  ✓ ${file}: Replaced ${icons.length} icons`);
+
         } else {
           // Find which icons are not available
           const unavailable = icons.filter(icon => 
@@ -96,12 +94,8 @@ files.forEach(file => {
   }
 });
 
-console.log(`\n✅ Migration complete!`);
-console.log(`   Files modified: ${filesModified}`);
-console.log(`   Icons replaced: ${totalIconsReplaced}`);
-
 // List remaining lucide-react imports
-console.log('\n📋 Files still using lucide-react directly:');
+
 const remaining = files.filter(file => {
   const content = fs.readFileSync(path.resolve(file), 'utf8');
   return content.includes("from 'lucide-react'");
@@ -109,7 +103,7 @@ const remaining = files.filter(file => {
 
 if (remaining.length > 0) {
   remaining.forEach(file => console.log(`   - ${file}`));
-  console.log(`\n   Total: ${remaining.length} files`);
+
 } else {
-  console.log('   None! All imports have been migrated. 🎉');
+
 }

@@ -30,7 +30,7 @@ test.describe('Matrix View Functionality', () => {
       if (await element.isVisible()) {
         // Check if quadrant has the expected label
         const text = await element.textContent()
-        console.log(`Quadrant ${quadrant.label} found with text:`, text)
+
       }
     }
     
@@ -46,9 +46,7 @@ test.describe('Matrix View Functionality', () => {
     // Look for node cards
     const nodeCards = page.locator('.node-card, [data-testid*="node"], .matrix-item')
     const nodeCount = await nodeCards.count()
-    
-    console.log(`Found ${nodeCount} nodes in matrix`)
-    
+
     if (nodeCount > 0) {
       // Click on first node
       const firstNode = nodeCards.first()
@@ -91,7 +89,7 @@ test.describe('Matrix View Functionality', () => {
         await page.waitForTimeout(500)
         
         // Verify node moved (this depends on implementation)
-        console.log('Drag and drop attempted')
+
       }
     }
   })
@@ -118,7 +116,7 @@ test.describe('Matrix View Functionality', () => {
         // Check if nodes are filtered
         const visibleNodes = page.locator('.node-card:visible')
         const count = await visibleNodes.count()
-        console.log(`Filtered to ${count} task nodes`)
+
       }
     }
   })
@@ -180,12 +178,10 @@ test.describe('Matrix View Functionality', () => {
       // Check for specific stat items
       const statItems = page.locator('.stat-item, [data-testid*="stat"]')
       const itemCount = await statItems.count()
-      
-      console.log(`Found ${itemCount} stat items`)
-      
+
       if (itemCount > 0) {
         const firstStatText = await statItems.first().textContent()
-        console.log('First stat:', firstStatText)
+
       }
     }
   })
@@ -209,7 +205,7 @@ test.describe('Matrix View Functionality', () => {
         
         const listContainer = page.locator('.list-view, .table-view, [data-view="list"]')
         if (await listContainer.isVisible()) {
-          console.log('Switched to list view')
+
         }
       }
     }
@@ -232,7 +228,7 @@ test.describe('Matrix View Functionality', () => {
         const emptyMessage = quadrant.locator('.empty-state, :text("No items"), :text("Drop here")')
         if (await emptyMessage.isVisible()) {
           const message = await emptyMessage.textContent()
-          console.log(`Quadrant ${i + 1} empty state:`, message)
+
         }
       }
     }
@@ -262,8 +258,7 @@ test.describe('Matrix View Functionality', () => {
     // Check if state was persisted
     const newNodeCards = page.locator('.node-card')
     const newCount = await newNodeCards.count()
-    
-    console.log(`Initial nodes: ${initialCount}, After reload: ${newCount}`)
+
   })
 })
 
@@ -282,8 +277,7 @@ test.describe('Matrix Performance', () => {
       const perfData = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming
       return perfData.loadEventEnd - perfData.fetchStart
     })
-    
-    console.log(`Matrix load time: ${loadTime}ms`)
+
     expect(loadTime).toBeLessThan(5000) // Should load within 5 seconds
     
     // Check for virtualization or pagination
@@ -291,7 +285,7 @@ test.describe('Matrix Performance', () => {
     const hasVirtualization = await pagination.isVisible()
     
     if (hasVirtualization) {
-      console.log('Matrix uses pagination/virtualization for performance')
+
     }
     
     // Check memory usage (if many nodes)
@@ -322,7 +316,7 @@ test.describe('Matrix Performance', () => {
         if (performance.now() - startTime < 1000) {
           requestAnimationFrame(countFrames)
         } else {
-          console.log(`FPS: ${frameCount}`)
+
         }
       }
       

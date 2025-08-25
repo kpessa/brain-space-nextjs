@@ -126,7 +126,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
           await loadNodes(userId)
           await loadTimeboxData(userId, selectedDate, effectiveInterval)
         } catch (error) {
-          console.error('Error loading data:', error)
+
         }
       }
       
@@ -140,7 +140,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
       try {
         loadCalendarEvents()
       } catch (error) {
-        console.error('Error loading calendar events:', error)
+
       }
     }
   }, [calendarSyncEnabled, isConnected, loadCalendarEvents])
@@ -246,7 +246,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   // Show loading state until client-side hydration and selectedDate is initialized
   if (!isClient || !selectedDate) {
     return (
-      <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(100vh-4rem)] flex items-center justify-center">
+      <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 min-h-[calc(var(--vh,1vh)*100-4rem)] flex items-center justify-center">
         <div className="text-white">Loading...</div>
       </div>
     )
@@ -261,7 +261,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
   return (
     <ErrorBoundary
       fallback={
-        <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 h-[calc(100vh-4rem)] flex items-center justify-center">
+        <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-8 h-[calc(var(--vh,1vh)*100-4rem)] flex items-center justify-center">
           <div className="bg-white rounded-lg p-8 max-w-md text-center">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Timebox Error</h2>
             <p className="text-gray-600 mb-4">Something went wrong with your schedule management. Please refresh the page to continue.</p>
@@ -275,7 +275,7 @@ export default function TimeboxClient({ userId }: { userId: string }) {
         </div>
       }
     >
-      <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-4 sm:p-8 h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
+      <div className="bg-gradient-to-br from-brain-600 via-space-600 to-brain-700 -m-8 p-4 sm:p-8 h-[calc(var(--vh,1vh)*100-4rem)] flex flex-col overflow-hidden">
         <div className="max-w-7xl mx-auto flex-1 flex flex-col overflow-hidden w-full">
           {/* Header Section */}
           <header className="mb-4 flex-shrink-0">

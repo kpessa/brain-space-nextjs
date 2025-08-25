@@ -8,8 +8,7 @@ import * as path from 'path'
  * Runs once before all tests
  */
 async function globalSetup(config: FullConfig) {
-  console.log('🚀 Running global setup for Playwright tests...')
-  
+
   // Set test environment variables
   process.env.PLAYWRIGHT_TEST = 'true'
   process.env.NODE_ENV = 'test'
@@ -74,16 +73,14 @@ async function globalSetup(config: FullConfig) {
       path: path.join(storageStateDir, 'adminUser.json') 
     })
     await adminContext.close()
-    
-    console.log('✅ Authentication states created successfully')
+
   } catch (error) {
-    console.error('❌ Error in global setup:', error)
+
     throw error
   } finally {
     await browser.close()
   }
-  
-  console.log('✅ Global setup completed')
+
 }
 
 export default globalSetup

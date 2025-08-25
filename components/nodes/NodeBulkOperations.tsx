@@ -34,7 +34,7 @@ export function BulkLinkModal({ isOpen, onClose, selectedNodes, nodes }: BulkLin
       await Promise.all(promises)
       onClose()
     } catch (error) {
-      console.error('Error linking nodes:', error)
+
     } finally {
       setLoading(false)
     }

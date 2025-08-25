@@ -12,8 +12,6 @@ export function TouchScrollFix() {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
     if (!isIOS) return
 
-    console.log('🔧 Applying iOS touch scrolling fixes...')
-
     // Function to apply touch scrolling fixes
     const applyTouchScrollFixes = () => {
       // Force enable touch scrolling on body and html
@@ -68,7 +66,6 @@ export function TouchScrollFix() {
         }
       })
 
-      console.log('✅ Touch scrolling fixes applied')
     }
 
     // Apply fixes immediately

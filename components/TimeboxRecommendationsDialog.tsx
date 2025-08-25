@@ -121,7 +121,7 @@ export default function TimeboxRecommendationsDialog({
       setInsights(data.insights || [])
       setSummary(data.summary || null)
     } catch (error) {
-      console.error('Error generating recommendations:', error)
+
       setError(error instanceof Error ? error.message : 'Failed to generate recommendations')
     } finally {
       setLoading(false)

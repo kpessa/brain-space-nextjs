@@ -76,7 +76,7 @@ function cleanCommentedCode(filePath) {
 
   if (content !== originalContent) {
     fs.writeFileSync(filePath, content, 'utf8');
-    console.log(`✓ ${filePath} - Removed ${count} lines of commented code`);
+
     return count;
   }
   
@@ -89,8 +89,6 @@ const files = glob.sync('**/*.{ts,tsx,js,jsx}', {
   nodir: true
 });
 
-console.log(`Found ${files.length} files to process...\n`);
-
 let totalRemoved = 0;
 let filesModified = 0;
 
@@ -101,5 +99,3 @@ files.forEach(file => {
     filesModified++;
   }
 });
-
-console.log(`\n✨ Complete! Removed ${totalRemoved} lines of commented code from ${filesModified} files.`);

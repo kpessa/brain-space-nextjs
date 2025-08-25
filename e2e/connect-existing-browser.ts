@@ -6,20 +6,17 @@
 import { chromium } from '@playwright/test'
 
 export async function connectToExistingBrowser() {
-  console.log('🌐 Connecting to existing Edge browser...')
-  console.log('Make sure Edge is running with: --remote-debugging-port=9222')
-  
+
   try {
     // Connect to the existing browser instance
     const browser = await chromium.connectOverCDP('http://localhost:9222')
-    console.log('✅ Connected to existing browser')
-    
+
     // Get the existing contexts (browser windows)
     const contexts = browser.contexts()
     console.log(`Found ${contexts.length} browser context(s)`)
     
     if (contexts.length === 0) {
-      console.log('Creating new context from existing browser...')
+
       // If no contexts, we need to get the default context
       // This happens when connecting to a fresh browser
       const defaultContext = browser.contexts()[0] || await browser.newContext()
@@ -38,21 +35,9 @@ export async function connectToExistingBrowser() {
     
     return { browser, context, page }
   } catch (error) {
-    console.error('❌ Failed to connect to browser:', error)
-    console.log('')
-    console.log('To fix this, start Edge with remote debugging:')
-    console.log('')
-    console.log('Windows:')
-    console.log('1. Close all Edge windows')
+
     console.log('2. Run: "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe" --remote-debugging-port=9222')
-    console.log('')
-    console.log('Mac:')
-    console.log('1. Close all Edge windows')
-    console.log('2. Run: /Applications/Microsoft\\ Edge.app/Contents/MacOS/Microsoft\\ Edge --remote-debugging-port=9222')
-    console.log('')
-    console.log('Linux:')
-    console.log('1. Close all Edge windows')  
-    console.log('2. Run: microsoft-edge --remote-debugging-port=9222')
+
     throw error
   }
 }
@@ -73,7 +58,7 @@ export async function launchEdgeWithDebugging() {
   }
   
   return new Promise((resolve, reject) => {
-    console.log('🚀 Launching Edge with debugging port...')
+
     exec(command, (error: any) => {
       if (error && !error.message.includes('already running')) {
         reject(error)

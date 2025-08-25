@@ -84,7 +84,7 @@ export function ReenhanceNodeDialog({
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to enhance node')
-      console.error('Enhancement error:', err)
+
     } finally {
       setLoading(false)
     }
@@ -110,7 +110,7 @@ export function ReenhanceNodeDialog({
       onClose()
     } catch (err) {
       toast.showError('Failed to update node')
-      console.error('Update error:', err)
+
     }
   }
   

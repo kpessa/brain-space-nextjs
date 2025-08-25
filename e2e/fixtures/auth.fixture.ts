@@ -83,8 +83,7 @@ export const test = base.extend<AuthFixtures>({
     // Check if we're still authenticated
     const url = page.url()
     if (url.includes('/login')) {
-      console.warn('⚠️  Real user authentication may have expired.')
-      console.log('Run: pnpm exec ts-node e2e/setup-real-auth.ts')
+
     }
     
     await use(page)

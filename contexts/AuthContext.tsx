@@ -72,10 +72,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (!response.ok) {
         const error = await response.json()
-        console.error('Failed to set auth cookie:', error)
+
       }
     } catch (error) {
-      console.error('Failed to set auth cookie:', error)
+
     }
   }
 
@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         credentials: 'include',
       })
     } catch (error) {
-      console.error('Failed to clear auth cookie:', error)
+
     }
   }
 
@@ -124,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         })
         .catch((error) => {
-          console.error('[AuthContext] Redirect result error:', error)
+
           // Clear any redirect errors to prevent loops
           if (error.code === 'auth/redirect-cancelled-by-user') {
           }
@@ -177,7 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               // Initialize Google Calendar service for authenticated user
               await initializeGoogleCalendar()
             } catch (error) {
-              console.error('[AuthContext] Error creating user profile:', error)
+
             }
           }
         } else {
@@ -192,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setStoreLoading(false)
       })
     } catch (error) {
-      console.error('[AuthContext] Error setting up auth listener:', error)
+
       setLoading(false)
       setStoreLoading(false)
     }
@@ -232,7 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setGoogleCalendarReady(false)
       }
     } catch (error) {
-      console.error('[AuthContext] Error initializing Google Calendar:', error)
+
       setGoogleCalendarReady(false)
     }
   }
@@ -313,7 +313,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
-      console.error('[AuthContext] Google sign in error:', error)
+
       throw error
     }
   }
@@ -332,7 +332,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Reset Google Calendar state
       setGoogleCalendarReady(false)
     } catch (error) {
-      console.error('Sign out error:', error)
+
       throw error
     }
   }
@@ -354,7 +354,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       )
 
     } catch (error) {
-      console.error('[AuthContext] Failed to store Google Calendar token:', error)
+
     }
   }
 
@@ -362,7 +362,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const connectGoogleCalendar = async (): Promise<boolean> => {
     try {
       if (!googleCalendarService.isReady()) {
-        console.error('[AuthContext] Google Calendar service not ready')
+
         return false
       }
       
@@ -374,7 +374,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       return false
     } catch (error) {
-      console.error('[AuthContext] Failed to connect Google Calendar:', error)
+
       return false
     }
   }
@@ -385,7 +385,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await googleCalendarService.signOut()
 
     } catch (error) {
-      console.error('[AuthContext] Failed to disconnect Google Calendar:', error)
+
       throw error
     }
   }
@@ -408,7 +408,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       return true
     } catch (error) {
-      console.error('[AuthContext] Failed to refresh Google Calendar auth:', error)
+
       return false
     }
   }

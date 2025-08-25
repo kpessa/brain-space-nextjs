@@ -244,8 +244,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Error in enhance-node:', error)
-    
+
     // Return a fallback response instead of failing completely
     return NextResponse.json({
       nodeData: {

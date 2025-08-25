@@ -43,6 +43,36 @@ process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET = 'test.appspot.com'
 process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = '123456'
 process.env.NEXT_PUBLIC_FIREBASE_APP_ID = 'test-app-id'
 
+// Mock Firebase Admin environment variables
+process.env.FIREBASE_ADMIN_PROJECT_ID = 'test-project'
+process.env.FIREBASE_ADMIN_CLIENT_EMAIL = 'test@test.com'
+process.env.FIREBASE_ADMIN_PRIVATE_KEY = 'test-key'
+
+// Mock Firebase Admin SDK
+jest.mock('firebase-admin', () => ({
+  apps: [],
+  initializeApp: jest.fn(),
+  cert: jest.fn(),
+  auth: jest.fn(() => ({
+    verifyIdToken: jest.fn(),
+    createSessionCookie: jest.fn(),
+    verifySessionCookie: jest.fn(),
+  })),
+  firestore: jest.fn(() => ({
+    collection: jest.fn(),
+    doc: jest.fn(),
+  })),
+}))
+
+// Mock jwks-rsa which causes import errors
+jest.mock('jwks-rsa', () => ({
+  JwksClient: jest.fn(),
+  hapiJwt2Key: jest.fn(),
+  expressJwtSecret: jest.fn(),
+  koaJwt2Key: jest.fn(),
+  passportJwtSecret: jest.fn(),
+}))
+
 // Suppress console errors in tests
 const originalError = console.error
 beforeAll(() => {

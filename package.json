@@ -19,7 +19,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:real": "PLAYWRIGHT_AUTH_MODE=real playwright test e2e/real-user-example.spec.ts",
     "test:e2e:setup-auth": "ts-node e2e/setup-real-auth.ts",
-    "test:unit": "NODE_OPTIONS=\"--max-old-space-size=4096\" jest --testPathIgnorePatterns=e2e"
+    "test:unit": "NODE_OPTIONS=\"--max-old-space-size=4096\" jest --testPathIgnorePatterns=e2e --maxWorkers=2"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

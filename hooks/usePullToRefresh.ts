@@ -65,10 +65,18 @@ export function usePullToRefresh({
         triggerHaptic('medium')
       }
       
-      // Only prevent default if we have a significant pull distance
-      // This allows normal scrolling to work while still enabling pull-to-refresh
-      if (adjustedDiff > 20) {
-        e.preventDefault()
+      // Only prevent default when actively pulling at the top
+      // Be highly selective to avoid blocking normal touch interactions
+      const shouldPreventDefault = (
+        adjustedDiff > 20 && 
+        adjustedDiff < maxPull * 0.8 && 
+        containerRef.current?.scrollTop === 0 && 
+        isAtTop() && 
+        isPulling
+      )
+      
+      if (shouldPreventDefault) {
+        e.preventDefault() // Only prevent when actively pulling at top
       }
     } else if (diff < 0) {
       // If pulling up (scrolling down), stop the pull-to-refresh

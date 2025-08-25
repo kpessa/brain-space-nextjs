@@ -161,7 +161,7 @@ function BrainDumpFlowInner({ initialNodes = [], initialEdges = [], onBack, user
         router.push('/nodes')
       }
     } catch (error) {
-      console.error('Failed to convert thoughts to nodes:', error)
+
       alert('Failed to convert some thoughts to nodes')
     }
   }

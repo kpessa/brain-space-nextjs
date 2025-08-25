@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
       htmlLink: event.htmlLink
     })
   } catch (error) {
-    console.error('Error creating calendar event from node:', error)
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to create calendar event' },
       { status: 500 }

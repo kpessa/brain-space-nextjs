@@ -388,7 +388,7 @@ export async function POST(request: NextRequest) {
       if (process.env.NODE_ENV !== 'development') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
-      console.warn('⚠️  Running without authentication in development mode')
+
     }
 
     const data: ExtendedStatusRequest = await request.json()
@@ -471,7 +471,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json(response)
   } catch (error) {
-    console.error('Error generating extended status:', error)
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to generate status' },
       { status: 500 }
